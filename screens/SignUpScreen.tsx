@@ -10,24 +10,93 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
+import type { StackNavigationProp } from '@react-navigation/stack';
+import type { RootStackParamList } from '../App';
+import { signup } from '../api/authAPI';
+
+type SignUpScreenNavigationProp = StackNavigationProp<RootStackParamList>;
 
 const SignUpScreen = () => {
+  const navigation = useNavigation<SignUpScreenNavigationProp>();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [phone, setPhone] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  const handleSignUp = () => {
-    // Handle sign up logic here
-    console.log('Sign up pressed');
+  const handleSignUp = async () => {
+    // Validation
+    if (!name.trim()) {
+      Alert.alert('Validation Error', 'Please enter your name');
+      return;
+    }
+
+    if (!email.trim()) {
+      Alert.alert('Validation Error', 'Please enter your email address');
+      return;
+    }
+
+    // Email format validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      Alert.alert('Validation Error', 'Please enter a valid email address');
+      return;
+    }
+
+    if (!password.trim()) {
+      Alert.alert('Validation Error', 'Please enter a password');
+      return;
+    }
+
+    if (password.length < 6) {
+      Alert.alert('Validation Error', 'Password must be at least 6 characters long');
+      return;
+    }
+
+    if (!agreedToTerms) {
+      Alert.alert('Terms Required', 'Please agree to the Terms and Privacy Policy to continue');
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const userData = {
+        name: name.trim(),
+        email: email.trim(),
+        password,
+        phone: phone.trim() || undefined,
+      };
+
+      const response = await signup(userData);
+
+      if (response.success) {
+        // Navigate to AddLocation screen (Step 2 of signup)
+        navigation.navigate('AddLocation');
+      }
+    } catch (error: any) {
+      Alert.alert(
+        'Sign Up Failed',
+        error.message || 'Unable to create account. Please try again.'
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleLogin = () => {
-    // Navigate to login screen
-    console.log('Login pressed');
+    navigation.navigate('Login');
+  };
+
+  const handleBack = () => {
+    navigation.goBack();
   };
 
   return (
@@ -44,7 +113,7 @@ const SignUpScreen = () => {
         >
           {/* Header */}
           <View style={styles.header}>
-            <TouchableOpacity style={styles.backButton}>
+            <TouchableOpacity style={styles.backButton} onPress={handleBack}>
               <Ionicons name="arrow-back" size={24} color="#fff" />
             </TouchableOpacity>
           </View>
@@ -131,11 +200,16 @@ const SignUpScreen = () => {
 
             {/* Sign Up Button */}
             <TouchableOpacity
-              style={styles.signUpButton}
+              style={[styles.signUpButton, loading && styles.signUpButtonDisabled]}
               onPress={handleSignUp}
               activeOpacity={0.8}
+              disabled={loading}
             >
-              <Text style={styles.signUpButtonText}>Sign up</Text>
+              {loading ? (
+                <ActivityIndicator color="#fff" size="small" />
+              ) : (
+                <Text style={styles.signUpButtonText}>Sign up</Text>
+              )}
             </TouchableOpacity>
 
             {/* Login Link */}
@@ -271,6 +345,9 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 8,
     elevation: 4,
+  },
+  signUpButtonDisabled: {
+    opacity: 0.6,
   },
   signUpButtonText: {
     color: '#fff',

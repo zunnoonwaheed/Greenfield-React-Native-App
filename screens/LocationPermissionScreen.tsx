@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -7,10 +7,14 @@ import {
   SafeAreaView,
   StatusBar,
   Dimensions,
+  Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
 import type { RootStackParamList } from '../App';
+import * as Location from 'expo-location';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const { width } = Dimensions.get('window');
 
@@ -27,12 +31,68 @@ const LocationPermissionScreen: React.FC<LocationPermissionScreenProps> = ({
   onBack,
 }) => {
   const navigation = useNavigation<LocationPermissionScreenNavigationProp>();
+  const [loading, setLoading] = useState(false);
 
-  const handleYesAllow = () => {
-    navigation.navigate('Login');
+  const handleYesAllow = async () => {
+    setLoading(true);
+
+    try {
+      // Request location permission
+      const { status } = await Location.requestForegroundPermissionsAsync();
+
+      if (status === 'granted') {
+        // Get current location
+        const location = await Location.getCurrentPositionAsync({});
+
+        // Save location to AsyncStorage
+        await AsyncStorage.setItem(
+          'userLocation',
+          JSON.stringify({
+            latitude: location.coords.latitude,
+            longitude: location.coords.longitude,
+            timestamp: new Date().toISOString(),
+          })
+        );
+
+        console.log('Location saved:', location.coords);
+
+        // Navigate to Login screen
+        navigation.navigate('Login');
+      } else {
+        Alert.alert(
+          'Permission Denied',
+          'Location permission is required to personalize your experience. You can still continue with limited features.',
+          [
+            {
+              text: 'Continue Anyway',
+              onPress: () => navigation.navigate('Login'),
+            },
+            {
+              text: 'Try Again',
+              onPress: () => handleYesAllow(),
+            },
+          ]
+        );
+      }
+    } catch (error) {
+      console.error('Error requesting location:', error);
+      Alert.alert(
+        'Error',
+        'Unable to get location. You can continue without location access.',
+        [
+          {
+            text: 'OK',
+            onPress: () => navigation.navigate('Login'),
+          },
+        ]
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleEssentialOnly = () => {
+    // Skip location permission and go to Login
     navigation.navigate('Login');
   };
 
@@ -67,11 +127,23 @@ const LocationPermissionScreen: React.FC<LocationPermissionScreenProps> = ({
 
           {/* Button Container */}
           <View style={styles.buttonContainer}>
-            <TouchableOpacity style={styles.primaryButton} onPress={handleYesAllow}>
-              <Text style={styles.primaryButtonText}>Yes, Allow</Text>
+            <TouchableOpacity
+              style={[styles.primaryButton, loading && styles.primaryButtonDisabled]}
+              onPress={handleYesAllow}
+              disabled={loading}
+            >
+              {loading ? (
+                <ActivityIndicator color="#F1F5F9" size="small" />
+              ) : (
+                <Text style={styles.primaryButtonText}>Yes, Allow</Text>
+              )}
             </TouchableOpacity>
-            
-            <TouchableOpacity style={styles.secondaryButton} onPress={handleEssentialOnly}>
+
+            <TouchableOpacity
+              style={styles.secondaryButton}
+              onPress={handleEssentialOnly}
+              disabled={loading}
+            >
               <Text style={styles.secondaryButtonText}>Only Allow Essential Access</Text>
             </TouchableOpacity>
           </View>
@@ -164,6 +236,9 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     textAlign: 'center',
     fontFamily: 'System',
+  },
+  primaryButtonDisabled: {
+    opacity: 0.6,
   },
   secondaryButton: {
     backgroundColor: '#FFFFFF',

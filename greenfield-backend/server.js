@@ -6,6 +6,7 @@
 const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
+const os = require('os');
 
 // Import routes
 const authRoutes = require('./routes/authRoutes');
@@ -22,13 +23,21 @@ const app = express();
 // MIDDLEWARE
 // ============================================
 
-// CORS - Allow requests from any frontend
-app.use(cors({
-  origin: '*', // In production, specify your frontend URL
-  credentials: true
-}));
+// Determine allowed CORS origins
+const corsOrigins = process.env.CORS_ORIGIN
+  ? process.env.CORS_ORIGIN.split(',')
+  : ['*']; // Default: allow all (for development)
 
-// Body parser
+const corsOptions = {
+  origin: corsOrigins,
+  credentials: process.env.CORS_CREDENTIALS === 'true' || true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+};
+
+app.use(cors(corsOptions));
+
+// Parse JSON and URL-encoded bodies
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -42,21 +51,18 @@ app.use((req, res, next) => {
 // ROUTES
 // ============================================
 
-// Health check endpoint
 app.get('/health', (req, res) => {
   res.json({
     success: true,
     message: 'Server is running',
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
   });
 });
 
-// API routes
 app.use('/api/auth', authRoutes);
 app.use('/api/user', userRoutes);
 app.use('/api/location', locationRoutes);
 
-// Root endpoint
 app.get('/', (req, res) => {
   res.json({
     success: true,
@@ -65,8 +71,8 @@ app.get('/', (req, res) => {
     endpoints: {
       auth: '/api/auth/*',
       user: '/api/user/*',
-      location: '/api/location/*'
-    }
+      location: '/api/location/*',
+    },
   });
 });
 
@@ -74,23 +80,20 @@ app.get('/', (req, res) => {
 // ERROR HANDLING
 // ============================================
 
-// 404 handler
 app.use((req, res) => {
   res.status(404).json({
     success: false,
     message: 'Endpoint not found',
-    path: req.path
+    path: req.path,
   });
 });
 
-// Global error handler
 app.use((err, req, res, next) => {
   console.error('Error:', err);
-
   res.status(err.status || 500).json({
     success: false,
     message: err.message || 'Internal server error',
-    ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
+    ...(process.env.NODE_ENV === 'development' && { stack: err.stack }),
   });
 });
 
@@ -100,50 +103,70 @@ app.use((err, req, res, next) => {
 
 const PORT = process.env.PORT || 3000;
 
-// Test database connection before starting server
-pool.query('SELECT NOW()', (err, res) => {
-  if (err) {
+// Helper: Get local IP address (for mobile testing)
+const getLocalIP = () => {
+  const interfaces = os.networkInterfaces();
+  for (let iface in interfaces) {
+    for (let alias of interfaces[iface]) {
+      if (alias.family === 'IPv4' && !alias.internal) {
+        return alias.address;
+      }
+    }
+  }
+  return 'localhost';
+};
+
+const startServer = async () => {
+  try {
+    const [result] = await pool.query('SELECT NOW() AS now');
+    console.log('✅ Database connected successfully');
+    console.log('Database time:', result[0].now);
+
+    app.listen(PORT, () => {
+      const localIP = getLocalIP();
+      console.log('');
+      console.log('🚀 ========================================');
+      console.log(`🚀 Server running on port ${PORT}`);
+      console.log(`🚀 Environment: ${process.env.NODE_ENV || 'development'}`);
+      console.log(`🚀 Local URL: http://localhost:${PORT}/api`);
+      console.log(`🚀 Network URL (for mobile): http://${localIP}:${PORT}/api`);
+      console.log('🚀 ========================================');
+      console.log('');
+      console.log('📍 Available endpoints:');
+      console.log('   POST   /api/auth/signup');
+      console.log('   POST   /api/auth/login');
+      console.log('   POST   /api/auth/forgot-password');
+      console.log('   POST   /api/auth/reset-password');
+      console.log('   POST   /api/auth/logout');
+      console.log('   GET    /api/user/profile');
+      console.log('   PUT    /api/user/profile');
+      console.log('   POST   /api/user/change-password');
+      console.log('   DELETE /api/user/account');
+      console.log('   POST   /api/location/add');
+      console.log('   GET    /api/location/list');
+      console.log('   GET    /api/location/default');
+      console.log('   PUT    /api/location/set-default/:id');
+      console.log('   PUT    /api/location/update/:id');
+      console.log('   DELETE /api/location/delete/:id');
+      console.log('');
+    });
+  } catch (err) {
     console.error('❌ Database connection failed:', err.message);
     process.exit(1);
   }
+};
 
-  console.log('✅ Database connected successfully');
-  console.log('Database time:', res.rows[0].now);
-
-  // Start server
-  app.listen(PORT, () => {
-    console.log('');
-    console.log('🚀 ========================================');
-    console.log(`🚀 Server running on port ${PORT}`);
-    console.log(`🚀 Environment: ${process.env.NODE_ENV || 'development'}`);
-    console.log(`🚀 API URL: http://localhost:${PORT}/api`);
-    console.log('🚀 ========================================');
-    console.log('');
-    console.log('📍 Available endpoints:');
-    console.log('   POST   /api/auth/signup');
-    console.log('   POST   /api/auth/login');
-    console.log('   POST   /api/auth/forgot-password');
-    console.log('   POST   /api/auth/reset-password');
-    console.log('   POST   /api/auth/logout');
-    console.log('   GET    /api/user/profile');
-    console.log('   PUT    /api/user/profile');
-    console.log('   POST   /api/user/change-password');
-    console.log('   DELETE /api/user/account');
-    console.log('   POST   /api/location/add');
-    console.log('   GET    /api/location/list');
-    console.log('   GET    /api/location/default');
-    console.log('   PUT    /api/location/set-default/:id');
-    console.log('   PUT    /api/location/update/:id');
-    console.log('   DELETE /api/location/delete/:id');
-    console.log('');
-  });
-});
+startServer();
 
 // Handle graceful shutdown
-process.on('SIGTERM', () => {
+process.on('SIGTERM', async () => {
   console.log('SIGTERM received, closing server...');
-  pool.end(() => {
+  try {
+    await pool.end();
     console.log('Database pool closed');
     process.exit(0);
-  });
+  } catch (err) {
+    console.error('Error closing database pool:', err.message);
+    process.exit(1);
+  }
 });

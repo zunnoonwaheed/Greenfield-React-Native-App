@@ -10,33 +10,84 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
+import type { StackNavigationProp } from '@react-navigation/stack';
+import type { RootStackParamList } from '../App';
+import { addLocation } from '../api/locationAPI';
+
+type AddLocationScreenNavigationProp = StackNavigationProp<RootStackParamList>;
 
 const AddLocationScreen = () => {
-  const [city, setCity] = useState('Islamabad');
+  const navigation = useNavigation<AddLocationScreenNavigationProp>();
+  const [city, setCity] = useState('');
   const [area, setArea] = useState('');
   const [sector, setSector] = useState('');
   const [streetNumber, setStreetNumber] = useState('');
-  const [propertyType, setPropertyType] = useState<'house' | 'appartment'>('house');
+  const [propertyType, setPropertyType] = useState<'house' | 'apartment'>('house');
   const [houseNumber, setHouseNumber] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handleDone = () => {
-    // Handle location submission
-    const locationData = {
-      city,
-      area,
-      sector,
-      streetNumber,
-      propertyType,
-      houseNumber,
-    };
-    console.log('Location data:', locationData);
+  const handleDone = async () => {
+    // Validation
+    if (!city.trim()) {
+      Alert.alert('Validation Error', 'Please enter a city');
+      return;
+    }
+
+    if (!area.trim()) {
+      Alert.alert('Validation Error', 'Please enter an area');
+      return;
+    }
+
+    if (!sector.trim()) {
+      Alert.alert('Validation Error', 'Please enter a sector');
+      return;
+    }
+
+    if (!streetNumber.trim()) {
+      Alert.alert('Validation Error', 'Please enter a street number');
+      return;
+    }
+
+    if (!houseNumber.trim()) {
+      Alert.alert('Validation Error', 'Please enter a house/apartment number');
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const locationData = {
+        city: city.trim(),
+        area: area.trim(),
+        sector: sector.trim(),
+        streetNumber: streetNumber.trim(),
+        propertyType,
+        houseNumber: houseNumber.trim(),
+      };
+
+      const response = await addLocation(locationData);
+
+      if (response.success) {
+        // Navigate to Welcome screen
+        navigation.navigate('Welcome');
+      }
+    } catch (error: any) {
+      Alert.alert(
+        'Error',
+        error.message || 'Unable to add location. Please try again.'
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleBack = () => {
-    // Navigate back
-    console.log('Back pressed');
+    navigation.goBack();
   };
 
   return (
@@ -167,15 +218,15 @@ const AddLocationScreen = () => {
 
               <TouchableOpacity
                 style={styles.radioOption}
-                onPress={() => setPropertyType('appartment')}
+                onPress={() => setPropertyType('apartment')}
                 activeOpacity={0.7}
               >
                 <View style={styles.radioButton}>
-                  {propertyType === 'appartment' && (
+                  {propertyType === 'apartment' && (
                     <View style={styles.radioButtonInner} />
                   )}
                 </View>
-                <Text style={styles.radioLabel}>Appartment</Text>
+                <Text style={styles.radioLabel}>Apartment</Text>
               </TouchableOpacity>
             </View>
 
@@ -201,11 +252,16 @@ const AddLocationScreen = () => {
 
             {/* Done Button */}
             <TouchableOpacity
-              style={styles.doneButton}
+              style={[styles.doneButton, loading && styles.doneButtonDisabled]}
               onPress={handleDone}
               activeOpacity={0.8}
+              disabled={loading}
             >
-              <Text style={styles.doneButtonText}>Done</Text>
+              {loading ? (
+                <ActivityIndicator color="#fff" size="small" />
+              ) : (
+                <Text style={styles.doneButtonText}>Done</Text>
+              )}
             </TouchableOpacity>
           </View>
         </ScrollView>
@@ -329,6 +385,9 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 8,
     elevation: 4,
+  },
+  doneButtonDisabled: {
+    opacity: 0.6,
   },
   doneButtonText: {
     color: '#fff',

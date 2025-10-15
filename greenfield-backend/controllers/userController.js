@@ -1,6 +1,6 @@
 // ============================================
 // USER CONTROLLER
-// Handles user profile operations
+// MySQL-compatible version
 // ============================================
 
 const { query } = require('../config/database');
@@ -13,35 +13,41 @@ const bcrypt = require('bcrypt');
  */
 exports.getProfile = async (req, res) => {
   try {
-    // req.user is set by authenticateToken middleware
     const userId = req.user.id;
 
-    const result = await query(
-      `SELECT id, name, email, phone, created_at, email_verified 
-       FROM users WHERE id = $1`,
+    // Get user data
+    const users = await query(
+      'SELECT id, name, email, phone, created_at FROM users WHERE id = ?',
       [userId]
     );
 
-    if (result.rows.length === 0) {
+    if (users.length === 0) {
       return res.status(404).json({
         success: false,
         message: 'User not found'
       });
     }
 
-    const user = result.rows[0];
+    const user = users[0];
 
-    // Get user's default location
-    const locationResult = await query(
-      'SELECT * FROM user_locations WHERE user_id = $1 AND is_default = true LIMIT 1',
-      [userId]
-    );
+    // Get user's default location if user_locations table exists
+    let location = null;
+    try {
+      const locations = await query(
+        'SELECT * FROM user_locations WHERE user_id = ? AND is_default = 1 LIMIT 1',
+        [userId]
+      );
+      location = locations.length > 0 ? locations[0] : null;
+    } catch (err) {
+      // Table might not exist yet
+      console.log('user_locations table not found');
+    }
 
     res.json({
       success: true,
       data: {
         user,
-        location: locationResult.rows[0] || null
+        location
       }
     });
   } catch (error) {
@@ -68,18 +74,15 @@ exports.updateProfile = async (req, res) => {
     // Build dynamic update query
     const updates = [];
     const values = [];
-    let paramCount = 1;
 
-    if (name) {
-      updates.push(`name = $${paramCount}`);
+    if (name !== undefined) {
+      updates.push('name = ?');
       values.push(name);
-      paramCount++;
     }
 
-    if (phone) {
-      updates.push(`phone = $${paramCount}`);
+    if (phone !== undefined) {
+      updates.push('phone = ?');
       values.push(phone);
-      paramCount++;
     }
 
     if (updates.length === 0) {
@@ -91,18 +94,23 @@ exports.updateProfile = async (req, res) => {
 
     values.push(userId); // Add userId as last parameter
 
-    const result = await query(
-      `UPDATE users SET ${updates.join(', ')}, updated_at = NOW() 
-       WHERE id = $${paramCount} 
-       RETURNING id, name, email, phone`,
+    // Update user
+    await query(
+      `UPDATE users SET ${updates.join(', ')} WHERE id = ?`,
       values
+    );
+
+    // Get updated user data
+    const users = await query(
+      'SELECT id, name, email, phone FROM users WHERE id = ?',
+      [userId]
     );
 
     res.json({
       success: true,
       message: 'Profile updated successfully',
       data: {
-        user: result.rows[0]
+        user: users[0]
       }
     });
   } catch (error) {
@@ -133,13 +141,20 @@ exports.changePassword = async (req, res) => {
       });
     }
 
+    if (newPassword.length < 6) {
+      return res.status(400).json({
+        success: false,
+        message: 'New password must be at least 6 characters long'
+      });
+    }
+
     // Get user's current password
-    const result = await query(
-      'SELECT password FROM users WHERE id = $1',
+    const users = await query(
+      'SELECT password FROM users WHERE id = ?',
       [userId]
     );
 
-    if (result.rows.length === 0) {
+    if (users.length === 0) {
       return res.status(404).json({
         success: false,
         message: 'User not found'
@@ -147,7 +162,7 @@ exports.changePassword = async (req, res) => {
     }
 
     // Verify current password
-    const isValid = await bcrypt.compare(currentPassword, result.rows[0].password);
+    const isValid = await bcrypt.compare(currentPassword, users[0].password);
 
     if (!isValid) {
       return res.status(401).json({
@@ -161,7 +176,7 @@ exports.changePassword = async (req, res) => {
 
     // Update password
     await query(
-      'UPDATE users SET password = $1, updated_at = NOW() WHERE id = $2',
+      'UPDATE users SET password = ? WHERE id = ?',
       [hashedPassword, userId]
     );
 
@@ -180,7 +195,7 @@ exports.changePassword = async (req, res) => {
 };
 
 /**
- * DELETE ACCOUNT - Soft delete user account
+ * DELETE ACCOUNT - Delete user account
  * DELETE /api/user/account
  * Headers: Authorization: Bearer TOKEN
  */
@@ -188,9 +203,9 @@ exports.deleteAccount = async (req, res) => {
   try {
     const userId = req.user.id;
 
-    // Soft delete by setting is_active to false
+    // Delete user (or you can soft delete by adding a deleted_at column)
     await query(
-      'UPDATE users SET is_active = false, updated_at = NOW() WHERE id = $1',
+      'DELETE FROM users WHERE id = ?',
       [userId]
     );
 

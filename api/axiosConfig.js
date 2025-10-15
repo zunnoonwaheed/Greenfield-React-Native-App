@@ -5,15 +5,32 @@
 
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Platform } from 'react-native';
 
-// Base API URL - Change this to your production URL
-const API_BASE_URL = 'http://localhost:3000/api';
-// For testing on physical device, use your computer's IP:
-// const API_BASE_URL = 'http://192.168.1.100:3000/api';
-// For production:
-// const API_BASE_URL = 'https://yourdomain.com/api';
+// ============================================
+// BASE API URL CONFIGURATION
+// ============================================
 
-// Create axios instance with default config
+// ⚠️ IMPORTANT: Use your laptop's Wi-Fi IP so your mobile device can connect
+const LOCAL_IP = '192.168.100.216';
+const PORT = '3001';
+
+// For testing on physical device
+const API_BASE_URL = `http://${LOCAL_IP}:${PORT}/api`;
+
+// For emulators/simulators
+// iOS simulator: 'http://127.0.0.1:3001/api'
+// Android emulator: 'http://10.0.2.2:3001/api'
+
+// For production
+// const API_BASE_URL = 'https://your-production-domain.com/api';
+
+console.log('🌐 API Base URL:', API_BASE_URL);
+
+// ============================================
+// CREATE AXIOS INSTANCE
+// ============================================
+
 const axiosInstance = axios.create({
   baseURL: API_BASE_URL,
   timeout: 10000, // 10 seconds timeout
@@ -24,87 +41,75 @@ const axiosInstance = axios.create({
 
 // ============================================
 // REQUEST INTERCEPTOR
-// Automatically add auth token to requests
+// Automatically add auth token to every request
 // ============================================
+
 axiosInstance.interceptors.request.use(
   async (config) => {
     try {
-      // Get token from AsyncStorage
       const token = await AsyncStorage.getItem('authToken');
-      
       if (token) {
-        // Add token to Authorization header
         config.headers.Authorization = `Bearer ${token}`;
       }
-      
-      console.log(`API Request: ${config.method.toUpperCase()} ${config.url}`);
+
+      console.log(`🚀 API Request: ${config.method.toUpperCase()} ${config.url}`);
       return config;
     } catch (error) {
-      console.error('Error in request interceptor:', error);
+      console.error('❌ Error in request interceptor:', error);
       return config;
     }
   },
-  (error) => {
-    return Promise.reject(error);
-  }
+  (error) => Promise.reject(error)
 );
 
 // ============================================
 // RESPONSE INTERCEPTOR
-// Handle common response scenarios
+// Handles success and error responses
 // ============================================
+
 axiosInstance.interceptors.response.use(
   (response) => {
-    // Return successful response
-    console.log(`API Response: ${response.status} ${response.config.url}`);
+    console.log(`✅ API Response: ${response.status} ${response.config.url}`);
     return response.data;
   },
   async (error) => {
-    console.error('API Error:', error.response?.data || error.message);
-    
-    // Handle specific error cases
+    console.error('⚠️ API Error:', error.response?.data || error.message);
+
     if (error.response) {
-      // Server responded with error status
       const { status, data } = error.response;
-      
+
       switch (status) {
         case 401:
-          // Unauthorized - Token expired or invalid
-          console.log('Session expired, clearing token...');
+          console.warn('🔒 Unauthorized — clearing token');
           await AsyncStorage.removeItem('authToken');
           await AsyncStorage.removeItem('userData');
-          // You can also trigger navigation to login screen here
           break;
-          
         case 403:
-          // Forbidden
-          console.error('Access forbidden');
+          console.error('🚫 Forbidden — access denied');
           break;
-          
         case 404:
-          // Not found
-          console.error('Resource not found');
+          console.error('❓ Resource not found');
           break;
-          
         case 500:
-          // Server error
-          console.error('Server error');
+          console.error('💥 Server error');
           break;
+        default:
+          console.error(`Unhandled API status: ${status}`);
       }
-      
-      // Return error data from server
+
       return Promise.reject(data);
     } else if (error.request) {
       // Request made but no response received
       return Promise.reject({
         success: false,
-        message: 'No response from server. Please check your internet connection.'
+        message:
+          'No response from server. Check that your backend is running and both devices share the same Wi-Fi.',
       });
     } else {
-      // Something else happened
+      // Other unexpected errors
       return Promise.reject({
         success: false,
-        message: error.message || 'An unexpected error occurred'
+        message: error.message || 'An unexpected error occurred.',
       });
     }
   }
@@ -114,59 +119,43 @@ axiosInstance.interceptors.response.use(
 // HELPER FUNCTIONS
 // ============================================
 
-/**
- * Store auth token
- */
 export const setAuthToken = async (token) => {
   try {
     await AsyncStorage.setItem('authToken', token);
-    console.log('Auth token stored');
+    console.log('🔐 Auth token stored');
   } catch (error) {
     console.error('Error storing auth token:', error);
   }
 };
 
-/**
- * Get auth token
- */
 export const getAuthToken = async () => {
   try {
-    const token = await AsyncStorage.getItem('authToken');
-    return token;
+    return await AsyncStorage.getItem('authToken');
   } catch (error) {
     console.error('Error getting auth token:', error);
     return null;
   }
 };
 
-/**
- * Remove auth token (logout)
- */
 export const removeAuthToken = async () => {
   try {
     await AsyncStorage.removeItem('authToken');
     await AsyncStorage.removeItem('userData');
-    console.log('Auth token removed');
+    console.log('🚪 Auth token removed');
   } catch (error) {
     console.error('Error removing auth token:', error);
   }
 };
 
-/**
- * Store user data
- */
 export const setUserData = async (userData) => {
   try {
     await AsyncStorage.setItem('userData', JSON.stringify(userData));
-    console.log('User data stored');
+    console.log('👤 User data stored');
   } catch (error) {
     console.error('Error storing user data:', error);
   }
 };
 
-/**
- * Get user data
- */
 export const getUserData = async () => {
   try {
     const userData = await AsyncStorage.getItem('userData');

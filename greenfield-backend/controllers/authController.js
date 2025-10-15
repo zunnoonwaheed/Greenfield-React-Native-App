@@ -1,23 +1,12 @@
-// ============================================
-// AUTHENTICATION CONTROLLER
-// Handles login, signup, password reset, logout
-// ============================================
-
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const { query } = require('../config/database');
 const crypto = require('crypto');
 
-/**
- * SIGNUP - Register new user
- * POST /api/auth/signup
- * Body: { name, email, password, phone }
- */
 exports.signup = async (req, res) => {
   try {
     const { name, email, password, phone } = req.body;
 
-    // Validation
     if (!name || !email || !password) {
       return res.status(400).json({
         success: false,
@@ -25,34 +14,29 @@ exports.signup = async (req, res) => {
       });
     }
 
-    // Check if user already exists
     const existingUser = await query(
-      'SELECT id FROM users WHERE email = $1',
+      'SELECT id FROM users WHERE email = ?',
       [email.toLowerCase()]
     );
 
-    if (existingUser.rows.length > 0) {
+    if (existingUser.length > 0) {
       return res.status(409).json({
         success: false,
         message: 'User with this email already exists'
       });
     }
 
-    // Hash password
-    const saltRounds = 10;
-    const hashedPassword = await bcrypt.hash(password, saltRounds);
+    const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Insert new user
     const result = await query(
-      'INSERT INTO users (name, email, password, phone) VALUES ($1, $2, $3, $4) RETURNING id, name, email, phone, created_at',
-      [name, email.toLowerCase(), hashedPassword, phone]
+      'INSERT INTO users (name, email, password, phone) VALUES (?, ?, ?, ?)',
+      [name, email.toLowerCase(), hashedPassword, phone || null]
     );
 
-    const user = result.rows[0];
+    const userId = result.insertId;
 
-    // Generate JWT token
     const token = jwt.sign(
-      { id: user.id, email: user.email, name: user.name },
+      { id: userId, email: email.toLowerCase(), name },
       process.env.JWT_SECRET,
       { expiresIn: process.env.JWT_EXPIRE || '7d' }
     );
@@ -61,15 +45,16 @@ exports.signup = async (req, res) => {
       success: true,
       message: 'User registered successfully',
       data: {
-        user: {
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          phone: user.phone
+        user: { 
+          id: userId, 
+          name, 
+          email: email.toLowerCase(),
+          phone: phone || null
         },
         token
       }
     });
+
   } catch (error) {
     console.error('Signup error:', error);
     res.status(500).json({
@@ -80,49 +65,39 @@ exports.signup = async (req, res) => {
   }
 };
 
-/**
- * LOGIN - Authenticate user
- * POST /api/auth/login
- * Body: { email, password }
- */
 exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // Validation
     if (!email || !password) {
-      return res.status(400).json({
-        success: false,
-        message: 'Email and password are required'
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Email and password are required' 
       });
     }
 
-    // Find user by email
-    const result = await query(
-      'SELECT * FROM users WHERE email = $1 AND is_active = true',
+    const users = await query(
+      'SELECT * FROM users WHERE email = ?',
       [email.toLowerCase()]
     );
 
-    if (result.rows.length === 0) {
-      return res.status(401).json({
-        success: false,
-        message: 'Invalid email or password'
+    if (users.length === 0) {
+      return res.status(401).json({ 
+        success: false, 
+        message: 'Invalid email or password' 
       });
     }
 
-    const user = result.rows[0];
+    const user = users[0];
 
-    // Compare password
-    const isPasswordValid = await bcrypt.compare(password, user.password);
-
-    if (!isPasswordValid) {
-      return res.status(401).json({
-        success: false,
-        message: 'Invalid email or password'
+    const isValid = await bcrypt.compare(password, user.password);
+    if (!isValid) {
+      return res.status(401).json({ 
+        success: false, 
+        message: 'Invalid email or password' 
       });
     }
 
-    // Generate JWT token
     const token = jwt.sign(
       { id: user.id, email: user.email, name: user.name },
       process.env.JWT_SECRET,
@@ -133,152 +108,179 @@ exports.login = async (req, res) => {
       success: true,
       message: 'Login successful',
       data: {
-        user: {
-          id: user.id,
-          name: user.name,
+        user: { 
+          id: user.id, 
+          name: user.name, 
           email: user.email,
-          phone: user.phone
+          phone: user.phone || null
         },
         token
       }
     });
+
   } catch (error) {
     console.error('Login error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Server error during login',
-      error: error.message
+    res.status(500).json({ 
+      success: false, 
+      message: 'Server error during login', 
+      error: error.message 
     });
   }
 };
 
-/**
- * FORGOT PASSWORD - Send reset token
- * POST /api/auth/forgot-password
- * Body: { email }
- */
 exports.forgotPassword = async (req, res) => {
   try {
     const { email } = req.body;
-
+    
     if (!email) {
-      return res.status(400).json({
-        success: false,
-        message: 'Email is required'
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Email is required' 
       });
     }
 
-    // Check if user exists
-    const result = await query(
-      'SELECT id, email FROM users WHERE email = $1',
+    const users = await query(
+      'SELECT id, email FROM users WHERE email = ?', 
       [email.toLowerCase()]
     );
 
-    if (result.rows.length === 0) {
-      // Don't reveal if user exists or not for security
-      return res.json({
-        success: true,
-        message: 'If an account exists with this email, a reset link has been sent'
+    if (users.length === 0) {
+      return res.json({ 
+        success: true, 
+        message: 'If account exists, reset link has been sent to your email' 
       });
     }
 
-    const user = result.rows[0];
-
-    // Generate reset token
+    const user = users[0];
     const resetToken = crypto.randomBytes(32).toString('hex');
-    const expiresAt = new Date(Date.now() + 3600000); // 1 hour from now
+    const expiresAt = new Date(Date.now() + 86400000);
 
-    // Save token to database
     await query(
-      'INSERT INTO password_reset_tokens (user_id, token, expires_at) VALUES ($1, $2, $3)',
-      [user.id, resetToken, expiresAt]
+      'DELETE FROM password_resets WHERE email = ?',
+      [user.email]
     );
 
-    // TODO: Send email with reset link
-    // resetLink = `${process.env.API_URL}/reset-password?token=${resetToken}`
-    // sendEmail(user.email, resetLink)
+    await query(
+      'INSERT INTO password_resets (email, token, expires_at) VALUES (?, ?, ?)',
+      [user.email, resetToken, expiresAt]
+    );
+
+    console.log('✅ Reset token created:', {
+      email: user.email,
+      token: resetToken,
+      expiresAt: expiresAt
+    });
 
     res.json({
       success: true,
-      message: 'Password reset link sent to your email',
-      // Only include token in response for testing (remove in production)
-      ...(process.env.NODE_ENV === 'development' && { resetToken })
+      message: 'If account exists, reset link has been sent to your email',
+      ...(process.env.NODE_ENV === 'development' && { 
+        data: { 
+          token: resetToken,
+          expiresAt: expiresAt,
+          email: user.email
+        } 
+      })
     });
+
   } catch (error) {
     console.error('Forgot password error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Server error',
-      error: error.message
+    res.status(500).json({ 
+      success: false, 
+      message: 'Server error', 
+      error: error.message 
     });
   }
 };
 
-/**
- * RESET PASSWORD - Reset password using token
- * POST /api/auth/reset-password
- * Body: { token, newPassword }
- */
 exports.resetPassword = async (req, res) => {
   try {
     const { token, newPassword } = req.body;
 
     if (!token || !newPassword) {
-      return res.status(400).json({
-        success: false,
-        message: 'Token and new password are required'
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Token and new password are required' 
       });
     }
 
-    // Find valid token
-    const result = await query(
-      'SELECT * FROM password_reset_tokens WHERE token = $1 AND used = false AND expires_at > NOW()',
+    if (newPassword.length < 6) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Password must be at least 6 characters long' 
+      });
+    }
+
+    console.log('🔍 Attempting to reset password with token:', token);
+
+    // Find token WITHOUT expiry check in SQL
+    const tokens = await query(
+      'SELECT * FROM password_resets WHERE token = ?',
       [token]
     );
 
-    if (result.rows.length === 0) {
-      return res.status(400).json({
-        success: false,
-        message: 'Invalid or expired reset token'
+    console.log('📊 Token lookup result:', tokens.length > 0 ? 'FOUND' : 'NOT FOUND');
+
+    if (tokens.length === 0) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Invalid reset token. Token not found in database.' 
       });
     }
 
-    const resetToken = result.rows[0];
+    const resetToken = tokens[0];
+    
+    // Check expiry manually in JavaScript
+    const now = new Date();
+    const expiresAt = new Date(resetToken.expires_at);
+    
+    console.log('⏰ Token expiry check:', {
+      now: now.toISOString(),
+      expiresAt: expiresAt.toISOString(),
+      isExpired: now > expiresAt
+    });
 
-    // Hash new password
+    if (now > expiresAt) {
+      await query('DELETE FROM password_resets WHERE token = ?', [token]);
+      
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Reset token has expired. Please request a new one.' 
+      });
+    }
+
     const hashedPassword = await bcrypt.hash(newPassword, 10);
 
-    // Update user password
     await query(
-      'UPDATE users SET password = $1 WHERE id = $2',
-      [hashedPassword, resetToken.user_id]
+      'UPDATE users SET password = ? WHERE email = ?',
+      [hashedPassword, resetToken.email]
     );
 
-    // Mark token as used
     await query(
-      'UPDATE password_reset_tokens SET used = true WHERE id = $1',
-      [resetToken.id]
+      'DELETE FROM password_resets WHERE token = ?',
+      [token]
     );
 
-    res.json({
-      success: true,
-      message: 'Password reset successfully'
+    console.log('✅ Password reset successful for:', resetToken.email);
+
+    res.json({ 
+      success: true, 
+      message: 'Password reset successfully. You can now login with your new password.' 
     });
+
   } catch (error) {
-    console.error('Reset password error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Server error',
-      error: error.message
+    console.error('❌ Reset password error:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Server error', 
+      error: error.message 
     });
   }
 };
 
 exports.logout = async (req, res) => {
-
-  
-  res.json({
-    success: true,
-    message: 'Logged out successfully'
+  res.json({ 
+    success: true, 
+    message: 'Logged out successfully' 
   });
 };

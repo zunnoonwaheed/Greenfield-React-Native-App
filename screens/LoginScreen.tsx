@@ -8,10 +8,13 @@ import {
   StatusBar,
   TextInput,
   Dimensions,
+  Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
 import type { RootStackParamList } from '../App';
+import { login } from '../api/authAPI';
 
 const { width } = Dimensions.get('window');
 
@@ -29,13 +32,46 @@ const LoginScreen: React.FC<LoginScreenProps> = ({
   onSignUp,
 }) => {
   const navigation = useNavigation<LoginScreenNavigationProp>();
-  const [email, setEmail] = useState('Anthonyjack@gmail.com');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  const handleLogin = () => {
-    if (onLogin) {
-      onLogin(email, password);
+  const handleLogin = async () => {
+    // Validation
+    if (!email.trim()) {
+      Alert.alert('Validation Error', 'Please enter your email address');
+      return;
+    }
+
+    if (!password.trim()) {
+      Alert.alert('Validation Error', 'Please enter your password');
+      return;
+    }
+
+    // Email format validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      Alert.alert('Validation Error', 'Please enter a valid email address');
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const response = await login(email.trim(), password);
+
+      if (response.success) {
+        // Navigate to Welcome screen
+        navigation.navigate('Welcome');
+      }
+    } catch (error: any) {
+      Alert.alert(
+        'Login Failed',
+        error.message || 'Unable to login. Please check your credentials and try again.'
+      );
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -85,7 +121,17 @@ const LoginScreen: React.FC<LoginScreenProps> = ({
                     <View style={styles.emailIcon} />
                     <View style={styles.emailTriangle} />
                   </View>
-                  <Text style={styles.emailText}>Anthonyjack@gmail.com</Text>
+                  <TextInput
+                    style={styles.textInput}
+                    placeholder="Enter your email"
+                    placeholderTextColor="#94A3B8"
+                    value={email}
+                    onChangeText={setEmail}
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                    autoComplete="email"
+                    editable={!loading}
+                  />
                 </View>
               </View>
             </View>
@@ -99,14 +145,20 @@ const LoginScreen: React.FC<LoginScreenProps> = ({
                     <View style={styles.lockShackle} />
                     <View style={styles.lockBody} />
                   </View>
-                  <View style={styles.passwordDots}>
-                    {[...Array(8)].map((_, i) => (
-                      <View key={i} style={styles.dot} />
-                    ))}
-                  </View>
-                  <TouchableOpacity 
+                  <TextInput
+                    style={styles.textInput}
+                    placeholder="Enter your password"
+                    placeholderTextColor="#94A3B8"
+                    value={password}
+                    onChangeText={setPassword}
+                    secureTextEntry={!showPassword}
+                    autoCapitalize="none"
+                    editable={!loading}
+                  />
+                  <TouchableOpacity
                     style={styles.eyeIcon}
                     onPress={() => setShowPassword(!showPassword)}
+                    disabled={loading}
                   >
                     <View style={styles.eyeContainer}>
                       <View style={styles.eyeOuter} />
@@ -125,15 +177,23 @@ const LoginScreen: React.FC<LoginScreenProps> = ({
           </View>
 
           {/* Login Button */}
-          <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
-            <Text style={styles.loginButtonText}>Login</Text>
+          <TouchableOpacity
+            style={[styles.loginButton, loading && styles.loginButtonDisabled]}
+            onPress={handleLogin}
+            disabled={loading}
+          >
+            {loading ? (
+              <ActivityIndicator color="#F1F5F9" size="small" />
+            ) : (
+              <Text style={styles.loginButtonText}>Login</Text>
+            )}
           </TouchableOpacity>
 
           {/* Sign Up Link */}
           <View style={styles.signUpContainer}>
             <Text style={styles.signUpText}>
               <Text style={styles.signUpRegularText}>Don't have an account? </Text>
-              <Text style={styles.signUpLink} onPress={onSignUp}>Sign up</Text>
+              <Text style={styles.signUpLink} onPress={() => navigation.navigate('SignUp')}>Sign up</Text>
             </Text>
           </View>
           
@@ -268,6 +328,14 @@ const styles = StyleSheet.create({
     fontFamily: 'DM Sans',
     lineHeight: 19.2,
   },
+  textInput: {
+    flex: 1,
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#334155',
+    fontFamily: 'DM Sans',
+    paddingVertical: 0,
+  },
   emailIconContainer: {
     width: 20,
     height: 20,
@@ -398,6 +466,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 20,
+  },
+  loginButtonDisabled: {
+    opacity: 0.6,
   },
   loginButtonText: {
     color: '#F1F5F9',

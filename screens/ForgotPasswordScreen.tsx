@@ -8,10 +8,13 @@ import {
   StatusBar,
   TextInput,
   Dimensions,
+  Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
 import type { RootStackParamList } from '../App';
+import { forgotPassword } from '../api/authAPI';
 
 const { width } = Dimensions.get('window');
 
@@ -25,14 +28,57 @@ const ForgotPasswordScreen: React.FC<ForgotPasswordScreenProps> = ({
   onSendResetLink,
 }) => {
   const navigation = useNavigation<ForgotPasswordScreenNavigationProp>();
-  const [email, setEmail] = useState('Anthonyjack@gmail.com');
+  const [email, setEmail] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handleSendResetLink = () => {
-    if (onSendResetLink) {
-      onSendResetLink(email);
+  const handleSendResetLink = async () => {
+    // Validation
+    if (!email.trim()) {
+      Alert.alert('Validation Error', 'Please enter your email address');
+      return;
     }
-    // Navigate to Reset Password screen
-    navigation.navigate('ResetPassword');
+
+    // Email format validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      Alert.alert('Validation Error', 'Please enter a valid email address');
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const response = await forgotPassword(email.trim());
+
+      if (response.success) {
+        Alert.alert(
+          'Success',
+          response.message || 'Password reset link has been sent to your email',
+          [
+            {
+              text: 'OK',
+              onPress: () => {
+                // In development, show token for testing
+                if (response.data?.token) {
+                  console.log('Reset Token (Dev Only):', response.data.token);
+                  // Navigate to Reset Password screen with the token
+                  navigation.navigate('ResetPassword');
+                } else {
+                  navigation.navigate('Login');
+                }
+              },
+            },
+          ]
+        );
+      }
+    } catch (error: any) {
+      Alert.alert(
+        'Error',
+        error.message || 'Unable to send reset link. Please try again.'
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleBack = () => {
@@ -83,15 +129,33 @@ const ForgotPasswordScreen: React.FC<ForgotPasswordScreenProps> = ({
                     <View style={styles.emailIcon} />
                     <View style={styles.emailTriangle} />
                   </View>
-                  <Text style={styles.emailText}>Anthonyjack@gmail.com</Text>
+                  <TextInput
+                    style={styles.textInput}
+                    placeholder="Enter your email"
+                    placeholderTextColor="#94A3B8"
+                    value={email}
+                    onChangeText={setEmail}
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                    autoComplete="email"
+                    editable={!loading}
+                  />
                 </View>
               </View>
             </View>
           </View>
 
           {/* Send Reset Link Button */}
-          <TouchableOpacity style={styles.sendResetButton} onPress={handleSendResetLink}>
-            <Text style={styles.sendResetButtonText}>Send Reset Link</Text>
+          <TouchableOpacity
+            style={[styles.sendResetButton, loading && styles.sendResetButtonDisabled]}
+            onPress={handleSendResetLink}
+            disabled={loading}
+          >
+            {loading ? (
+              <ActivityIndicator color="#FFF" size="small" />
+            ) : (
+              <Text style={styles.sendResetButtonText}>Send Reset Link</Text>
+            )}
           </TouchableOpacity>
 
           {/* Login Link */}
@@ -232,6 +296,14 @@ const styles = StyleSheet.create({
     fontFamily: 'Work Sans',
     lineHeight: 19.2,
   },
+  textInput: {
+    flex: 1,
+    fontSize: 16,
+    fontWeight: '400',
+    color: '#334155',
+    fontFamily: 'Work Sans',
+    paddingVertical: 0,
+  },
   emailIconContainer: {
     width: 20,
     height: 20,
@@ -270,6 +342,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 20,
+  },
+  sendResetButtonDisabled: {
+    opacity: 0.6,
   },
   sendResetButtonText: {
     color: '#FFF',

@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -6,17 +6,27 @@ import {
   StyleSheet,
   SafeAreaView,
   StatusBar,
-  Image,
   Animated,
   Dimensions,
+  ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
+import type { StackNavigationProp } from '@react-navigation/stack';
+import type { RootStackParamList } from '../App';
+import { getProfile } from '../api/userAPI';
+import { getUserData } from '../api/axiosConfig';
+
+type WelcomeScreenNavigationProp = StackNavigationProp<RootStackParamList>;
 
 const { width, height } = Dimensions.get('window');
 
 const WelcomeScreen = () => {
+  const navigation = useNavigation<WelcomeScreenNavigationProp>();
   const confettiAnimations = useRef<Animated.Value[]>([]);
   const confettiCount = 50;
+  const [userName, setUserName] = useState('');
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     // Initialize confetti animations
@@ -26,7 +36,31 @@ const WelcomeScreen = () => {
 
     // Start confetti animation
     startConfettiAnimation();
+
+    // Load user data
+    loadUserData();
   }, []);
+
+  const loadUserData = async () => {
+    try {
+      // First try to get from local storage
+      const userData = await getUserData();
+      if (userData) {
+        setUserName(userData.name || 'User');
+      } else {
+        // Fetch from API
+        const response = await getProfile();
+        if (response.success && response.data.user) {
+          setUserName(response.data.user.name || 'User');
+        }
+      }
+    } catch (error) {
+      console.error('Failed to load user data:', error);
+      setUserName('User');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const startConfettiAnimation = () => {
     const animations = confettiAnimations.current.map((anim, index) => {
@@ -50,13 +84,11 @@ const WelcomeScreen = () => {
   };
 
   const handleStartExploring = () => {
-    // Navigate to main app
-    console.log('Start Exploring pressed');
+    navigation.navigate('Home');
   };
 
   const handleBack = () => {
-    // Navigate back
-    console.log('Back pressed');
+    navigation.goBack();
   };
 
   const renderConfetti = () => {
@@ -125,21 +157,25 @@ const WelcomeScreen = () => {
 
       {/* Content */}
       <View style={styles.content}>
-        {/* Illustration */}
+        {/* Illustration Placeholder */}
         <View style={styles.illustrationContainer}>
-          <Image
-            source={require('./assets/welcome-illustration.png')}
-            style={styles.illustration}
-            resizeMode="contain"
-          />
+          <View style={styles.illustrationPlaceholder}>
+            <Ionicons name="checkmark-circle" size={120} color="#0D7F6F" />
+          </View>
         </View>
 
         {/* Text Content */}
         <View style={styles.textContent}>
-          <Text style={styles.title}>Welcome aboard</Text>
-          <Text style={styles.subtitle}>
-            Explore bundles, track orders, and post ads in one place.
-          </Text>
+          {loading ? (
+            <ActivityIndicator size="large" color="#0D7F6F" />
+          ) : (
+            <>
+              <Text style={styles.title}>Welcome aboard{userName ? `, ${userName}` : ''}!</Text>
+              <Text style={styles.subtitle}>
+                Explore bundles, track orders, and post ads in one place.
+              </Text>
+            </>
+          )}
         </View>
 
         {/* Start Button */}
@@ -195,9 +231,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 20,
   },
-  illustration: {
-    width: width * 0.85,
-    height: height * 0.45,
+  illustrationPlaceholder: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 40,
   },
   textContent: {
     alignItems: 'center',

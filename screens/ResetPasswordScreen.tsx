@@ -6,24 +6,75 @@ import {
   StyleSheet,
   SafeAreaView,
   StatusBar,
+  TextInput,
+  Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
 import type { RootStackParamList } from '../App';
+import { resetPassword } from '../api/authAPI';
 
 type ResetPasswordNavigationProp = StackNavigationProp<RootStackParamList, 'ResetPassword'>;
 
 const ResetPasswordScreen: React.FC = () => {
   const navigation = useNavigation<ResetPasswordNavigationProp>();
+  const [token, setToken] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  const handleResetPassword = () => {
-    console.log('Resetting password');
-    // After successful reset, navigate to Login
-    navigation.navigate('Login');
+  const handleResetPassword = async () => {
+    // Validation
+    if (!token.trim()) {
+      Alert.alert('Validation Error', 'Please enter the reset token you received via email');
+      return;
+    }
+
+    if (!password.trim()) {
+      Alert.alert('Validation Error', 'Please enter a new password');
+      return;
+    }
+
+    if (password.length < 6) {
+      Alert.alert('Validation Error', 'Password must be at least 6 characters long');
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      Alert.alert('Validation Error', 'Passwords do not match');
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const response = await resetPassword(token.trim(), password);
+
+      if (response.success) {
+        Alert.alert(
+          'Success',
+          response.message || 'Password reset successfully! You can now login with your new password.',
+          [
+            {
+              text: 'OK',
+              onPress: () => {
+                navigation.navigate('Login');
+              },
+            },
+          ]
+        );
+      }
+    } catch (error: any) {
+      Alert.alert(
+        'Reset Failed',
+        error.message || 'Unable to reset password. Please check your token and try again.'
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleBack = () => {
@@ -61,29 +112,53 @@ const ResetPasswordScreen: React.FC = () => {
           <View style={styles.headerSection}>
             <Text style={styles.title}>Reset your password</Text>
             <Text style={styles.subtitle}>
-              Create a strong, memorable password.
+              Enter the token from your email and create a new password.
             </Text>
           </View>
 
           {/* Form Section */}
           <View style={styles.formSection}>
+            {/* Token Input */}
+            <View style={styles.inputContainer}>
+              <Text style={styles.inputLabel}>Reset Token</Text>
+              <View style={styles.inputField}>
+                <View style={styles.inputContent}>
+                  <TextInput
+                    style={styles.textInput}
+                    placeholder="Enter reset token"
+                    placeholderTextColor="#94A3B8"
+                    value={token}
+                    onChangeText={setToken}
+                    autoCapitalize="none"
+                    editable={!loading}
+                  />
+                </View>
+              </View>
+            </View>
+
             {/* Password Input */}
             <View style={styles.inputContainer}>
-              <Text style={styles.inputLabel}>Password</Text>
+              <Text style={styles.inputLabel}>New Password</Text>
               <View style={styles.inputField}>
                 <View style={styles.inputContent}>
                   <View style={styles.lockContainer}>
                     <View style={styles.lockShackle} />
                     <View style={styles.lockBody} />
                   </View>
-                  <View style={styles.passwordDots}>
-                    {[...Array(8)].map((_, i) => (
-                      <View key={i} style={styles.dot} />
-                    ))}
-                  </View>
-                  <TouchableOpacity 
+                  <TextInput
+                    style={styles.textInput}
+                    placeholder="Enter new password"
+                    placeholderTextColor="#94A3B8"
+                    value={password}
+                    onChangeText={setPassword}
+                    secureTextEntry={!showPassword}
+                    autoCapitalize="none"
+                    editable={!loading}
+                  />
+                  <TouchableOpacity
                     style={styles.eyeIcon}
                     onPress={() => setShowPassword(!showPassword)}
+                    disabled={loading}
                   >
                     <View style={styles.eyeContainer}>
                       <View style={styles.eyeOuter} />
@@ -104,14 +179,20 @@ const ResetPasswordScreen: React.FC = () => {
                     <View style={styles.lockShackle} />
                     <View style={styles.lockBody} />
                   </View>
-                  <View style={styles.passwordDots}>
-                    {[...Array(8)].map((_, i) => (
-                      <View key={i} style={styles.dot} />
-                    ))}
-                  </View>
-                  <TouchableOpacity 
+                  <TextInput
+                    style={styles.textInput}
+                    placeholder="Confirm new password"
+                    placeholderTextColor="#94A3B8"
+                    value={confirmPassword}
+                    onChangeText={setConfirmPassword}
+                    secureTextEntry={!showConfirmPassword}
+                    autoCapitalize="none"
+                    editable={!loading}
+                  />
+                  <TouchableOpacity
                     style={styles.eyeIcon}
                     onPress={() => setShowConfirmPassword(!showConfirmPassword)}
+                    disabled={loading}
                   >
                     <View style={styles.eyeContainer}>
                       <View style={styles.eyeOuter} />
@@ -125,8 +206,16 @@ const ResetPasswordScreen: React.FC = () => {
           </View>
 
           {/* Reset Password Button */}
-          <TouchableOpacity style={styles.resetButton} onPress={handleResetPassword}>
-            <Text style={styles.resetButtonText}>Reset Password</Text>
+          <TouchableOpacity
+            style={[styles.resetButton, loading && styles.resetButtonDisabled]}
+            onPress={handleResetPassword}
+            disabled={loading}
+          >
+            {loading ? (
+              <ActivityIndicator color="#F1F5F9" size="small" />
+            ) : (
+              <Text style={styles.resetButtonText}>Reset Password</Text>
+            )}
           </TouchableOpacity>
 
           {/* Login Link */}
@@ -301,6 +390,14 @@ const styles = StyleSheet.create({
     borderRadius: 1.5,
     backgroundColor: '#334155',
   },
+  textInput: {
+    flex: 1,
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#334155',
+    fontFamily: 'DM Sans',
+    paddingVertical: 0,
+  },
   eyeIcon: {
     width: 20,
     height: 20,
@@ -349,6 +446,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 20,
+  },
+  resetButtonDisabled: {
+    opacity: 0.6,
   },
   resetButtonText: {
     color: '#F1F5F9',

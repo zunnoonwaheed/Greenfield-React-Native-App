@@ -1,77 +1,125 @@
-// ============================================
-// DATABASE CONNECTION CONFIGURATION
-// PostgreSQL connection using pg (node-postgres)
-// ============================================
-
-const { Pool } = require('pg');
+const mysql = require('mysql2/promise');
 require('dotenv').config();
 
-// Create a connection pool for better performance
-const pool = new Pool({
-  host: process.env.DB_HOST,
-  port: process.env.DB_PORT || 5432,
-  database: process.env.DB_NAME,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
+// Database configuration
+const config = {
+  host: process.env.DB_HOST || 'localhost',
+  port: parseInt(process.env.DB_PORT) || 3306,
+  database: process.env.DB_NAME || 'greenfieldsuperm_db_local',
+  user: process.env.DB_USER || 'root',
+  password: process.env.DB_PASSWORD || '',
   
   // Connection pool settings
-  max: 20,                    // Maximum number of clients in the pool
-  idleTimeoutMillis: 30000,   // Close idle clients after 30 seconds
-  connectionTimeoutMillis: 2000, // Return an error after 2 seconds if connection can't be established
+  connectionLimit: parseInt(process.env.DB_CONNECTION_LIMIT) || 10,
+  queueLimit: parseInt(process.env.DB_QUEUE_LIMIT) || 0,
+  waitForConnections: process.env.DB_WAIT_FOR_CONNECTIONS !== 'false',
+  connectTimeout: parseInt(process.env.DB_CONNECT_TIMEOUT) || 10000,
   
-  // SSL configuration for cPanel (usually required)
-  ssl: process.env.NODE_ENV === 'production' ? {
+  // Additional settings
+  timezone: '+00:00', // Store dates in UTC
+  dateStrings: false,
+  multipleStatements: false, // Security: prevent SQL injection with multiple statements
+};
+
+// Add SSL configuration if enabled
+if (process.env.DB_SSL === 'true') {
+  config.ssl = {
     rejectUnauthorized: false
-  } : false
-});
+  };
+}
 
-// Test database connection
-pool.on('connect', () => {
-  console.log('✅ Connected to PostgreSQL database');
-});
+// Create the connection pool
+const pool = mysql.createPool(config);
 
-pool.on('error', (err) => {
-  console.error('❌ Unexpected error on idle client', err);
-  process.exit(-1);
-});
+// Log connection on startup
+if (process.env.NODE_ENV === 'development') {
+  pool.getConnection()
+    .then(connection => {
+      console.log('✅ MySQL Database connected successfully');
+      connection.release();
+    })
+    .catch(err => {
+      console.error('❌ MySQL Database connection failed:', err.message);
+    });
+}
 
 // Helper function to execute queries
-const query = async (text, params) => {
+const query = async (sql, params = []) => {
   const start = Date.now();
   try {
-    const res = await pool.query(text, params);
+    const [results] = await pool.execute(sql, params);
     const duration = Date.now() - start;
-    console.log('Executed query', { text, duration, rows: res.rowCount });
-    return res;
+    
+    if (process.env.LOG_LEVEL === 'debug') {
+      console.log('Executed query', { 
+        sql: sql.substring(0, 100), 
+        duration, 
+        rows: Array.isArray(results) ? results.length : 'N/A'
+      });
+    }
+    
+    return results;
   } catch (error) {
-    console.error('Database query error:', error);
+    console.error('Database query error:', error.message);
+    console.error('SQL:', sql);
     throw error;
   }
 };
 
-// Helper function to get a client from the pool (for transactions)
-const getClient = async () => {
-  const client = await pool.connect();
-  const query = client.query.bind(client);
-  const release = client.release.bind(client);
-  
-  // Set a timeout of 5 seconds, after which we will log this client's last query
-  const timeout = setTimeout(() => {
-    console.error('A client has been checked out for more than 5 seconds!');
-  }, 5000);
-  
-  // Monkey patch the release method to clear timeout
-  client.release = () => {
-    clearTimeout(timeout);
-    client.release = release;
-    return release();
-  };
-  
-  return client;
+// Helper function to get a connection from the pool (for transactions)
+const getConnection = async () => {
+  try {
+    const connection = await pool.getConnection();
+    
+    if (process.env.LOG_LEVEL === 'debug') {
+      console.log('Connection acquired from pool');
+    }
+    
+    return connection;
+  } catch (error) {
+    console.error('Error getting connection from pool:', error.message);
+    throw error;
+  }
 };
 
+// Test database connection
+const testConnection = async () => {
+  try {
+    const [result] = await pool.execute('SELECT NOW() as now, DATABASE() as database_name');
+    console.log('✅ Database connection test successful');
+    console.log(`📅 Server time: ${result[0].now}`);
+    console.log(`🗄️  Database: ${result[0].database_name}`);
+    return true;
+  } catch (error) {
+    console.error('❌ Database connection test failed:', error.message);
+    return false;
+  }
+};
+
+// Graceful shutdown
+const closePool = async () => {
+  try {
+    await pool.end();
+    console.log('Database pool has ended');
+  } catch (error) {
+    console.error('Error closing database pool:', error.message);
+  }
+};
+
+process.on('SIGINT', async () => {
+  await closePool();
+  process.exit(0);
+});
+
+process.on('SIGTERM', async () => {
+  await closePool();
+  process.exit(0);
+});
+
 module.exports = {
-  pool,
   query,
-  getClient
+  getConnection,
+  pool,
+  testConnection,
+  closePool
 };
