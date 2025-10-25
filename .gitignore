@@ -32,6 +32,9 @@ yarn-error.*
 
 # local env files
 .env*.local
+.env
+api/.env
+app/.env
 
 # typescript
 *.tsbuildinfo
@@ -39,3 +42,13 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+
+# Vercel
+.vercel
+.vercel.json
+
+# API build
+api/dist/
+
+# Old files backup
+.old_root_files/

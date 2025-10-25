@@ -1,45 +1,24 @@
 {
   "name": "greenfield",
-  "license": "0BSD",
   "version": "1.0.0",
-  "main": "index.ts",
+  "description": "Expo React Native app with Express API on Vercel",
+  "private": true,
+  "license": "MIT",
   "scripts": {
-    "start": "expo start",
-    "android": "expo start --android",
-    "ios": "expo start --ios",
-    "web": "expo start --web",
-    "vercel-build": "expo-export"
+    "dev:app": "cd app && npm run start",
+    "dev:api": "cd api && npm run dev",
+    "dev": "concurrently \"npm run dev:api\" \"npm run dev:app\"",
+    "install:all": "npm install && cd app && npm install && cd ../api && npm install",
+    "build": "echo 'Building API only' && cd api && npm install && npm run build",
+    "vercel-build": "echo 'No build step required - API builds handled by Vercel'",
+    "vercel:dev": "vercel dev",
+    "deploy": "vercel --prod"
   },
-  "dependencies": {
-    "@expo/vector-icons": "^15.0.2",
-    "@react-native-async-storage/async-storage": "^2.2.0",
-    "@react-navigation/native": "^7.1.18",
-    "@react-navigation/stack": "^7.4.9",
-    "axios": "^1.12.2",
-    "bcrypt": "^6.0.0",
-    "cors": "^2.8.5",
-    "dotenv": "^17.2.3",
-    "expo": "~54.0.12",
-    "expo-document-picker": "~14.0.7",
-    "expo-image-picker": "~17.0.8",
-    "expo-location": "^19.0.7",
-    "expo-status-bar": "~3.0.8",
-    "express": "^5.1.0",
-    "express-validator": "^7.2.1",
-    "jsonwebtoken": "^9.0.2",
-    "pg": "^8.16.3",
-    "react": "19.1.0",
-    "react-native": "0.81.4",
-    "react-native-safe-area-context": "~5.6.0",
-    "react-native-screens": "~4.16.0",
-    "react-native-svg": "^15.14.0"
-  },
+  "keywords": ["expo", "react-native", "express", "vercel", "typescript"],
   "devDependencies": {
-    "@types/react": "~19.1.0",
-    "@types/react-native": "^0.72.8",
-    "nodemon": "^3.1.10",
-    "react-native-svg-transformer": "^1.5.1",
-    "typescript": "~5.9.2"
+    "concurrently": "^9.1.2"
   },
-  "private": true
+  "engines": {
+    "node": ">=20.0.0"
+  }
 }

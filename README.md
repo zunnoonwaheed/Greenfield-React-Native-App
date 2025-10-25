@@ -1,202 +1,326 @@
-# Greenfield - React Native E-Commerce App
+# 🌿 Greenfield - Expo + Express on Vercel
 
-Full-stack mobile application with authentication, location management, and user profiles.
+A full-stack TypeScript project with:
+- **React Native mobile/web app** (Expo) in `/app`
+- **Express REST API** (deployed on Vercel) in `/api`
+- **PostgreSQL database** connection example
+
+## 📁 Project Structure
+
+```
+greenfield/
+├── app/                    # Expo React Native application
+│   ├── App.tsx            # Main app component
+│   ├── package.json       # App dependencies
+│   ├── tsconfig.json      # TypeScript config
+│   └── app.json           # Expo configuration
+├── api/                    # Express API backend
+│   ├── index.ts           # Express server entry point
+│   ├── hello.ts           # Example API endpoints
+│   ├── db.ts              # PostgreSQL connection
+│   ├── package.json       # API dependencies
+│   └── tsconfig.json      # TypeScript config
+├── package.json            # Root workspace scripts
+├── vercel.json            # Vercel deployment config
+└── README.md              # This file
+```
 
 ## 🚀 Quick Start
 
-### Backend (Terminal 1)
+### Prerequisites
+
+- Node.js 20+ and npm
+- PostgreSQL database (local or hosted)
+- Expo CLI (optional, installed automatically)
+- Vercel CLI (for deployment): `npm i -g vercel`
+
+### Installation
+
+1. **Clone and install dependencies:**
+   ```bash
+   npm run install:all
+   ```
+
+   Or manually:
+   ```bash
+   npm install
+   cd app && npm install
+   cd ../api && npm install
+   ```
+
+2. **Configure environment variables:**
+
+   **API** (`/api/.env`):
+   ```bash
+   cd api
+   cp .env.example .env
+   # Edit .env with your database credentials
+   ```
+
+   **App** (`/app/.env`):
+   ```bash
+   cd app
+   cp .env.example .env
+   # Update API_URL if needed
+   ```
+
+3. **Start development servers:**
+
+   **Option 1 - Both servers together:**
+   ```bash
+   npm run dev
+   ```
+
+   **Option 2 - Separate terminals:**
+   ```bash
+   # Terminal 1 - API Server
+   npm run dev:api
+
+   # Terminal 2 - Expo App
+   npm run dev:app
+   ```
+
+4. **Open the app:**
+   - Press `i` for iOS simulator
+   - Press `a` for Android emulator
+   - Press `w` for web browser
+   - Scan QR code with Expo Go app on physical device
+
+## 🔌 API Endpoints
+
+Base URL: `http://localhost:5000/api` (development)
+
+| Method | Endpoint              | Description                |
+|--------|----------------------|----------------------------|
+| GET    | `/api`               | Health check               |
+| GET    | `/api/hello`         | Simple hello world         |
+| GET    | `/api/hello/:name`   | Personalized greeting      |
+| POST   | `/api/hello`         | Echo posted message        |
+| GET    | `/api/hello/db/test` | Test database connection   |
+
+### Example API Requests
+
 ```bash
-cd greenfield-backend
-npm install
-node seed.js          # Import test data
-npm run dev           # Start on port 5000
+# Health check
+curl http://localhost:5000/api
+
+# Hello endpoint
+curl http://localhost:5000/api/hello
+
+# Personalized greeting
+curl http://localhost:5000/api/hello/John
+
+# POST request
+curl -X POST http://localhost:5000/api/hello \
+  -H "Content-Type: application/json" \
+  -d '{"message":"Hello from curl"}'
+
+# Database test
+curl http://localhost:5000/api/hello/db/test
 ```
 
-### Frontend (Terminal 2)
+## 🗄️ Database Setup
+
+### Local PostgreSQL
+
+1. **Install PostgreSQL** (if not installed):
+   ```bash
+   # macOS
+   brew install postgresql
+   brew services start postgresql
+
+   # Ubuntu/Debian
+   sudo apt-get install postgresql
+   sudo service postgresql start
+   ```
+
+2. **Create database:**
+   ```bash
+   createdb greenfield
+   ```
+
+3. **Update `/api/.env`:**
+   ```env
+   POSTGRES_USER=postgres
+   POSTGRES_PASSWORD=your_password
+   POSTGRES_HOST=localhost
+   POSTGRES_PORT=5432
+   POSTGRES_DATABASE=greenfield
+   ```
+
+### Hosted PostgreSQL (Vercel/Neon/Supabase)
+
+For production, use a hosted PostgreSQL service:
+
+- **Vercel Postgres**: https://vercel.com/docs/storage/vercel-postgres
+- **Neon**: https://neon.tech
+- **Supabase**: https://supabase.com
+
+Add connection string to Vercel environment variables:
+```env
+DATABASE_URL=postgresql://user:password@host:5432/database
+```
+
+## 🚢 Deployment
+
+### Deploy API to Vercel
+
+1. **Install Vercel CLI:**
+   ```bash
+   npm i -g vercel
+   ```
+
+2. **Login to Vercel:**
+   ```bash
+   vercel login
+   ```
+
+3. **Deploy:**
+   ```bash
+   npm run deploy
+   ```
+
+4. **Set environment variables in Vercel:**
+   - Go to your project settings on Vercel
+   - Add environment variables (POSTGRES_USER, POSTGRES_PASSWORD, etc.)
+   - Or use `vercel env add`
+
+5. **Update app API URL:**
+   Update `/app/App.tsx` line 16-24 to use your Vercel URL:
+   ```typescript
+   const API_URL = 'https://your-project.vercel.app/api';
+   ```
+
+### Deploy App
+
+**Web**: Vercel will automatically build and deploy the web version if configured.
+
+**Mobile**: Use EAS (Expo Application Services):
 ```bash
-npm install
-npx expo start
-# Press 'i' for iOS or 'a' for Android
+cd app
+npx eas build --platform ios
+npx eas build --platform android
 ```
 
-## 📱 Features
+## 📱 Platform-Specific API URLs
 
-✅ User authentication (signup, login, password reset)
-✅ Location permission with GPS tracking
-✅ Delivery address management
-✅ JWT token-based authorization
-✅ Persistent sessions with AsyncStorage
-✅ Cross-platform (iOS & Android)
+Update in `/app/App.tsx`:
 
-## 🔧 Tech Stack
+```typescript
+// iOS Simulator
+http://localhost:5000/api
 
-**Frontend:**
-- React Native 0.81.4 + Expo ~54.0.12
-- TypeScript 5.9.2
-- React Navigation 7.x
-- Axios for API calls
+// Android Emulator
+http://10.0.2.2:5000/api
 
-**Backend:**
-- Node.js + Express 5.1.0
-- MySQL 8.0+ database
-- JWT authentication
-- bcrypt password hashing
+// Physical Device (use your computer's IP)
+http://192.168.1.100:5000/api
 
-## 📖 Documentation
-
-- **[Complete Setup Guide](SETUP_AND_TESTING.md)** - Detailed installation and testing
-- **[Implementation Summary](IMPLEMENTATION_SUMMARY.md)** - Full feature documentation
-- **[Development Guide](CLAUDE.md)** - Architecture and code structure
-- **[API Tests](API_TESTS.http)** - REST API test collection
-
-## 🧪 Test Accounts
-
-After running `node seed.js`:
-
-- **Admin**: admin@greenfield.com / admin123
-- **Customer**: customer@test.com / test123
-
-## 🌐 API Configuration
-
-**Current Setup: Physical Device**
-- **Backend Port**: `3001` ✅
-- **Mac IP**: `192.168.100.216` ✅
-- **API URL**: `http://192.168.100.216:3001/api` ✅
-
-**Configured in `api/axiosConfig.js` line 29**
-
-For simulators/emulators, uncomment line 32 and comment out line 29.
-
-## 📊 Project Structure
-
-```
-├── App.tsx                    # Navigation setup
-├── screens/                   # UI screens (7 total)
-├── api/                       # API client modules
-│   ├── axiosConfig.js        # Axios + interceptors
-│   ├── authAPI.js
-│   ├── locationAPI.js
-│   └── userAPI.js
-└── greenfield-backend/        # Node.js backend
-    ├── server.js
-    ├── routes/
-    ├── controllers/
-    └── models/
+// Production
+https://your-project.vercel.app/api
 ```
 
-## 🎯 Screen Flow
+## 🛠️ Development
 
-```
-LocationPermission → Login ⇄ SignUp
-                       ↓
-                 AddLocation → Welcome
+### Available Scripts
 
-ForgotPassword → ResetPassword → Login
-```
+**Root:**
+- `npm run dev` - Start both API and app
+- `npm run dev:api` - Start API only
+- `npm run dev:app` - Start Expo app only
+- `npm run install:all` - Install all dependencies
+- `npm run deploy` - Deploy to Vercel
 
-## ⚙️ Environment Setup
+**API (`/api`):**
+- `npm run dev` - Development server with hot reload
+- `npm run build` - Build TypeScript to JavaScript
+- `npm start` - Run production build
+- `npm run type-check` - Check TypeScript types
 
-**Backend** (`greenfield-backend/.env`):
-```env
-PORT=5000
-DB_NAME=greenfieldsuperm_db_local
-DB_USER=root
-DB_PASSWORD=
-JWT_SECRET=your_secret_key
-```
+**App (`/app`):**
+- `npm start` - Start Expo development server
+- `npm run android` - Open on Android
+- `npm run ios` - Open on iOS
+- `npm run web` - Open in web browser
+- `npm run type-check` - Check TypeScript types
 
-**Frontend** (`.env`):
-```env
-PUBLIC_BUILDER_KEY=your_builder_key
+## 📝 Adding New API Endpoints
+
+1. **Create route file** in `/api`:
+   ```typescript
+   // api/users.ts
+   import { Router } from 'express';
+
+   const router = Router();
+
+   router.get('/', (req, res) => {
+     res.json({ users: [] });
+   });
+
+   export default router;
+   ```
+
+2. **Register in** `/api/index.ts`:
+   ```typescript
+   import usersRouter from './users';
+   app.use('/api/users', usersRouter);
+   ```
+
+## 🧪 Testing API Locally
+
+Use the built-in test buttons in the Expo app or use curl/Postman:
+
+```bash
+# Test API health
+curl http://localhost:5000/api
+
+# Test hello endpoint
+curl http://localhost:5000/api/hello
+
+# Test database
+curl http://localhost:5000/api/hello/db/test
 ```
 
 ## 🐛 Troubleshooting
 
-### "Network Error" on Physical Device
+### API not connecting from app
 
-**Quick Test:**
-```bash
-./test-connection.sh
-```
+1. Make sure API server is running on port 5000
+2. Check firewall settings
+3. Verify API_URL in App.tsx matches your platform:
+   - iOS: `http://localhost:5000/api`
+   - Android: `http://10.0.2.2:5000/api`
+   - Physical device: Use computer's local IP
 
-**Manual Tests:**
-1. Backend running? `curl http://localhost:3001/health`
-2. Phone can reach backend? Open phone browser: `http://192.168.100.216:3001/health`
-3. Clear Expo cache: `npx expo start -c`
+### Database connection fails
 
-**Common Fixes:**
-- Both devices on same Wi-Fi ✅
-- Firewall allows port 3001
-- CORS configured (already done ✅)
-- API URL uses Mac IP: `192.168.100.216`
+1. Verify PostgreSQL is running: `pg_isready`
+2. Check credentials in `/api/.env`
+3. Test connection: `psql -U postgres -d greenfield`
 
-**Detailed guide:** See [PHYSICAL_DEVICE_SETUP.md](PHYSICAL_DEVICE_SETUP.md)
+### Vercel deployment fails
 
-### Database Issues
-```bash
-mysql -u root -p
-CREATE DATABASE greenfieldsuperm_db_local;
-exit
-mysql -u root -p greenfieldsuperm_db_local < greenfield-backend/models/local_backup.sql
-```
+1. Check build logs in Vercel dashboard
+2. Verify all environment variables are set
+3. Make sure `vercel.json` is properly configured
+4. Check Node.js version matches (20+)
 
-### Clear App Data
-```javascript
-// Add temporarily to any screen
-import AsyncStorage from '@react-native-async-storage/async-storage';
-await AsyncStorage.clear();
-```
+## 📚 Tech Stack
 
-## 📦 Dependencies
+- **Frontend**: React Native 0.76, Expo SDK 52, TypeScript 5.7
+- **Backend**: Express 4.21, Node.js 20+, TypeScript 5.7
+- **Database**: PostgreSQL 14+
+- **Deployment**: Vercel (API), Expo (Mobile)
+- **Tools**: Axios, pg (node-postgres), tsx/ts-node
 
-**Frontend:**
-```bash
-npm install
-```
+## 📄 License
 
-**Backend:**
-```bash
-cd greenfield-backend
-npm install
-```
+MIT
 
-## 🔐 Security Features
+## 🤝 Contributing
 
-- JWT token authentication
-- bcrypt password hashing (10 rounds)
-- SQL injection prevention
-- CORS configuration
-- Request timeouts
-- Token expiration handling
-
-## 🎨 UI/UX
-
-- Custom styled components
-- Loading states on all actions
-- Form validation with feedback
-- Password visibility toggles
-- Success/error alerts
-- Smooth navigation
-- Animated effects
-
-## 📈 Status
-
-**✅ PRODUCTION READY**
-
-All core features implemented, tested, and documented.
-
-## 🚀 Next Steps
-
-1. Run backend: `cd greenfield-backend && npm run dev`
-2. Run frontend: `npx expo start`
-3. Test on simulator: Press `i` (iOS) or `a` (Android)
-4. Test full flow: Signup → AddLocation → Welcome
-5. Verify token persistence (close/reopen app)
-
-## 📞 Support
-
-For detailed setup instructions, see [SETUP_AND_TESTING.md](SETUP_AND_TESTING.md)
+Feel free to submit issues and pull requests!
 
 ---
 
-**Built with React Native + Node.js + MySQL**
+Built with ❤️ using Expo and Express
