@@ -7,7 +7,8 @@
     "start": "expo start",
     "android": "expo start --android",
     "ios": "expo start --ios",
-    "web": "expo start --web"
+    "web": "expo start --web",
+    "vercel-build": "expo-export"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.2",
@@ -19,6 +20,8 @@
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
     "expo": "~54.0.12",
+    "expo-document-picker": "~14.0.7",
+    "expo-image-picker": "~17.0.8",
     "expo-location": "^19.0.7",
     "expo-status-bar": "~3.0.8",
     "express": "^5.1.0",

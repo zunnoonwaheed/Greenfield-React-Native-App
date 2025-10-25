@@ -1,0 +1,182 @@
+import React, { useEffect } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  Image,
+  TouchableOpacity,
+  SafeAreaView,
+  StatusBar,
+  Animated,
+} from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import type { StackNavigationProp } from '@react-navigation/stack';
+import type { RootStackParamList } from '../App';
+
+type DeliveredNavigationProp = StackNavigationProp<RootStackParamList>;
+
+const DeliveredScreen: React.FC = () => {
+  const navigation = useNavigation<DeliveredNavigationProp>();
+  const fadeAnim = new Animated.Value(0);
+
+  useEffect(() => {
+    // Fade in animation
+    Animated.timing(fadeAnim, {
+      toValue: 1,
+      duration: 500,
+      useNativeDriver: true,
+    }).start();
+  }, []);
+
+  return (
+    <SafeAreaView style={styles.container}>
+      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+
+      <Animated.View style={[styles.content, { opacity: fadeAnim }]}>
+        {/* Progress Bar */}
+        <View style={styles.progressContainer}>
+          <View style={styles.progressBackground}>
+            <View style={[styles.progressFill, { width: '100%' }]} />
+          </View>
+        </View>
+
+        {/* Illustration */}
+        <View style={styles.imageContainer}>
+          <Image
+            source={require('../images/frame1.png')}
+            style={styles.illustration}
+            resizeMode="contain"
+          />
+        </View>
+
+        {/* Title */}
+        <Text style={styles.title}>Delivered ✅</Text>
+
+        {/* Description */}
+        <Text style={styles.description}>
+          Delivered successfully! We hope you love your order. Don't forget to rate your experience.
+        </Text>
+
+        {/* Buttons */}
+        <View style={styles.buttonsContainer}>
+          <TouchableOpacity
+            style={styles.primaryButton}
+            onPress={() => navigation.navigate('HomescreenNew')}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.primaryButtonText}>Back to Home</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.secondaryButton}
+            onPress={() => {
+              // Navigate to rating screen (can be added later)
+              console.log('Rate order');
+            }}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.secondaryButtonText}>Rate Order ⭐</Text>
+          </TouchableOpacity>
+        </View>
+      </Animated.View>
+    </SafeAreaView>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+  },
+  content: {
+    flex: 1,
+    paddingHorizontal: 32,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  progressContainer: {
+    position: 'absolute',
+    top: 40,
+    left: 32,
+    right: 32,
+  },
+  progressBackground: {
+    height: 6,
+    backgroundColor: '#E8F5E9',
+    borderRadius: 3,
+    overflow: 'hidden',
+  },
+  progressFill: {
+    height: '100%',
+    backgroundColor: '#0A8A4E',
+    borderRadius: 3,
+  },
+  imageContainer: {
+    width: '100%',
+    height: 280,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 32,
+  },
+  illustration: {
+    width: '85%',
+    height: '100%',
+  },
+  title: {
+    fontSize: 28,
+    fontWeight: '700',
+    color: '#000000',
+    textAlign: 'center',
+    marginBottom: 16,
+    fontFamily: 'Poppins',
+  },
+  description: {
+    fontSize: 16,
+    fontWeight: '400',
+    color: '#757575',
+    textAlign: 'center',
+    lineHeight: 24,
+    marginBottom: 48,
+    paddingHorizontal: 8,
+    fontFamily: 'Poppins',
+  },
+  buttonsContainer: {
+    width: '100%',
+    gap: 16,
+  },
+  primaryButton: {
+    backgroundColor: '#0A8A4E',
+    borderRadius: 16,
+    paddingVertical: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#0A8A4E',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+  primaryButtonText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    fontFamily: 'Poppins',
+  },
+  secondaryButton: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    paddingVertical: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#0A8A4E',
+  },
+  secondaryButtonText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#0A8A4E',
+    fontFamily: 'Poppins',
+  },
+});
+
+export default DeliveredScreen;

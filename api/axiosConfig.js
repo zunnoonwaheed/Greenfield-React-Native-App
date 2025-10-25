@@ -33,7 +33,7 @@ console.log('🌐 API Base URL:', API_BASE_URL);
 
 const axiosInstance = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 10000, // 10 seconds timeout
+  timeout: 30000, // 30 seconds timeout (increased for slow connections)
   headers: {
     'Content-Type': 'application/json',
   },
@@ -99,17 +99,17 @@ axiosInstance.interceptors.response.use(
 
       return Promise.reject(data);
     } else if (error.request) {
-      // Request made but no response received
+      // Request made but no response received (timeout or network issue)
       return Promise.reject({
         success: false,
         message:
-          'No response from server. Check that your backend is running and both devices share the same Wi-Fi.',
+          'Network is slow or unavailable. Please check your connection and try again.',
       });
     } else {
       // Other unexpected errors
       return Promise.reject({
         success: false,
-        message: error.message || 'An unexpected error occurred.',
+        message: error.message || 'An unexpected error occurred. Please try again.',
       });
     }
   }

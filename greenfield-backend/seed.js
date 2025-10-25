@@ -137,7 +137,27 @@ const seedData = {
     { name: 'Coca Cola', slug: 'coca-cola' },
     { name: 'Pepsi', slug: 'pepsi' },
     { name: 'Nestle', slug: 'nestle' },
-  ]
+  ],
+
+  // Marketplace Ad Categories (for Sell/Ads section)
+  adCategories: [
+    { name: 'Electronics', icon: 'laptop' },
+    { name: 'Furniture', icon: 'bed' },
+    { name: 'Grocery', icon: 'basket' },
+    { name: 'Vehicles', icon: 'car' },
+    { name: 'Clothing', icon: 'shirt' },
+    { name: 'Books', icon: 'book' },
+  ],
+
+  // Subcategories for marketplace ads
+  adSubcategories: {
+    'Electronics': ['Mobile Phones', 'Laptops', 'Cameras', 'Gaming', 'TVs', 'Audio Systems'],
+    'Furniture': ['Chairs', 'Tables', 'Beds', 'Storage', 'Sofas', 'Wardrobes'],
+    'Grocery': ['Fruits', 'Vegetables', 'Grains', 'Dairy', 'Bakery', 'Beverages'],
+    'Vehicles': ['Cars', 'Motorcycles', 'Bicycles', 'Parts & Accessories'],
+    'Clothing': ['Men', 'Women', 'Kids', 'Shoes', 'Accessories'],
+    'Books': ['Fiction', 'Non-Fiction', 'Academic', 'Comics', 'Magazines'],
+  }
 };
 
 // ============================================
@@ -169,8 +189,12 @@ const tableExists = async (tableName) => {
  */
 const clearTables = async () => {
   console.log('🗑️  Clearing existing data...');
-  
+
   const tables = [
+    'ad_images',
+    'ads',
+    'subcategories',
+    'categories',
     'order_items',
     'orders',
     'user_locations',
@@ -323,9 +347,9 @@ const seedCategories = async () => {
   
   for (const category of seedData.categories) {
     const result = await query(
-      `INSERT INTO sizee (name, slug, catID, websiteID, mainID) 
-       VALUES (?, ?, 2, 1, 2)`,
-      [category.name, category.slug]
+      `INSERT INTO sizee (name, title, slug, keyword, catID, websiteID, mainID)
+       VALUES (?, ?, ?, ?, 2, 1, 2)`,
+      [category.name, category.name, category.slug, category.slug]
     );
     categoryMap[category.name] = result.insertId;
     console.log(`  ✅ Created category: ${category.name}`);
@@ -373,7 +397,7 @@ const seedBrands = async () => {
  */
 const seedProducts = async (categoryMap) => {
   console.log('🛍️  Seeding products...');
-  
+
   const exists = await tableExists('proe');
   if (!exists) {
     console.log('⚠️  Table "proe" does not exist. Skipping products...');
@@ -384,17 +408,17 @@ const seedProducts = async (categoryMap) => {
     console.log('⚠️  No categories found. Skipping products...');
     return;
   }
-  
+
   for (const product of seedData.products) {
     const categoryId = categoryMap[product.category];
-    
+
     if (!categoryId) {
       console.log(`⚠️  Category not found for ${product.name}, skipping...`);
       continue;
     }
-    
+
     await query(
-      `INSERT INTO proe (name, slug, catid, price, sale_price, qty, details, websiteID, mainID, catID) 
+      `INSERT INTO proe (name, slug, catid, price, sale_price, qty, details, websiteID, mainID, catID)
        VALUES (?, ?, ?, ?, ?, ?, ?, 1, 2, 2)`,
       [
         product.name,
@@ -407,6 +431,111 @@ const seedProducts = async (categoryMap) => {
       ]
     );
     console.log(`  ✅ Created product: ${product.name}`);
+  }
+};
+
+/**
+ * Create marketplace ad tables
+ */
+const createAdTables = async () => {
+  console.log('📦 Creating ad marketplace tables...');
+
+  // Create categories table
+  await query(`
+    CREATE TABLE IF NOT EXISTS categories (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      name VARCHAR(255) NOT NULL,
+      icon VARCHAR(255),
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    )
+  `);
+  console.log('  ✅ Created categories table');
+
+  // Create subcategories table
+  await query(`
+    CREATE TABLE IF NOT EXISTS subcategories (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      category_id INT NOT NULL,
+      name VARCHAR(255) NOT NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE CASCADE
+    )
+  `);
+  console.log('  ✅ Created subcategories table');
+
+  // Create ads table
+  await query(`
+    CREATE TABLE IF NOT EXISTS ads (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      user_id INT NOT NULL,
+      title VARCHAR(255) NOT NULL,
+      description TEXT,
+      category_id INT NOT NULL,
+      subcategory_id INT,
+      \`condition\` ENUM('new', 'used') NOT NULL,
+      price DECIMAL(10, 2) NOT NULL,
+      negotiable BOOLEAN DEFAULT FALSE,
+      specifications TEXT,
+      city VARCHAR(255),
+      address TEXT,
+      phone VARCHAR(20),
+      email VARCHAR(255),
+      status ENUM('active', 'sold', 'inactive') DEFAULT 'active',
+      views INT DEFAULT 0,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+      FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE CASCADE,
+      FOREIGN KEY (subcategory_id) REFERENCES subcategories(id) ON DELETE SET NULL
+    )
+  `);
+  console.log('  ✅ Created ads table');
+
+  // Create ad_images table
+  await query(`
+    CREATE TABLE IF NOT EXISTS ad_images (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      ad_id INT NOT NULL,
+      image_url VARCHAR(500) NOT NULL,
+      is_primary BOOLEAN DEFAULT FALSE,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (ad_id) REFERENCES ads(id) ON DELETE CASCADE
+    )
+  `);
+  console.log('  ✅ Created ad_images table');
+};
+
+/**
+ * Seed ad categories and subcategories
+ */
+const seedAdCategories = async () => {
+  console.log('🏷️  Seeding ad categories...');
+
+  const categoryMap = {};
+
+  for (const category of seedData.adCategories) {
+    const result = await query(
+      'INSERT INTO categories (name, icon) VALUES (?, ?)',
+      [category.name, category.icon]
+    );
+    categoryMap[category.name] = result.insertId;
+    console.log(`  ✅ Created category: ${category.name}`);
+  }
+
+  // Seed subcategories
+  console.log('📋 Seeding ad subcategories...');
+  for (const [categoryName, subcategories] of Object.entries(seedData.adSubcategories)) {
+    const categoryId = categoryMap[categoryName];
+
+    for (const subcategoryName of subcategories) {
+      await query(
+        'INSERT INTO subcategories (category_id, name) VALUES (?, ?)',
+        [categoryId, subcategoryName]
+      );
+    }
+    console.log(`  ✅ Created ${subcategories.length} subcategories for ${categoryName}`);
   }
 };
 
@@ -425,15 +554,19 @@ const seedDatabase = async () => {
     // Seed in order (respecting foreign keys)
     await seedLocations();
     await seedUsers();
-    const categoryMap = await seedCategories();
-    await seedBrands();
-    await seedProducts(categoryMap);
+    // const categoryMap = await seedCategories(); // Skip grocery categories for now
+    // await seedBrands(); // Skip brands for now
+    // await seedProducts(categoryMap); // Skip grocery products for now
+
+    // Create and seed marketplace ad tables
+    await createAdTables();
+    await seedAdCategories();
 
     console.log('\n✅ Database seeding completed successfully!\n');
     console.log('📝 Default login credentials:');
     console.log('   Admin: admin@greenfield.com / admin123');
     console.log('   Customer: customer@test.com / test123\n');
-    
+
     process.exit(0);
   } catch (error) {
     console.error('\n❌ Error seeding database:', error);

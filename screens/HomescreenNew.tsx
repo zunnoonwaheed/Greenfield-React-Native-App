@@ -1,28 +1,28 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  TextInput,
   Image,
-  Dimensions,
   StatusBar,
+  ImageSourcePropType,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
 import type { RootStackParamList } from '../App';
-
-const { width } = Dimensions.get('window');
+import { Ionicons } from '@expo/vector-icons';
+import SavedAddressesScreen from './SavedAddressesScreen';
+// import { getDefaultLocation } from '../api/locationAPI'; // Commented out - using local data
 
 type HomescreenNavigationProp = StackNavigationProp<RootStackParamList>;
 
 interface CategoryItem {
   id: string;
   name: string;
-  image: string;
+  image: ImageSourcePropType;
 }
 
 interface BundleItem {
@@ -31,22 +31,56 @@ interface BundleItem {
   description: string;
   price: string;
   discount: string;
-  image: string;
+  image: ImageSourcePropType;
   quantity: number;
 }
 
 const HomescreenNew: React.FC = () => {
   const navigation = useNavigation<HomescreenNavigationProp>();
+  const [showAddressModal, setShowAddressModal] = useState(false);
+  const [deliveryAddress, setDeliveryAddress] = useState('Sky Avenue');
+
+  // Use local default address instead of API call
+  // TODO: Re-enable API call when backend is ready
+  useFocusEffect(
+    React.useCallback(() => {
+      loadDefaultAddress();
+    }, [])
+  );
+
+  const loadDefaultAddress = () => {
+    // Use fallback address - update when backend is ready
+    setDeliveryAddress('Sky Avenue');
+  };
+
+  // Commented out for now - re-enable when backend is ready
+  // const fetchDefaultAddress = async () => {
+  //   try {
+  //     const response = await getDefaultLocation();
+  //     if (response.success && response.data?.location) {
+  //       const location = response.data.location;
+  //       // Format address for display
+  //       const addressLabel = location.area && location.sector
+  //         ? `${location.area} - ${location.sector}`
+  //         : location.area || location.sector || location.city || 'Sky Avenue';
+  //       setDeliveryAddress(addressLabel);
+  //     }
+  //   } catch (error) {
+  //     console.log('No default address set, using default');
+  //   }
+  // };
+
+  const handleAddressModalClose = () => {
+    setShowAddressModal(false);
+    // Refresh the default address when modal closes
+    loadDefaultAddress();
+  };
 
   const categories: CategoryItem[] = [
-    { id: '1', name: 'Grocery Bundles', image: '🛒' },
-    { id: '2', name: 'Fresh Produce', image: '🥬' },
-    { id: '3', name: 'Dairy & Bakery', image: '🧀' },
-    { id: '4', name: 'Snacks & Beverages', image: '🥤' },
-    { id: '5', name: 'Canteen / Fast Food', image: '🍖' },
-    { id: '6', name: 'Household Essentials', image: '🧽' },
-    { id: '7', name: 'Personal Care', image: '🧴' },
-    { id: '8', name: 'Fresh Farm Meat', image: '🐟' },
+    { id: '1', name: 'Grocery Bundles', image: require('../images/homepage-assets/home-shop-category.png') },
+    { id: '2', name: 'Fresh Produce', image: require('../images/homepage-assets/home-shop-category1.png') },
+    { id: '3', name: 'Dairy & Bakery', image: require('../images/homepage-assets/home-shop-category2.png') },
+    { id: '4', name: 'Snacks & Beverages', image: require('../images/homepage-assets/home-shop-category3.png') },
   ];
 
   const bundles: BundleItem[] = [
@@ -55,8 +89,8 @@ const HomescreenNew: React.FC = () => {
       name: 'Weekly Essentials',
       description: 'Rice, flour, pulses, oil, tea, sugar, and spices – packed in one bundle',
       price: '699 Rs',
-      discount: '-%23',
-      image: '📦',
+      discount: '-23%',
+      image: require('../images/homepage-assets/home-grocery1.png'),
       quantity: 1,
     },
     {
@@ -64,43 +98,43 @@ const HomescreenNew: React.FC = () => {
       name: 'Weekly Essentials',
       description: 'Rice, flour, pulses, oil, tea, sugar, and spices – packed in one bundle',
       price: '699 Rs',
-      discount: '-%23',
-      image: '📦',
+      discount: '-23%',
+      image: require('../images/homepage-assets/home-grocery2.png'),
       quantity: 1,
     },
     {
       id: '3',
-      name: 'Weekly Essentials',
-      description: 'Rice, flour, pulses, oil, tea, sugar, and spices – packed in one bundle',
-      price: '699 Rs',
-      discount: '-%23',
-      image: '📦',
+      name: 'Family Bundle',
+      description: 'Complete grocery pack with all essentials for your family',
+      price: '899 Rs',
+      discount: '-15%',
+      image: require('../images/homepage-assets/home-grocery-list.png'),
       quantity: 1,
     },
   ];
 
   const renderCategoryItem = (item: CategoryItem) => (
-    <TouchableOpacity key={item.id} style={styles.categoryItem}>
+    <TouchableOpacity key={item.id} style={styles.categoryItem} onPress={() => navigation.navigate('GroceryList')}>
       <View style={styles.categoryImageContainer}>
-        <Text style={styles.categoryImage}>{item.image}</Text>
+        <Image source={item.image} style={styles.categoryImage} resizeMode="contain" />
       </View>
       <Text style={styles.categoryText}>{item.name}</Text>
     </TouchableOpacity>
   );
 
   const renderBundleItem = (item: BundleItem) => (
-    <View key={item.id} style={styles.bundleCard}>
+    <TouchableOpacity key={item.id} style={styles.bundleCard} onPress={() => navigation.navigate('ProductDetail' as any)}>
       <View style={styles.discountLabel}>
         <Text style={styles.discountIcon}>⚡</Text>
         <Text style={styles.discountText}>{item.discount}</Text>
       </View>
       <View style={styles.bundleContent}>
         <View style={styles.bundleImageContainer}>
-          <Text style={styles.bundleImage}>{item.image}</Text>
+          <Image source={item.image} style={styles.bundleImage} resizeMode="cover" />
         </View>
         <View style={styles.bundleInfo}>
           <Text style={styles.bundleName}>{item.name}</Text>
-          <Text style={styles.bundleDescription} numberOfLines={1}>
+          <Text style={styles.bundleDescription} numberOfLines={2}>
             {item.description}
           </Text>
           <Text style={styles.bundlePrice}>{item.price}</Text>
@@ -120,48 +154,59 @@ const HomescreenNew: React.FC = () => {
           <Text style={styles.addToCartText}>Add To Cart</Text>
         </TouchableOpacity>
       </View>
-    </View>
+    </TouchableOpacity>
   );
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#026A49" />
-      
+      <StatusBar barStyle="light-content" backgroundColor="#166534" />
+
       {/* Header Section */}
       <View style={styles.header}>
-        <View style={styles.statusBar}>
-          <Text style={styles.timeText}>9:41</Text>
-          <View style={styles.statusIcons}>
-            <Text style={styles.statusIcon}>📶</Text>
-            <Text style={styles.statusIcon}>📶</Text>
-            <Text style={styles.statusIcon}>🔋</Text>
-          </View>
-        </View>
-        
         <View style={styles.topBar}>
-          <TouchableOpacity style={styles.iconButton} onPress={() => navigation.navigate('Notifications')}>
-            <Text style={styles.icon}>🔔</Text>
+          <TouchableOpacity
+            style={styles.iconButton}
+            onPress={() => navigation.navigate('Notifications')}
+          >
+            <Ionicons name="notifications-outline" size={24} color="#FFFFFF" />
           </TouchableOpacity>
-          <TouchableOpacity style={styles.iconButton}>
-            <Text style={styles.icon}>🛒</Text>
+
+          <TouchableOpacity
+            style={styles.iconButton}
+            onPress={() => navigation.navigate('Cart' as any)}
+          >
+            <Ionicons name="cart-outline" size={24} color="#FFFFFF" />
           </TouchableOpacity>
         </View>
         
         <View style={styles.headerContent}>
-          <View style={styles.locationContainer}>
+          <TouchableOpacity
+            style={styles.locationContainer}
+            onPress={() => setShowAddressModal(true)}
+            activeOpacity={0.7}
+          >
             <Text style={styles.deliverText}>
-              Deliver to <Text style={styles.locationText}>Sky Avenue</Text>
+              Deliver to <Text style={styles.locationText}>{deliveryAddress}</Text>
             </Text>
             <Text style={styles.dropdownIcon}>⌄</Text>
-          </View>
+          </TouchableOpacity>
           <View style={styles.searchContainer}>
             <Text style={styles.searchPlaceholder}>Start Shopping</Text>
-            <View style={styles.cursor} />
+            <Ionicons name="mic-outline" size={20} color="#94A3B8" />
           </View>
         </View>
       </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+        {/* Banner Section */}
+        <View style={styles.bannerSection}>
+          <Image
+            source={require('../images/homepage-assets/home-banner.png')}
+            style={styles.bannerImage}
+            resizeMode="cover"
+          />
+        </View>
+
         {/* Shop by Category */}
         <View style={styles.section}>
           <TouchableOpacity style={styles.sectionHeader} onPress={() => navigation.navigate('Categories')}>
@@ -228,7 +273,11 @@ const HomescreenNew: React.FC = () => {
             
             <View style={styles.listCard}>
               <View style={styles.listImageContainer}>
-                <Text style={styles.listImage}>📋</Text>
+                <Image
+                  source={require('../images/homepage-assets/home-grocery-list.png')}
+                  style={styles.listImageIcon}
+                  resizeMode="contain"
+                />
               </View>
               <Text style={styles.listTitle}>List No 3</Text>
               <Text style={styles.listItems}>Rice, Spice, Fish, Meat</Text>
@@ -236,12 +285,16 @@ const HomescreenNew: React.FC = () => {
                 <Text style={styles.addItemsText}>Add Items</Text>
               </TouchableOpacity>
             </View>
-            
+
             <View style={styles.listCard}>
               <View style={styles.listImageContainer}>
-                <Text style={styles.listImage}>📋</Text>
+                <Image
+                  source={require('../images/homepage-assets/home-grocery-list.png')}
+                  style={styles.listImageIcon}
+                  resizeMode="contain"
+                />
               </View>
-              <Text style={styles.listTitle}>List No 3</Text>
+              <Text style={styles.listTitle}>List No 4</Text>
               <Text style={styles.listItems}>Rice, Spice, Fish, Meat</Text>
               <TouchableOpacity style={styles.addItemsButton}>
                 <Text style={styles.addItemsText}>Add Items</Text>
@@ -251,25 +304,54 @@ const HomescreenNew: React.FC = () => {
         </View>
       </ScrollView>
 
+      {/* Floating Chatbot Button - Updated with message-circle icon and matching green */}
+      <View style={styles.chatbotWrapper}>
+        <TouchableOpacity
+          style={styles.floatingChatButton}
+          onPress={() => {
+            // Add chatbot navigation logic here
+            console.log('Open chatbot');
+          }}
+        >
+          <Image
+            source={require('../images/homepage-assets/message-circle.png')}
+            style={styles.chatbotIcon}
+            resizeMode="contain"
+          />
+        </TouchableOpacity>
+      </View>
+
       {/* Bottom Navigation */}
       <View style={styles.bottomNav}>
-        <TouchableOpacity style={styles.navItem}>
-          <Text style={styles.navIconActive}>🏠</Text>
+        <TouchableOpacity style={styles.navItem} onPress={() => navigation.navigate('HomescreenNew')}>
+          <Ionicons name="home" size={24} color="#166534" />
           <Text style={styles.navLabelActive}>Home</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem}>
-          <Text style={styles.navIcon}>📊</Text>
+
+        <TouchableOpacity style={styles.navItem} onPress={() => navigation.navigate('Categories')}>
+          <Ionicons name="grid-outline" size={24} color="#64748B" />
           <Text style={styles.navLabel}>Categories</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem}>
-          <Text style={styles.navIcon}>📈</Text>
+
+        <TouchableOpacity style={styles.navItem} onPress={() => navigation.navigate('Sell/Ads' as any)}>
+          <Ionicons name="trending-up-outline" size={24} color="#64748B" />
           <Text style={styles.navLabel}>Sell/Ads</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem}>
-          <Text style={styles.navIcon}>⚙️</Text>
+
+        <TouchableOpacity 
+          style={[styles.navItem, styles.profileButton]} 
+          onPress={() => navigation.navigate('Profile' as any)}
+        >
+          <Ionicons name="person-outline" size={24} color="#64748B" />
           <Text style={styles.navLabel}>Profile</Text>
         </TouchableOpacity>
       </View>
+
+      {showAddressModal && (
+        <SavedAddressesScreen 
+          onClose={handleAddressModalClose}
+        />
+      )}
     </SafeAreaView>
   );
 };
@@ -277,63 +359,42 @@ const HomescreenNew: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FCFCFC',
+    backgroundColor: '#FAFBFC',
   },
   header: {
-    backgroundColor: '#026A49',
-    paddingTop: 0,
-    paddingBottom: 20,
-    paddingHorizontal: 32,
-  },
-  statusBar: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 12,
-  },
-  timeText: {
-    color: '#FFF',
-    fontSize: 18,
-    fontWeight: '600',
-    fontFamily: 'DM Sans',
-  },
-  statusIcons: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  statusIcon: {
-    color: '#FFF',
-    fontSize: 14,
+    backgroundColor: '#166534',
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    paddingBottom: 16,
+    gap: 16,
   },
   topBar: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 6,
   },
   iconButton: {
-    width: 48,
-    height: 48,
-    borderRadius: 8,
+    width: 28,
+    height: 28,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  icon: {
-    color: '#FFF',
-    fontSize: 24,
+  iconImage: {
+    width: 24,
+    height: 24,
+    tintColor: '#FFFFFF',
   },
   headerContent: {
-    gap: 16,
+    gap: 12,
   },
   locationContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: 4,
   },
   deliverText: {
     color: '#FFF',
-    fontSize: 18,
+    fontSize: 14,
     fontWeight: '400',
     fontFamily: 'DM Sans',
   },
@@ -342,87 +403,94 @@ const styles = StyleSheet.create({
   },
   dropdownIcon: {
     color: '#FFF',
-    fontSize: 10,
+    fontSize: 16,
+    fontWeight: '500',
   },
   searchContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FCFCFC',
+    backgroundColor: '#FFF',
     borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#CFCFCF',
     paddingHorizontal: 16,
     paddingVertical: 12,
-    gap: 2,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
   searchPlaceholder: {
     color: '#94A3B8',
     fontSize: 14,
-    fontWeight: '500',
+    fontWeight: '400',
     fontFamily: 'DM Sans',
-    flex: 1,
   },
   cursor: {
     width: 1,
     height: 16,
-    backgroundColor: '#A3F7CD',
+    backgroundColor: '#94A3B8',
   },
   content: {
     flex: 1,
-    paddingHorizontal: 32,
-    paddingTop: 24,
+  },
+  bannerSection: {
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 8,
+  },
+  bannerImage: {
+    width: '100%',
+    height: 150,
+    borderRadius: 12,
   },
   section: {
-    marginBottom: 24,
+    paddingTop: 16,
+    paddingBottom: 8,
   },
   sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 16,
+    paddingHorizontal: 16,
+    marginBottom: 12,
   },
   sectionTitle: {
     color: '#1E293B',
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '700',
     fontFamily: 'DM Sans',
   },
   chevronRight: {
     color: '#334155',
-    fontSize: 20,
-    fontWeight: '600',
+    fontSize: 24,
+    fontWeight: '400',
   },
   categoriesContainer: {
-    flexDirection: 'row',
+    paddingLeft: 16,
   },
   categoryItem: {
     alignItems: 'center',
-    gap: 6,
     marginRight: 12,
-    width: 85,
+    gap: 8,
   },
   categoryImageContainer: {
-    width: 86,
-    height: 86,
+    width: 80,
+    height: 80,
+    backgroundColor: '#F8F9FA',
     borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#CFCFCF',
-    backgroundColor: '#FFF',
     justifyContent: 'center',
     alignItems: 'center',
   },
   categoryImage: {
-    fontSize: 32,
+    width: 60,
+    height: 60,
   },
   categoryText: {
     color: '#334155',
-    fontSize: 14,
-    fontWeight: '400',
+    fontSize: 12,
+    fontWeight: '500',
     fontFamily: 'DM Sans',
     textAlign: 'center',
+    maxWidth: 80,
   },
   bundlesContainer: {
-    flexDirection: 'row',
+    paddingLeft: 16,
   },
   bundleCard: {
     width: 164,
@@ -468,7 +536,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   bundleImage: {
-    fontSize: 40,
+    width: '100%',
+    height: '100%',
+    borderRadius: 12,
   },
   bundleInfo: {
     gap: 2,
@@ -526,7 +596,7 @@ const styles = StyleSheet.create({
   },
   addToCartButton: {
     flex: 1,
-    backgroundColor: '#026A49',
+    backgroundColor: '#166534',
     borderRadius: 4,
     paddingHorizontal: 8,
     paddingVertical: 6,
@@ -559,7 +629,7 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: '#009D66',
+    backgroundColor: '#166534',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -602,6 +672,10 @@ const styles = StyleSheet.create({
   listImage: {
     fontSize: 40,
   },
+  listImageIcon: {
+    width: 60,
+    height: 60,
+  },
   listTitle: {
     color: '#334155',
     fontSize: 14,
@@ -618,51 +692,101 @@ const styles = StyleSheet.create({
   },
   addItemsButton: {
     backgroundColor: '#A3F7CD',
-    borderRadius: 4,
-    paddingVertical: 8,
+    borderRadius: 6,
+    paddingVertical: 10,
     justifyContent: 'center',
     alignItems: 'center',
   },
   addItemsText: {
-    color: '#026A49',
-    fontSize: 10,
+    color: '#166534',
+    fontSize: 11,
     fontWeight: '700',
     fontFamily: 'DM Sans',
   },
   bottomNav: {
     flexDirection: 'row',
-    backgroundColor: '#FFF',
+    backgroundColor: '#FFFFFF',
     borderTopWidth: 1,
-    borderTopColor: '#CFCFCF',
-    paddingHorizontal: 4,
-    paddingVertical: 8,
-    justifyContent: 'space-between',
+    borderTopColor: '#E5E7EB',
+    paddingHorizontal: 8,
+    paddingTop: 10,
+    paddingBottom: 8,
+    justifyContent: 'space-around',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 8,
   },
   navItem: {
-    flex: 1,
     alignItems: 'center',
-    gap: 8,
-    paddingVertical: 6,
+    justifyContent: 'center',
+    gap: 4,
+    paddingVertical: 4,
+    paddingHorizontal: 12,
+    minWidth: 70,
   },
   navIconActive: {
-    color: '#026A49',
+    color: '#166534',
     fontSize: 20,
   },
   navIcon: {
     color: '#334155',
     fontSize: 20,
   },
+  navIconImage: {
+    width: 24,
+    height: 24,
+    opacity: 0.6,
+  },
+  navIconImageActive: {
+    opacity: 1,
+    tintColor: '#166534',
+  },
   navLabelActive: {
-    color: '#026A49',
-    fontSize: 12,
-    fontWeight: '400',
+    color: '#166534',
+    fontSize: 11,
+    fontWeight: '500',
     fontFamily: 'Poppins',
   },
   navLabel: {
-    color: '#334155',
-    fontSize: 12,
+    color: '#64748B',
+    fontSize: 11,
     fontWeight: '400',
     fontFamily: 'Poppins',
+  },
+  profileButton: {
+    zIndex: 10,
+  },
+  chatbotWrapper: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    left: 0,
+    top: 0,
+    pointerEvents: 'box-none',
+  },
+  floatingChatButton: {
+    position: 'absolute',
+    bottom: 90,
+    right: 20,
+    backgroundColor: '#166534',
+    borderRadius: 50,
+    width: 56,
+    height: 56,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 8,
+    shadowColor: '#000',
+    shadowOpacity: 0.25,
+    shadowOffset: { width: 0, height: 4 },
+    shadowRadius: 8,
+    zIndex: 5,
+  },
+  chatbotIcon: {
+    width: 28,
+    height: 28,
+    tintColor: '#FFFFFF',
   },
 });
 

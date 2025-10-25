@@ -12,6 +12,10 @@ const os = require('os');
 const authRoutes = require('./routes/authRoutes');
 const userRoutes = require('./routes/userRoutes');
 const locationRoutes = require('./routes/locationRoutes');
+const productRoutes = require('./routes/productRoutes');
+const categoryRoutes = require('./routes/categoryRoutes');
+const orderRoutes = require('./routes/orderRoutes');
+const adRoutes = require('./routes/adRoutes');
 
 // Import database pool
 const { pool } = require('./config/database');
@@ -62,6 +66,10 @@ app.get('/health', (req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/user', userRoutes);
 app.use('/api/location', locationRoutes);
+app.use('/api/products', productRoutes);
+app.use('/api/categories', categoryRoutes);
+app.use('/api/orders', orderRoutes);
+app.use('/api/ads', adRoutes);
 
 app.get('/', (req, res) => {
   res.json({
@@ -72,6 +80,9 @@ app.get('/', (req, res) => {
       auth: '/api/auth/*',
       user: '/api/user/*',
       location: '/api/location/*',
+      products: '/api/products/*',
+      categories: '/api/categories/*',
+      orders: '/api/orders/*',
     },
   });
 });

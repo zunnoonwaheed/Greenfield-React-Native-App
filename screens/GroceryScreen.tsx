@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
+import FilterModalScreen, { FilterState } from './FilterModalScreen';
 
 const { width } = Dimensions.get('window');
 const cardWidth = (width - 64) / 2; // 32px padding on each side + 12px gap
@@ -27,12 +28,26 @@ interface ProductItem {
   hasDiscount?: boolean;
   discountPercent?: number;
   quantity: number;
+  brand?: string;
+  rating?: number;
 }
 
 const GroceryScreen: React.FC = () => {
   const navigation = useNavigation<GroceryScreenNavigationProp>();
   const [selectedFilter, setSelectedFilter] = useState('All');
-  const [products] = useState<ProductItem[]>([
+  const [showFilterModal, setShowFilterModal] = useState(false);
+  const [filters, setFilters] = useState<FilterState>({
+    priceRange: '',
+    sortBy: '',
+    discount: '',
+    ratings: '',
+    delivery: '',
+    brandSeller: '',
+    packaging: '',
+    selectedBrands: [],
+  });
+
+  const [allProducts] = useState<ProductItem[]>([
     {
       id: 1,
       title: 'Weekly Essentials',
@@ -40,56 +55,106 @@ const GroceryScreen: React.FC = () => {
       price: '699 Rs',
       image: 'https://api.builder.io/api/v1/image/assets/TEMP/a98171bcec580aa2ea282b0bad06482c03157cf8',
       quantity: 1,
+      brand: 'Arya Farms',
+      rating: 4.5,
     },
     {
       id: 2,
-      title: 'Weekly Essentials',
-      description: 'Rice, flour, pulses, oil, tea, sugar, and spices – packed in one bundle',
-      price: '699 Rs',
+      title: 'Fresh Vegetables Bundle',
+      description: 'Potatoes, onions, tomatoes, spinach, and carrots – fresh from farm',
+      price: '599 Rs',
       image: 'https://api.builder.io/api/v1/image/assets/TEMP/a98171bcec580aa2ea282b0bad06482c03157cf8',
       hasDiscount: true,
       discountPercent: 23,
       quantity: 1,
+      brand: 'FreshMart',
+      rating: 4.8,
     },
     {
       id: 3,
-      title: 'Weekly Essentials',
-      description: 'Rice, flour, pulses, oil, tea, sugar, and spices – packed in one bundle',
-      price: '699 Rs',
+      title: 'Organic Produce Pack',
+      description: 'Organic vegetables and fruits, pesticide-free, directly from local farms',
+      price: '899 Rs',
       image: 'https://api.builder.io/api/v1/image/assets/TEMP/a98171bcec580aa2ea282b0bad06482c03157cf8',
       hasDiscount: true,
-      discountPercent: 23,
+      discountPercent: 15,
       quantity: 1,
+      brand: 'Arya Farms',
+      rating: 4.9,
     },
     {
       id: 4,
-      title: 'Weekly Essentials',
-      description: 'Rice, flour, pulses, oil, tea, sugar, and spices – packed in one bundle',
-      price: '699 Rs',
+      title: 'Daily Dairy Bundle',
+      description: 'Milk, yogurt, cheese, butter – fresh dairy products for the week',
+      price: '799 Rs',
       image: 'https://api.builder.io/api/v1/image/assets/TEMP/a98171bcec580aa2ea282b0bad06482c03157cf8',
       quantity: 1,
+      brand: 'GreenLeaf',
+      rating: 4.2,
     },
     {
       id: 5,
-      title: 'Weekly Essentials',
-      description: 'Rice, flour, pulses, oil, tea, sugar, and spices – packed in one bundle',
-      price: '699 Rs',
+      title: 'Breakfast Combo',
+      description: 'Bread, eggs, juice, cereal – complete breakfast essentials',
+      price: '499 Rs',
       image: 'https://api.builder.io/api/v1/image/assets/TEMP/a98171bcec580aa2ea282b0bad06482c03157cf8',
       hasDiscount: true,
-      discountPercent: 23,
+      discountPercent: 10,
       quantity: 1,
+      brand: 'FreshMart',
+      rating: 4.6,
     },
     {
       id: 6,
-      title: 'Weekly Essentials',
-      description: 'Rice, flour, pulses, oil, tea, sugar, and spices – packed in one bundle',
-      price: '699 Rs',
+      title: 'Snack Pack',
+      description: 'Chips, cookies, nuts, dried fruits – perfect for snacking',
+      price: '399 Rs',
       image: 'https://api.builder.io/api/v1/image/assets/TEMP/a98171bcec580aa2ea282b0bad06482c03157cf8',
       hasDiscount: true,
-      discountPercent: 23,
+      discountPercent: 20,
       quantity: 1,
+      brand: 'SnackTime',
+      rating: 4.3,
     },
   ]);
+
+  // Filter products based on active filters
+  const getFilteredProducts = () => {
+    let filtered = [...allProducts];
+
+    // Filter by selected brands
+    if (filters.selectedBrands.length > 0) {
+      filtered = filtered.filter(product =>
+        product.brand && filters.selectedBrands.includes(product.brand)
+      );
+    }
+
+    // Filter by discount
+    if (filters.discount) {
+      filtered = filtered.filter(product => product.hasDiscount);
+    }
+
+    // Filter by ratings
+    if (filters.ratings) {
+      const minRating = parseFloat(filters.ratings);
+      filtered = filtered.filter(product =>
+        product.rating && product.rating >= minRating
+      );
+    }
+
+    // Sort products
+    if (filters.sortBy) {
+      if (filters.sortBy.includes('Low to High')) {
+        filtered.sort((a, b) => parseFloat(a.price) - parseFloat(b.price));
+      } else if (filters.sortBy.includes('High to Low')) {
+        filtered.sort((a, b) => parseFloat(b.price) - parseFloat(a.price));
+      }
+    }
+
+    return filtered;
+  };
+
+  const products = getFilteredProducts();
 
   const handleBack = () => {
     navigation.goBack();
@@ -97,6 +162,15 @@ const GroceryScreen: React.FC = () => {
 
   const handleFilterPress = (filter: string) => {
     setSelectedFilter(filter);
+    // Open filter modal when any filter chip is clicked
+    if (filter !== 'All') {
+      openFilterModal();
+    }
+  };
+
+  const handleProductPress = (product: ProductItem) => {
+    // Navigate to product detail screen
+    navigation.navigate('ProductDetail', { product } as any);
   };
 
   const handleQuantityChange = (productId: number, change: number) => {
@@ -110,8 +184,16 @@ const GroceryScreen: React.FC = () => {
   };
 
   const openFilterModal = () => {
-    // Navigate to filter modal
-    navigation.navigate('FilterModal');
+    setShowFilterModal(true);
+  };
+
+  const closeFilterModal = () => {
+    setShowFilterModal(false);
+  };
+
+  const handleApplyFilters = (newFilters: FilterState) => {
+    setFilters(newFilters);
+    setShowFilterModal(false);
   };
 
   const renderFilterChip = (label: string, isSelected: boolean = false, hasDropdown: boolean = false) => (
@@ -153,7 +235,12 @@ const GroceryScreen: React.FC = () => {
   );
 
   const renderProductCard = (product: ProductItem) => (
-    <View key={product.id} style={styles.productCard}>
+    <TouchableOpacity
+      key={product.id}
+      style={styles.productCard}
+      onPress={() => handleProductPress(product)}
+      activeOpacity={0.7}
+    >
       {product.hasDiscount && (
         <View style={styles.discountLabel}>
           <View style={styles.discountIconContainer}>
@@ -162,10 +249,10 @@ const GroceryScreen: React.FC = () => {
           </View>
         </View>
       )}
-      
+
       <View style={styles.productContent}>
         <Image source={{ uri: product.image }} style={styles.productImage} />
-        
+
         <View style={styles.productInfo}>
           <View style={styles.productTextInfo}>
             <Text style={styles.productTitle}>{product.title}</Text>
@@ -181,12 +268,15 @@ const GroceryScreen: React.FC = () => {
         {renderQuantityControl(product)}
         <TouchableOpacity
           style={styles.addToCartButton}
-          onPress={() => handleAddToCart(product.id)}
+          onPress={(e) => {
+            e.stopPropagation();
+            handleAddToCart(product.id);
+          }}
         >
           <Text style={styles.addToCartText}>Add To Cart</Text>
         </TouchableOpacity>
       </View>
-    </View>
+    </TouchableOpacity>
   );
 
   return (
@@ -235,12 +325,44 @@ const GroceryScreen: React.FC = () => {
             {renderFilterChip('Sort By')}
           </View>
 
+          {/* Selected Brand Tags */}
+          {filters.selectedBrands.length > 0 && (
+            <View style={styles.selectedBrandsContainer}>
+              {filters.selectedBrands.map((brand) => (
+                <View key={brand} style={styles.brandTag}>
+                  <Text style={styles.brandTagText}>{brand}</Text>
+                  <TouchableOpacity
+                    onPress={() => {
+                      setFilters({
+                        ...filters,
+                        selectedBrands: filters.selectedBrands.filter(b => b !== brand)
+                      });
+                    }}
+                  >
+                    <View style={styles.removeTagIcon}>
+                      <View style={styles.removeTagLine1} />
+                      <View style={styles.removeTagLine2} />
+                    </View>
+                  </TouchableOpacity>
+                </View>
+              ))}
+            </View>
+          )}
+
           {/* Products Grid */}
           <View style={styles.productsGrid}>
             {products.map(renderProductCard)}
           </View>
         </View>
       </ScrollView>
+
+      {/* Filter Modal */}
+      <FilterModalScreen
+        visible={showFilterModal}
+        onClose={closeFilterModal}
+        onApply={handleApplyFilters}
+        currentFilters={filters}
+      />
     </View>
   );
 };
@@ -537,6 +659,49 @@ const styles = StyleSheet.create({
     color: '#FFF',
     fontFamily: 'DM Sans',
   },
+  selectedBrandsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 16,
+  },
+  brandTag: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    backgroundColor: '#D1FAE5',
+  },
+  brandTagText: {
+    fontSize: 12,
+    fontWeight: '500',
+    color: '#059669',
+    fontFamily: 'DM Sans',
+  },
+  removeTagIcon: {
+    width: 12,
+    height: 12,
+    position: 'relative',
+  },
+  removeTagLine1: {
+    position: 'absolute',
+    width: 12,
+    height: 2,
+    backgroundColor: '#059669',
+    transform: [{ rotate: '45deg' }],
+    top: 5,
+  },
+  removeTagLine2: {
+    position: 'absolute',
+    width: 12,
+    height: 2,
+    backgroundColor: '#059669',
+    transform: [{ rotate: '-45deg' }],
+    top: 5,
+  },
 });
+
 
 export default GroceryScreen;
