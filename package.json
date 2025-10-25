@@ -9,7 +9,7 @@
     "dev:api": "cd api && npm run dev",
     "dev": "concurrently \"npm run dev:api\" \"npm run dev:app\"",
     "install:all": "npm install && cd app && npm install && cd ../api && npm install",
-    "vercel-build": "echo 'Skipping root build - API builds separately'",
+    "vercel-build": "echo 'No build required for API'",
     "deploy": "vercel --prod"
   },
   "keywords": ["expo", "react-native", "express", "vercel", "typescript"],

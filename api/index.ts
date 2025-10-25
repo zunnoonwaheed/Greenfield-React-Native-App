@@ -1,6 +1,7 @@
 import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import helloRouter from './hello';
 
 dotenv.config();
 
@@ -19,10 +20,9 @@ app.use((req: Request, _res: Response, next: NextFunction) => {
 });
 
 // ==========================================
-// ROUTES
-// Note: Vercel mounts this at /api, so:
-// - '/' here = '/api' externally
-// - '/hello' here = '/api/hello' externally
+// IMPORTANT: Vercel routes to /api automatically
+// So '/' here becomes '/api' externally
+// And '/hello' here becomes '/api/hello' externally
 // ==========================================
 
 // Root endpoint: GET /api
@@ -30,67 +30,12 @@ app.get('/', (_req: Request, res: Response) => {
   res.json({
     message: 'Greenfield API is live 🚀',
     version: '1.0.0',
-    timestamp: new Date().toISOString(),
-    endpoints: {
-      health: '/api',
-      hello: '/api/hello',
-      users: '/api/users'
-    }
-  });
-});
-
-// Hello endpoint: GET /api/hello
-app.get('/hello', (_req: Request, res: Response) => {
-  res.json({
-    success: true,
-    message: 'Hello from Greenfield API!',
     timestamp: new Date().toISOString()
   });
 });
 
-// Hello with name: GET /api/hello/:name
-app.get('/hello/:name', (req: Request, res: Response) => {
-  const { name } = req.params;
-  res.json({
-    success: true,
-    message: `Hello, ${name}!`,
-    timestamp: new Date().toISOString()
-  });
-});
-
-// Users endpoint: GET /api/users
-app.get('/users', (_req: Request, res: Response) => {
-  res.json({
-    success: true,
-    users: [
-      { id: 1, name: 'John Doe', email: 'john@example.com' },
-      { id: 2, name: 'Jane Smith', email: 'jane@example.com' }
-    ]
-  });
-});
-
-// Users by ID: GET /api/users/:id
-app.get('/users/:id', (req: Request, res: Response) => {
-  const { id } = req.params;
-  res.json({
-    success: true,
-    user: {
-      id: parseInt(id),
-      name: 'Sample User',
-      email: 'user@example.com'
-    }
-  });
-});
-
-// POST example: POST /api/hello
-app.post('/hello', (req: Request, res: Response) => {
-  const { message } = req.body;
-  res.json({
-    success: true,
-    received: message || 'No message provided',
-    timestamp: new Date().toISOString()
-  });
-});
+// Mount hello router at /hello (becomes /api/hello externally)
+app.use('/hello', helloRouter);
 
 // 404 handler - must be AFTER all routes
 app.use((_req: Request, res: Response) => {
@@ -99,11 +44,7 @@ app.use((_req: Request, res: Response) => {
     message: 'Endpoint not found',
     availableEndpoints: [
       'GET /api',
-      'GET /api/hello',
-      'GET /api/hello/:name',
-      'GET /api/users',
-      'GET /api/users/:id',
-      'POST /api/hello'
+      'GET /api/hello'
     ]
   });
 });
@@ -122,7 +63,7 @@ app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
 if (process.env.NODE_ENV !== 'production') {
   app.listen(PORT, () => {
     console.log(`🚀 Server running on http://localhost:${PORT}`);
-    console.log(`📍 Test: http://localhost:${PORT}/api`);
+    console.log(`📍 API: http://localhost:${PORT}/api`);
   });
 }
 
