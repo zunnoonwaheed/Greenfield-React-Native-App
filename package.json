@@ -1,30 +1,20 @@
 {
-  "name": "greenfield-api",
+  "name": "greenfield",
   "version": "1.0.0",
-  "description": "Express API backend for Greenfield",
-  "main": "dist/index.js",
+  "description": "Expo React Native app with Express API on Vercel",
   "private": true,
+  "license": "MIT",
   "scripts": {
-    "dev": "nodemon --exec ts-node index.ts",
-    "build": "tsc",
-    "start": "node dist/index.js",
-    "type-check": "tsc --noEmit"
+    "dev:app": "cd app && npm start",
+    "dev:api": "cd api && npm run dev",
+    "dev": "concurrently \"npm run dev:api\" \"npm run dev:app\"",
+    "install:all": "npm install && cd app && npm install && cd ../api && npm install",
+    "vercel-build": "echo 'Skipping root build - API builds separately'",
+    "deploy": "vercel --prod"
   },
-  "dependencies": {
-    "@vercel/node": "^3.2.28",
-    "cors": "^2.8.5",
-    "dotenv": "^16.4.7",
-    "express": "^4.21.2",
-    "pg": "^8.14.0"
-  },
+  "keywords": ["expo", "react-native", "express", "vercel", "typescript"],
   "devDependencies": {
-    "@types/cors": "^2.8.17",
-    "@types/express": "^5.0.0",
-    "@types/node": "^22.13.1",
-    "@types/pg": "^8.11.10",
-    "nodemon": "^3.1.10",
-    "ts-node": "^10.9.2",
-    "typescript": "^5.7.3"
+    "concurrently": "^9.1.2"
   },
   "engines": {
     "node": ">=20.0.0"
