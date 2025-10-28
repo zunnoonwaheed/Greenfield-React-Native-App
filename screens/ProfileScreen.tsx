@@ -11,32 +11,36 @@ import {
   StyleSheet,
   ScrollView,
   Image,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
-import type { RootStackParamList } from '../App';
+import type { MainStackParamList } from '../navigation/MainStack';
+import { useAuth } from '../contexts/AuthContext';
+import { Colors, Typography, Spacing, BorderRadius, Layout } from '../constants/theme';
 
-type ProfileScreenNavigationProp = StackNavigationProp<RootStackParamList>;
+type ProfileScreenNavigationProp = StackNavigationProp<MainStackParamList>;
 
 interface MenuItem {
   id: string;
   title: string;
   subtitle: string;
   icon: keyof typeof Ionicons.glyphMap;
-  route?: keyof RootStackParamList;
+  route?: keyof MainStackParamList;
   action?: 'logout';
 }
 
 const ProfileScreen: React.FC = () => {
   const navigation = useNavigation<ProfileScreenNavigationProp>();
+  const { logout: authLogout, user: authUser } = useAuth();
   const [showLogoutModal, setShowLogoutModal] = useState(false);
 
-  // Mock user data - in production, fetch from API
+  // Use user data from AuthContext or fallback to mock
   const user = {
-    name: 'Ahmed Khan',
-    email: 'ahmed.khan@example.com',
+    name: authUser?.name || 'User',
+    email: authUser?.email || 'user@example.com',
     avatar: require('../images/homepage-assets/home-shop-category.png'), // Placeholder
   };
 
@@ -99,10 +103,17 @@ const ProfileScreen: React.FC = () => {
     }
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     setShowLogoutModal(false);
-    // TODO: Clear auth token and navigate to login
-    navigation.navigate('Login');
+
+    try {
+      await authLogout();
+      console.log('✅ Logout successful - switching to Auth Stack');
+      // User will be redirected to AuthStack automatically via AuthContext
+    } catch (error) {
+      console.error('⚠️ Logout error:', error);
+      Alert.alert('Logout Error', 'Failed to logout. Please try again.');
+    }
   };
 
   return (
@@ -125,7 +136,7 @@ const ProfileScreen: React.FC = () => {
             onPress={() => navigation.navigate('EditProfile')}
             activeOpacity={0.7}
           >
-            <Ionicons name="create-outline" size={20} color="#00A86B" />
+            <Ionicons name="create-outline" size={Spacing.screenPadding} color={Colors.primary} />
           </TouchableOpacity>
         </View>
 
@@ -149,7 +160,7 @@ const ProfileScreen: React.FC = () => {
                 <Ionicons
                   name={item.icon}
                   size={22}
-                  color={item.action === 'logout' ? '#E53935' : '#00A86B'}
+                  color={item.action === 'logout' ? Colors.error : Colors.primary}
                 />
               </View>
               <View style={styles.menuContent}>
@@ -161,7 +172,7 @@ const ProfileScreen: React.FC = () => {
                 </Text>
                 <Text style={styles.menuSubtitle}>{item.subtitle}</Text>
               </View>
-              <Ionicons name="chevron-forward" size={20} color="#9E9E9E" />
+              <Ionicons name="chevron-forward" size={Spacing.screenPadding} color={Colors.textLight} />
             </TouchableOpacity>
           ))}
         </View>
@@ -172,7 +183,7 @@ const ProfileScreen: React.FC = () => {
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <View style={styles.modalIconContainer}>
-              <Ionicons name="log-out-outline" size={48} color="#E53935" />
+              <Ionicons name="log-out-outline" size={48} color={Colors.error} />
             </View>
             <Text style={styles.modalTitle}>Confirm Logout?</Text>
             <Text style={styles.modalMessage}>
@@ -204,30 +215,30 @@ const ProfileScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: Colors.backgroundGray,
   },
   header: {
-    backgroundColor: '#FFFFFF',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
+    backgroundColor: Colors.white,
+    paddingHorizontal: Spacing.screenPadding,
+    paddingVertical: Spacing.medium,
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E5E5',
+    borderBottomColor: Colors.border,
   },
   headerTitle: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#000000',
+    fontSize: Typography.h3,
+    fontWeight: Typography.bold,
+    color: Colors.black,
     fontFamily: 'Poppins',
   },
   userCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    marginHorizontal: 20,
-    marginTop: 20,
-    padding: 20,
-    borderRadius: 16,
-    shadowColor: '#000',
+    backgroundColor: Colors.white,
+    marginHorizontal: Spacing.screenPadding,
+    marginTop: Spacing.screenPadding,
+    padding: Spacing.screenPadding,
+    borderRadius: BorderRadius.medium,
+    shadowColor: Colors.black,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08,
     shadowRadius: 4,
@@ -236,40 +247,40 @@ const styles = StyleSheet.create({
   avatar: {
     width: 64,
     height: 64,
-    borderRadius: 32,
-    backgroundColor: '#E5E5E5',
+    borderRadius: Spacing.xl,
+    backgroundColor: Colors.border,
   },
   userInfo: {
     flex: 1,
-    marginLeft: 16,
+    marginLeft: Spacing.medium,
   },
   userName: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#000000',
-    marginBottom: 4,
+    fontSize: Typography.h5,
+    fontWeight: Typography.bold,
+    color: Colors.black,
+    marginBottom: Spacing.xs,
     fontFamily: 'Poppins',
   },
   userEmail: {
-    fontSize: 14,
-    color: '#777',
+    fontSize: Typography.bodySmall,
+    color: Colors.textSecondary,
   },
   editButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#E8F5E9',
+    width: Layout.avatarSize,
+    height: Layout.avatarSize,
+    borderRadius: Spacing.screenPadding,
+    backgroundColor: Colors.backgroundGray,
     justifyContent: 'center',
     alignItems: 'center',
   },
   menuContainer: {
-    marginHorizontal: 20,
-    marginTop: 20,
-    marginBottom: 20,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
+    marginHorizontal: Spacing.screenPadding,
+    marginTop: Spacing.screenPadding,
+    marginBottom: Spacing.screenPadding,
+    backgroundColor: Colors.white,
+    borderRadius: BorderRadius.medium,
     overflow: 'hidden',
-    shadowColor: '#000',
+    shadowColor: Colors.black,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08,
     shadowRadius: 4,
@@ -278,44 +289,44 @@ const styles = StyleSheet.create({
   menuItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 16,
+    padding: Spacing.medium,
     borderBottomWidth: 1,
-    borderBottomColor: '#F5F5F5',
+    borderBottomColor: Colors.backgroundGray,
   },
   lastMenuItem: {
     borderBottomWidth: 0,
   },
   logoutItem: {
-    backgroundColor: '#FFEBEE',
+    backgroundColor: Colors.backgroundGray,
   },
   iconContainer: {
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: '#E8F5E9',
+    backgroundColor: Colors.backgroundGray,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 12,
+    marginRight: Spacing.gap,
   },
   logoutIconContainer: {
-    backgroundColor: '#FFEBEE',
+    backgroundColor: Colors.backgroundGray,
   },
   menuContent: {
     flex: 1,
   },
   menuTitle: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: '#000000',
-    marginBottom: 4,
+    fontSize: Typography.bodySmall + 1,
+    fontWeight: Typography.semibold,
+    color: Colors.black,
+    marginBottom: Spacing.xs,
     fontFamily: 'Poppins',
   },
   logoutTitle: {
-    color: '#E53935',
+    color: Colors.error,
   },
   menuSubtitle: {
-    fontSize: 12,
-    color: '#777',
+    fontSize: Typography.caption,
+    color: Colors.textSecondary,
   },
   modalOverlay: {
     position: 'absolute',
@@ -323,19 +334,19 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: Colors.overlay,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 20,
+    paddingHorizontal: Spacing.screenPadding,
   },
   modalContent: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 20,
-    padding: 24,
+    backgroundColor: Colors.white,
+    borderRadius: BorderRadius.large,
+    padding: Spacing.large,
     width: '100%',
     maxWidth: 400,
     alignItems: 'center',
-    shadowColor: '#000',
+    shadowColor: Colors.black,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
     shadowRadius: 8,
@@ -344,62 +355,62 @@ const styles = StyleSheet.create({
   modalIconContainer: {
     width: 80,
     height: 80,
-    borderRadius: 40,
-    backgroundColor: '#FFEBEE',
+    borderRadius: Layout.avatarSize * 2,
+    backgroundColor: Colors.backgroundGray,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: Spacing.medium,
   },
   modalTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#000000',
-    marginBottom: 12,
+    fontSize: Typography.h4,
+    fontWeight: Typography.bold,
+    color: Colors.black,
+    marginBottom: Spacing.gap,
     fontFamily: 'Poppins',
   },
   modalMessage: {
-    fontSize: 14,
-    color: '#777',
+    fontSize: Typography.bodySmall,
+    color: Colors.textSecondary,
     textAlign: 'center',
-    lineHeight: 22,
-    marginBottom: 24,
+    lineHeight: Typography.bodySmall * Typography.lineHeightNormal,
+    marginBottom: Spacing.large,
   },
   modalButtons: {
     flexDirection: 'row',
-    gap: 12,
+    gap: Spacing.gap,
     width: '100%',
   },
   cancelButton: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.white,
     borderWidth: 1.5,
-    borderColor: '#E5E5E5',
-    borderRadius: 12,
-    paddingVertical: 14,
+    borderColor: Colors.border,
+    borderRadius: BorderRadius.medium,
+    paddingVertical: Typography.bodySmall,
     alignItems: 'center',
   },
   cancelButtonText: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: '#777',
+    fontSize: Typography.bodySmall + 1,
+    fontWeight: Typography.bold,
+    color: Colors.textSecondary,
     fontFamily: 'Poppins',
   },
   confirmButton: {
     flex: 1,
-    backgroundColor: '#00A86B',
-    borderRadius: 12,
-    paddingVertical: 14,
+    backgroundColor: Colors.primary,
+    borderRadius: BorderRadius.medium,
+    paddingVertical: Typography.bodySmall,
     alignItems: 'center',
-    shadowColor: '#000',
+    shadowColor: Colors.black,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
   },
   confirmButtonText: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: '#FFFFFF',
+    fontSize: Typography.bodySmall + 1,
+    fontWeight: Typography.bold,
+    color: Colors.white,
     fontFamily: 'Poppins',
   },
 });

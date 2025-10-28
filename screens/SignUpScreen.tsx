@@ -5,7 +5,6 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  SafeAreaView,
   StatusBar,
   KeyboardAvoidingView,
   Platform,
@@ -13,16 +12,20 @@ import {
   Alert,
   ActivityIndicator,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
-import type { RootStackParamList } from '../App';
+import type { AuthStackParamList } from '../navigation/AuthStack';
 import { signup } from '../api/authAPI';
+import { useAuth } from '../contexts/AuthContext';
+import { Colors, Typography, Spacing, BorderRadius, Layout } from '../constants/theme';
 
-type SignUpScreenNavigationProp = StackNavigationProp<RootStackParamList>;
+type SignUpScreenNavigationProp = StackNavigationProp<AuthStackParamList>;
 
 const SignUpScreen = () => {
   const navigation = useNavigation<SignUpScreenNavigationProp>();
+  const { login: authLogin } = useAuth();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -75,13 +78,31 @@ const SignUpScreen = () => {
         phone: phone.trim() || undefined,
       };
 
+      console.log('📝 Attempting signup for:', userData.email);
       const response = await signup(userData);
 
-      if (response.success) {
-        // Navigate to AddLocation screen (Step 2 of signup)
-        navigation.navigate('AddLocation');
+      console.log('📥 Signup response received:', {
+        success: response?.success,
+        hasToken: !!response?.token,
+        hasUser: !!response?.user,
+        message: response?.message
+      });
+
+      if (response.success && response.token && response.user) {
+        // Automatically log user in after successful signup
+        await authLogin(response.token, response.user);
+
+        console.log('✅ Signup successful - switching to Main App');
+        // User will be redirected to MainStack automatically via AuthContext
+      } else {
+        console.warn('⚠️ Signup response missing required fields:', response);
+        Alert.alert(
+          'Signup Failed',
+          response?.message || 'Invalid response from server. Please try again.'
+        );
       }
     } catch (error: any) {
+      console.error('❌ Signup error:', error);
       Alert.alert(
         'Sign Up Failed',
         error.message || 'Unable to create account. Please try again.'
@@ -101,7 +122,7 @@ const SignUpScreen = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#0D7F6F" />
+      <StatusBar barStyle="light-content" backgroundColor={Colors.primary} />
       
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -114,7 +135,7 @@ const SignUpScreen = () => {
           {/* Header */}
           <View style={styles.header}>
             <TouchableOpacity style={styles.backButton} onPress={handleBack}>
-              <Ionicons name="arrow-back" size={24} color="#fff" />
+              <Ionicons name="arrow-back" size={Layout.iconSize} color={Colors.white} />
             </TouchableOpacity>
           </View>
 
@@ -129,13 +150,13 @@ const SignUpScreen = () => {
             <View style={styles.inputContainer}>
               <Text style={styles.label}>Name</Text>
               <View style={styles.inputWrapper}>
-                <Ionicons name="person-outline" size={20} color="#666" style={styles.inputIcon} />
+                <Ionicons name="person-outline" size={20} color={Colors.textSecondary} style={styles.inputIcon} />
                 <TextInput
                   style={styles.input}
                   placeholder="Anthony Jack"
                   value={name}
                   onChangeText={setName}
-                  placeholderTextColor="#999"
+                  placeholderTextColor={Colors.textLight}
                 />
               </View>
             </View>
@@ -144,7 +165,7 @@ const SignUpScreen = () => {
             <View style={styles.inputContainer}>
               <Text style={styles.label}>Email</Text>
               <View style={styles.inputWrapper}>
-                <Ionicons name="mail-outline" size={20} color="#666" style={styles.inputIcon} />
+                <Ionicons name="mail-outline" size={20} color={Colors.textSecondary} style={styles.inputIcon} />
                 <TextInput
                   style={styles.input}
                   placeholder="Anthonyjack@gmail.com"
@@ -152,7 +173,7 @@ const SignUpScreen = () => {
                   onChangeText={setEmail}
                   keyboardType="email-address"
                   autoCapitalize="none"
-                  placeholderTextColor="#999"
+                  placeholderTextColor={Colors.textLight}
                 />
               </View>
             </View>
@@ -161,14 +182,14 @@ const SignUpScreen = () => {
             <View style={styles.inputContainer}>
               <Text style={styles.label}>Password</Text>
               <View style={styles.inputWrapper}>
-                <Ionicons name="lock-closed-outline" size={20} color="#666" style={styles.inputIcon} />
+                <Ionicons name="lock-closed-outline" size={20} color={Colors.textSecondary} style={styles.inputIcon} />
                 <TextInput
                   style={styles.input}
                   placeholder="••••••••"
                   value={password}
                   onChangeText={setPassword}
                   secureTextEntry={!showPassword}
-                  placeholderTextColor="#999"
+                  placeholderTextColor={Colors.textLight}
                 />
                 <TouchableOpacity
                   onPress={() => setShowPassword(!showPassword)}
@@ -177,7 +198,7 @@ const SignUpScreen = () => {
                   <Ionicons
                     name={showPassword ? "eye-outline" : "eye-off-outline"}
                     size={20}
-                    color="#666"
+                    color={Colors.textSecondary}
                   />
                 </TouchableOpacity>
               </View>
@@ -189,7 +210,7 @@ const SignUpScreen = () => {
               onPress={() => setAgreedToTerms(!agreedToTerms)}
             >
               <View style={[styles.checkbox, agreedToTerms && styles.checkboxChecked]}>
-                {agreedToTerms && <Ionicons name="checkmark" size={16} color="#fff" />}
+                {agreedToTerms && <Ionicons name="checkmark" size={Typography.body} color={Colors.white} />}
               </View>
               <Text style={styles.checkboxText}>
                 By signing up, you agree to our{' '}
@@ -206,7 +227,7 @@ const SignUpScreen = () => {
               disabled={loading}
             >
               {loading ? (
-                <ActivityIndicator color="#fff" size="small" />
+                <ActivityIndicator color={Colors.white} size="small" />
               ) : (
                 <Text style={styles.signUpButtonText}>Sign up</Text>
               )}
@@ -229,7 +250,7 @@ const SignUpScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0D7F6F',
+    backgroundColor: Colors.primary,
   },
   keyboardView: {
     flex: 1,
@@ -238,106 +259,106 @@ const styles = StyleSheet.create({
     flexGrow: 1,
   },
   header: {
-    paddingHorizontal: 20,
-    paddingTop: 20,
-    paddingBottom: 40,
+    paddingHorizontal: Spacing.screenPadding,
+    paddingTop: Spacing.screenPadding,
+    paddingBottom: Spacing.xxl,
   },
   backButton: {
-    width: 40,
-    height: 40,
+    width: Spacing.xxl,
+    height: Spacing.xxl,
     justifyContent: 'center',
   },
   formCard: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
-    borderTopLeftRadius: 30,
-    borderTopRightRadius: 30,
-    paddingHorizontal: 24,
-    paddingTop: 32,
-    paddingBottom: 40,
+    backgroundColor: Colors.backgroundGray,
+    borderTopLeftRadius: BorderRadius.xl,
+    borderTopRightRadius: BorderRadius.xl,
+    paddingHorizontal: Spacing.large,
+    paddingTop: Spacing.xl,
+    paddingBottom: Spacing.xxl,
   },
   title: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#1A1A1A',
-    marginBottom: 12,
-    lineHeight: 32,
+    fontSize: Typography.h3,
+    fontWeight: Typography.bold,
+    color: Colors.text,
+    marginBottom: Spacing.gap,
+    lineHeight: Spacing.xl,
   },
   subtitle: {
-    fontSize: 15,
-    color: '#666',
-    marginBottom: 32,
+    fontSize: Typography.bodySmall + 1,
+    color: Colors.textSecondary,
+    marginBottom: Spacing.xl,
     lineHeight: 22,
   },
   inputContainer: {
-    marginBottom: 20,
+    marginBottom: Spacing.screenPadding,
   },
   label: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: '#1A1A1A',
-    marginBottom: 8,
+    fontSize: Typography.bodySmall + 1,
+    fontWeight: Typography.semibold,
+    color: Colors.text,
+    marginBottom: Spacing.small,
   },
   inputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fff',
-    borderRadius: 12,
+    backgroundColor: Colors.white,
+    borderRadius: BorderRadius.medium,
     borderWidth: 1,
-    borderColor: '#E0E0E0',
-    paddingHorizontal: 16,
+    borderColor: Colors.border,
+    paddingHorizontal: Spacing.medium,
     height: 52,
   },
   inputIcon: {
-    marginRight: 12,
+    marginRight: Spacing.gap,
   },
   input: {
     flex: 1,
-    fontSize: 15,
-    color: '#1A1A1A',
+    fontSize: Typography.bodySmall + 1,
+    color: Colors.text,
   },
   eyeIcon: {
-    padding: 4,
+    padding: Spacing.xs,
   },
   checkboxContainer: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    marginTop: 8,
-    marginBottom: 24,
+    marginTop: Spacing.small,
+    marginBottom: Spacing.large,
   },
   checkbox: {
-    width: 20,
-    height: 20,
-    borderRadius: 4,
+    width: Spacing.screenPadding,
+    height: Spacing.screenPadding,
+    borderRadius: Spacing.xs,
     borderWidth: 2,
-    borderColor: '#0D7F6F',
-    marginRight: 12,
+    borderColor: Colors.primary,
+    marginRight: Spacing.gap,
     marginTop: 2,
     alignItems: 'center',
     justifyContent: 'center',
   },
   checkboxChecked: {
-    backgroundColor: '#0D7F6F',
-    borderColor: '#0D7F6F',
+    backgroundColor: Colors.primary,
+    borderColor: Colors.primary,
   },
   checkboxText: {
     flex: 1,
-    fontSize: 13,
-    color: '#666',
-    lineHeight: 20,
+    fontSize: Typography.caption + 1,
+    color: Colors.textSecondary,
+    lineHeight: Spacing.screenPadding,
   },
   link: {
-    color: '#0D7F6F',
-    fontWeight: '500',
+    color: Colors.primary,
+    fontWeight: Typography.medium,
   },
   signUpButton: {
-    backgroundColor: '#0D7F6F',
-    borderRadius: 12,
+    backgroundColor: Colors.primary,
+    borderRadius: BorderRadius.medium,
     height: 52,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 20,
-    shadowColor: '#0D7F6F',
+    marginBottom: Spacing.screenPadding,
+    shadowColor: Colors.primary,
     shadowOffset: {
       width: 0,
       height: 4,
@@ -350,9 +371,9 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   signUpButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
+    color: Colors.white,
+    fontSize: Typography.body,
+    fontWeight: Typography.semibold,
   },
   loginContainer: {
     flexDirection: 'row',
@@ -360,13 +381,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   loginText: {
-    fontSize: 14,
-    color: '#666',
+    fontSize: Typography.bodySmall,
+    color: Colors.textSecondary,
   },
   loginLink: {
-    fontSize: 14,
-    color: '#0D7F6F',
-    fontWeight: '600',
+    fontSize: Typography.bodySmall,
+    color: Colors.primary,
+    fontWeight: Typography.semibold,
   },
 });
 

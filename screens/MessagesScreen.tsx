@@ -18,9 +18,10 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
-import type { RootStackParamList } from '../App';
+import type { MainStackParamList } from '../navigation/MainStack';
+import { Colors, Typography, Spacing, BorderRadius } from '../constants/theme';
 
-type MessagesScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Messages'>;
+type MessagesScreenNavigationProp = StackNavigationProp<MainStackParamList, 'Messages'>;
 
 interface Message {
   id: string;
@@ -183,7 +184,7 @@ const MessagesScreen: React.FC = () => {
             activeOpacity={0.7}
             style={styles.backButton}
           >
-            <Ionicons name="arrow-back" size={24} color="#000000" />
+            <Ionicons name="arrow-back" size={24} color={Colors.text} />
           </TouchableOpacity>
           <View style={styles.headerContent}>
             <Text style={styles.headerTitle}>Messages</Text>
@@ -208,13 +209,13 @@ const MessagesScreen: React.FC = () => {
         <View style={styles.inputContainer}>
           <View style={styles.inputWrapper}>
             <TouchableOpacity style={styles.attachmentButton} activeOpacity={0.7}>
-              <Ionicons name="happy-outline" size={24} color="#757575" />
+              <Ionicons name="happy-outline" size={24} color={Colors.textSecondary} />
             </TouchableOpacity>
 
             <TextInput
               style={styles.textInput}
               placeholder="Write a message…"
-              placeholderTextColor="#9E9E9E"
+              placeholderTextColor={Colors.textLight}
               value={messageText}
               onChangeText={setMessageText}
               multiline
@@ -234,7 +235,7 @@ const MessagesScreen: React.FC = () => {
               <Ionicons
                 name="send"
                 size={20}
-                color={messageText.trim() ? '#FFFFFF' : '#9E9E9E'}
+                color={messageText.trim() ? Colors.textWhite : Colors.textLight}
               />
             </TouchableOpacity>
           </View>
@@ -247,7 +248,7 @@ const MessagesScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: Colors.backgroundGray,
   },
   keyboardView: {
     flex: 1,
@@ -256,14 +257,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    backgroundColor: '#FFFFFF',
+    paddingHorizontal: Spacing.screenPadding,
+    paddingVertical: Spacing.medium,
+    backgroundColor: Colors.background,
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E5E5',
+    borderBottomColor: Colors.borderLight,
   },
   backButton: {
-    padding: 4,
+    padding: Spacing.xs,
   },
   headerSpacer: {
     width: 32,
@@ -273,22 +274,22 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   headerTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#000000',
+    fontSize: Typography.h5,
+    fontWeight: Typography.bold,
+    color: Colors.text,
   },
   headerSubtitle: {
-    fontSize: 12,
-    color: '#0A8A4E',
+    fontSize: Typography.caption,
+    color: Colors.primary,
     marginTop: 2,
   },
   messagesList: {
-    paddingHorizontal: 16,
-    paddingVertical: 20,
+    paddingHorizontal: Spacing.medium,
+    paddingVertical: Spacing.screenPadding,
     flexGrow: 1,
   },
   messageContainer: {
-    marginBottom: 16,
+    marginBottom: Spacing.medium,
     maxWidth: '80%',
   },
   userMessageContainer: {
@@ -300,9 +301,9 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
   },
   messageBubble: {
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    borderRadius: BorderRadius.medium,
+    paddingHorizontal: Spacing.medium,
+    paddingVertical: Spacing.medium,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
@@ -310,32 +311,32 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   userBubble: {
-    backgroundColor: '#0A8A4E',
-    borderBottomRightRadius: 4,
+    backgroundColor: Colors.primary,
+    borderBottomRightRadius: BorderRadius.xs,
   },
   botBubble: {
-    backgroundColor: '#FFFFFF',
-    borderBottomLeftRadius: 4,
+    backgroundColor: Colors.background,
+    borderBottomLeftRadius: BorderRadius.xs,
     borderWidth: 1,
-    borderColor: '#E5E5E5',
+    borderColor: Colors.borderLight,
   },
   typingBubble: {
-    paddingVertical: 16,
+    paddingVertical: Spacing.medium,
   },
   messageText: {
-    fontSize: 14,
+    fontSize: Typography.bodySmall,
     lineHeight: 20,
   },
   userMessageText: {
-    color: '#FFFFFF',
+    color: Colors.textWhite,
   },
   botMessageText: {
-    color: '#000000',
+    color: Colors.text,
   },
   timestamp: {
-    fontSize: 10,
-    color: '#9E9E9E',
-    marginTop: 4,
+    fontSize: Typography.tiny,
+    color: Colors.textLight,
+    marginTop: Spacing.xs,
   },
   userTimestamp: {
     textAlign: 'right',
@@ -346,13 +347,13 @@ const styles = StyleSheet.create({
   typingDots: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: Spacing.xs,
   },
   dot: {
     width: 8,
     height: 8,
-    borderRadius: 4,
-    backgroundColor: '#BDBDBD',
+    borderRadius: BorderRadius.xs,
+    backgroundColor: Colors.textLight,
   },
   dot1: {
     opacity: 0.4,
@@ -364,34 +365,34 @@ const styles = StyleSheet.create({
     opacity: 0.8,
   },
   inputContainer: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.background,
     borderTopWidth: 1,
-    borderTopColor: '#E5E5E5',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    borderTopColor: Colors.borderLight,
+    paddingHorizontal: Spacing.medium,
+    paddingVertical: Spacing.medium,
   },
   inputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F5F5F5',
-    borderRadius: 24,
+    backgroundColor: Colors.backgroundGray,
+    borderRadius: BorderRadius.large,
     borderWidth: 1,
-    borderColor: '#E5E5E5',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    borderColor: Colors.borderLight,
+    paddingHorizontal: Spacing.medium,
+    paddingVertical: Spacing.small,
   },
   attachmentButton: {
-    marginRight: 8,
+    marginRight: Spacing.small,
   },
   textInput: {
     flex: 1,
-    fontSize: 14,
-    color: '#000000',
+    fontSize: Typography.bodySmall,
+    color: Colors.text,
     maxHeight: 80,
-    paddingVertical: 4,
+    paddingVertical: Spacing.xs,
   },
   sendButton: {
-    marginLeft: 8,
+    marginLeft: Spacing.small,
     width: 36,
     height: 36,
     borderRadius: 18,
@@ -399,7 +400,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   sendButtonActive: {
-    backgroundColor: '#0A8A4E',
+    backgroundColor: Colors.primary,
   },
   sendButtonInactive: {
     backgroundColor: 'transparent',

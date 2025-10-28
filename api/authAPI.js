@@ -21,15 +21,36 @@ import axiosInstance, { setAuthToken, setUserData, removeAuthToken } from './axi
 export const signup = async (userData) => {
   try {
     const response = await axiosInstance.post('/auth/signup', userData);
-    
-    if (response.success && response.data.token) {
-      // Store token and user data
-      await setAuthToken(response.data.token);
-      await setUserData(response.data.user);
+
+    console.log('📦 Signup response:', JSON.stringify(response, null, 2));
+
+    // Backend returns: { success, message, data: { user, token } }
+    // Extract token and user from nested data structure
+    if (response && response.success && response.data) {
+      const { token, user } = response.data;
+
+      if (token) {
+        await setAuthToken(token);
+        console.log('🔑 Token stored successfully');
+      }
+
+      if (user) {
+        await setUserData(user);
+        console.log('👤 User data stored:', user);
+      }
+
+      // Return flattened structure for screens
+      return {
+        success: response.success,
+        message: response.message,
+        token,
+        user
+      };
     }
-    
+
     return response;
   } catch (error) {
+    console.error('❌ Signup error:', error);
     throw error;
   }
 };
@@ -49,15 +70,36 @@ export const login = async (email, password) => {
       email,
       password
     });
-    
-    if (response.success && response.data.token) {
-      // Store token and user data
-      await setAuthToken(response.data.token);
-      await setUserData(response.data.user);
+
+    console.log('📦 Login response:', JSON.stringify(response, null, 2));
+
+    // Backend returns: { success, message, data: { user, token } }
+    // Extract token and user from nested data structure
+    if (response && response.success && response.data) {
+      const { token, user } = response.data;
+
+      if (token) {
+        await setAuthToken(token);
+        console.log('🔑 Token stored successfully');
+      }
+
+      if (user) {
+        await setUserData(user);
+        console.log('👤 User data stored:', user);
+      }
+
+      // Return flattened structure for screens
+      return {
+        success: response.success,
+        message: response.message,
+        token,
+        user
+      };
     }
-    
+
     return response;
   } catch (error) {
+    console.error('❌ Login error:', error);
     throw error;
   }
 };

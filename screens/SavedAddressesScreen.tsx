@@ -35,6 +35,7 @@ import { useNavigation } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
 import type { RootStackParamList } from '../App';
 import { getLocations } from '../api/locationAPI';
+import { Colors, Typography, Spacing, BorderRadius, Layout } from '../constants/theme';
 
 type SavedAddressesScreenNavigationProp = StackNavigationProp<RootStackParamList>;
 
@@ -76,8 +77,9 @@ const SavedAddressesScreen: React.FC<SavedAddressesScreenProps> = ({
     setLoading(true);
     try {
       const response = await getLocations();
-      if (response.success && response.data?.locations) {
-        setAddresses(response.data.locations);
+      // Response interceptor unwraps response.data, so access locations directly
+      if (response && response.success && response.locations) {
+        setAddresses(response.locations);
       }
     } catch (error: any) {
       Alert.alert('Error', error.message || 'Failed to fetch addresses');
@@ -143,7 +145,7 @@ const SavedAddressesScreen: React.FC<SavedAddressesScreenProps> = ({
     <View style={styles.addressItem}>
       <View style={styles.addressContent}>
         <View style={styles.iconContainer}>
-          <Ionicons name="location" size={20} color="#009D66" />
+          <Ionicons name="location" size={20} color={Colors.primary} />
         </View>
         <View style={styles.addressTextContainer}>
           <Text style={styles.addressLabel} numberOfLines={1}>
@@ -166,13 +168,13 @@ const SavedAddressesScreen: React.FC<SavedAddressesScreenProps> = ({
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           activeOpacity={0.7}
         >
-          <Ionicons name="close" size={24} color="#475569" />
+          <Ionicons name="close" size={Layout.iconSize} color={Colors.textSecondary} />
         </TouchableOpacity>
       </View>
 
       {loading ? (
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#026A49" />
+          <ActivityIndicator size="large" color={Colors.primary} />
         </View>
       ) : (
         <ScrollView
@@ -187,7 +189,7 @@ const SavedAddressesScreen: React.FC<SavedAddressesScreenProps> = ({
             ))
           ) : (
             <View style={styles.emptyContainer}>
-              <Ionicons name="location-outline" size={48} color="#CBD5E1" />
+              <Ionicons name="location-outline" size={48} color={Colors.border} />
               <Text style={styles.emptyText}>No saved addresses</Text>
               <Text style={styles.emptySubtext}>
                 Add your first address to get started
@@ -244,37 +246,37 @@ const SavedAddressesScreen: React.FC<SavedAddressesScreenProps> = ({
 const styles = StyleSheet.create({
   screenWrapper: {
     flex: 1,
-    backgroundColor: '#FCFCFC',
+    backgroundColor: Colors.backgroundGray,
   },
   screenOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+    backgroundColor: Colors.overlay,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 32,
+    paddingHorizontal: Spacing.xl,
   },
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+    backgroundColor: Colors.overlay,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 32,
+    paddingHorizontal: Spacing.xl,
   },
   modalContainer: {
     width: '100%',
     maxWidth: 366,
-    backgroundColor: '#FCFCFC',
-    borderRadius: 12,
-    padding: 20,
+    backgroundColor: Colors.backgroundGray,
+    borderRadius: BorderRadius.medium,
+    padding: Spacing.screenPadding,
     paddingBottom: 28,
     maxHeight: '70%',
   },
   screenContainer: {
     width: '100%',
     maxWidth: 366,
-    backgroundColor: '#FCFCFC',
-    borderRadius: 12,
-    padding: 20,
+    backgroundColor: Colors.backgroundGray,
+    borderRadius: BorderRadius.medium,
+    padding: Spacing.screenPadding,
     paddingBottom: 28,
     maxHeight: '70%',
   },
@@ -282,37 +284,37 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 24,
+    marginBottom: Spacing.large,
   },
   title: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#1E293B',
+    fontSize: Typography.subheading,
+    fontWeight: Typography.bold,
+    color: Colors.text,
     textTransform: 'capitalize',
   },
   addressList: {
-    marginBottom: 24,
+    marginBottom: Spacing.large,
   },
   addressItem: {
-    backgroundColor: '#FFF',
-    borderRadius: 12,
+    backgroundColor: Colors.white,
+    borderRadius: BorderRadius.medium,
     borderWidth: 1,
-    borderColor: '#CBD5E1',
-    padding: 12,
-    paddingHorizontal: 16,
-    paddingRight: 20,
-    marginBottom: 12,
+    borderColor: Colors.border,
+    padding: Spacing.gap,
+    paddingHorizontal: Spacing.medium,
+    paddingRight: Spacing.screenPadding,
+    marginBottom: Spacing.gap,
   },
   addressContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: Spacing.gap,
   },
   iconContainer: {
-    width: 32,
-    height: 32,
-    borderRadius: 8,
-    backgroundColor: '#CFFCE3',
+    width: Spacing.xl,
+    height: Spacing.xl,
+    borderRadius: BorderRadius.button,
+    backgroundColor: Colors.primaryLight,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -321,14 +323,14 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   addressLabel: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#1E293B',
+    fontSize: Typography.body,
+    fontWeight: Typography.bold,
+    color: Colors.text,
   },
   addressDetail: {
-    fontSize: 14,
-    fontWeight: '400',
-    color: '#475569',
+    fontSize: Typography.bodySmall,
+    fontWeight: Typography.regular,
+    color: Colors.textSecondary,
   },
   loadingContainer: {
     height: 200,
@@ -339,49 +341,49 @@ const styles = StyleSheet.create({
     height: 200,
     justifyContent: 'center',
     alignItems: 'center',
-    gap: 8,
+    gap: Spacing.small,
   },
   emptyText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#334155',
-    marginTop: 12,
+    fontSize: Typography.body,
+    fontWeight: Typography.semibold,
+    color: Colors.text,
+    marginTop: Spacing.gap,
   },
   emptySubtext: {
-    fontSize: 14,
-    color: '#64748B',
+    fontSize: Typography.bodySmall,
+    color: Colors.textSecondary,
     textAlign: 'center',
   },
   buttonContainer: {
-    gap: 12,
+    gap: Spacing.gap,
   },
   addButton: {
-    backgroundColor: '#026A49',
-    borderRadius: 8,
+    backgroundColor: Colors.primary,
+    borderRadius: BorderRadius.button,
     paddingVertical: 14,
-    paddingHorizontal: 24,
+    paddingHorizontal: Spacing.large,
     alignItems: 'center',
     justifyContent: 'center',
   },
   addButtonText: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#FFF',
+    fontSize: Typography.body,
+    fontWeight: Typography.bold,
+    color: Colors.white,
   },
   closeButton: {
-    backgroundColor: '#FFF',
-    borderRadius: 8,
+    backgroundColor: Colors.white,
+    borderRadius: BorderRadius.button,
     borderWidth: 1,
-    borderColor: '#CFCFCF',
+    borderColor: Colors.border,
     paddingVertical: 14,
-    paddingHorizontal: 24,
+    paddingHorizontal: Spacing.large,
     alignItems: 'center',
     justifyContent: 'center',
   },
   closeButtonText: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#334155',
+    fontSize: Typography.body,
+    fontWeight: Typography.bold,
+    color: Colors.text,
   },
 });
 

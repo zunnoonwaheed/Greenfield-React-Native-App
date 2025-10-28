@@ -133,15 +133,26 @@ const startServer = async () => {
     console.log('✅ Database connected successfully');
     console.log('Database time:', result[0].now);
 
-    app.listen(PORT, () => {
+    // 🔥 CRITICAL FIX: Listen on 0.0.0.0 to accept connections from ANY network interface
+    // This allows mobile devices on the same network to connect
+    app.listen(PORT, '0.0.0.0', () => {
       const localIP = getLocalIP();
       console.log('');
       console.log('🚀 ========================================');
       console.log(`🚀 Server running on port ${PORT}`);
       console.log(`🚀 Environment: ${process.env.NODE_ENV || 'development'}`);
-      console.log(`🚀 Local URL: http://localhost:${PORT}/api`);
-      console.log(`🚀 Network URL (for mobile): http://${localIP}:${PORT}/api`);
+      console.log(`🚀 Listening on: 0.0.0.0:${PORT} (ALL interfaces)`);
       console.log('🚀 ========================================');
+      console.log('');
+      console.log('📱 Access URLs:');
+      console.log(`   Local:          http://localhost:${PORT}/api`);
+      console.log(`   Network:        http://${localIP}:${PORT}/api`);
+      console.log(`   iOS Simulator:  http://localhost:${PORT}/api`);
+      console.log(`   Android Emu:    http://10.0.2.2:${PORT}/api`);
+      console.log(`   Physical Dev:   http://${localIP}:${PORT}/api`);
+      console.log('');
+      console.log('🔧 Test connectivity:');
+      console.log(`   curl http://${localIP}:${PORT}/health`);
       console.log('');
       console.log('📍 Available endpoints:');
       console.log('   POST   /api/auth/signup');

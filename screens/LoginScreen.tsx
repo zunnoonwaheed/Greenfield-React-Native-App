@@ -4,21 +4,23 @@ import {
   Text,
   TouchableOpacity,
   StyleSheet,
-  SafeAreaView,
   StatusBar,
   TextInput,
   Dimensions,
   Alert,
   ActivityIndicator,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
-import type { RootStackParamList } from '../App';
+import type { AuthStackParamList } from '../navigation/AuthStack';
 import { login } from '../api/authAPI';
+import { useAuth } from '../contexts/AuthContext';
+import { Colors, Typography, Spacing, BorderRadius, Layout } from '../constants/theme';
 
 const { width } = Dimensions.get('window');
 
-type LoginScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Login'>;
+type LoginScreenNavigationProp = StackNavigationProp<AuthStackParamList, 'Login'>;
 
 interface LoginScreenProps {
   onLogin?: (email: string, password: string) => void;
@@ -32,6 +34,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({
   onSignUp,
 }) => {
   const navigation = useNavigation<LoginScreenNavigationProp>();
+  const { login: authLogin } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -59,13 +62,30 @@ const LoginScreen: React.FC<LoginScreenProps> = ({
     setLoading(true);
 
     try {
+      console.log('🔐 Attempting login for:', email.trim());
       const response = await login(email.trim(), password);
 
-      if (response.success) {
-        // Navigate to Welcome screen
-        navigation.navigate('Welcome');
+      console.log('📥 Login response received:', {
+        success: response?.success,
+        hasToken: !!response?.token,
+        hasUser: !!response?.user,
+        message: response?.message
+      });
+
+      if (response.success && response.token && response.user) {
+        // Update auth context - this will automatically navigate to MainStack
+        await authLogin(response.token, response.user);
+
+        console.log('✅ Login successful - switching to Main App');
+      } else {
+        console.warn('⚠️ Login response missing required fields:', response);
+        Alert.alert(
+          'Login Failed',
+          response?.message || 'Invalid response from server. Please try again.'
+        );
       }
     } catch (error: any) {
+      console.error('❌ Login error:', error);
       Alert.alert(
         'Login Failed',
         error.message || 'Unable to login. Please check your credentials and try again.'
@@ -81,7 +101,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#EF5D21" />
+      <StatusBar barStyle="light-content" backgroundColor={Colors.accent} />
       
       {/* Orange Header */}
       <View style={styles.header}>
@@ -124,7 +144,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({
                   <TextInput
                     style={styles.textInput}
                     placeholder="Enter your email"
-                    placeholderTextColor="#94A3B8"
+                    placeholderTextColor={Colors.textLight}
                     value={email}
                     onChangeText={setEmail}
                     keyboardType="email-address"
@@ -148,7 +168,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({
                   <TextInput
                     style={styles.textInput}
                     placeholder="Enter your password"
-                    placeholderTextColor="#94A3B8"
+                    placeholderTextColor={Colors.textLight}
                     value={password}
                     onChangeText={setPassword}
                     secureTextEntry={!showPassword}
@@ -183,7 +203,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({
             disabled={loading}
           >
             {loading ? (
-              <ActivityIndicator color="#F1F5F9" size="small" />
+              <ActivityIndicator color={Colors.textWhite} size="small" />
             ) : (
               <Text style={styles.loginButtonText}>Login</Text>
             )}
@@ -206,32 +226,32 @@ const LoginScreen: React.FC<LoginScreenProps> = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#EF5D21',
+    backgroundColor: Colors.accent,
   },
   header: {
-    backgroundColor: '#EF5D21',
+    backgroundColor: Colors.accent,
     paddingBottom: 150,
   },
   topBar: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingTop: 8,
+    paddingHorizontal: Spacing.screenPadding,
+    paddingTop: Spacing.small,
     height: 56,
   },
   backButton: {
     width: 48,
     height: 48,
-    borderRadius: 8,
+    borderRadius: BorderRadius.button,
     justifyContent: 'center',
     alignItems: 'center',
     paddingVertical: 11.667,
     paddingHorizontal: 10,
   },
   arrowContainer: {
-    width: 24,
-    height: 24,
+    width: Layout.iconSize,
+    height: Layout.iconSize,
     justifyContent: 'center',
     alignItems: 'center',
     position: 'relative',
@@ -240,7 +260,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     width: 14,
     height: 2,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.white,
     left: 5,
   },
   arrowHead: {
@@ -251,9 +271,9 @@ const styles = StyleSheet.create({
     borderTopWidth: 6,
     borderBottomWidth: 6,
     borderRightWidth: 8,
-    borderTopColor: 'transparent',
-    borderBottomColor: 'transparent',
-    borderRightColor: '#FFFFFF',
+    borderTopColor: Colors.transparent,
+    borderBottomColor: Colors.transparent,
+    borderRightColor: Colors.white,
   },
   placeholder: {
     width: 48,
@@ -261,78 +281,78 @@ const styles = StyleSheet.create({
   },
   contentWrapper: {
     marginTop: -100,
-    paddingHorizontal: 20,
+    paddingHorizontal: Spacing.screenPadding,
   },
   content: {
-    backgroundColor: '#FCFCFC',
-    borderTopLeftRadius: 48,
-    borderTopRightRadius: 48,
-    borderBottomLeftRadius: 48,
-    borderBottomRightRadius: 48,
+    backgroundColor: Colors.background,
+    borderTopLeftRadius: BorderRadius.xl * 1.7,
+    borderTopRightRadius: BorderRadius.xl * 1.7,
+    borderBottomLeftRadius: BorderRadius.xl * 1.7,
+    borderBottomRightRadius: BorderRadius.xl * 1.7,
     borderWidth: 1,
-    borderColor: '#CFCFCF',
-    paddingHorizontal: 24,
-    paddingTop: 32,
+    borderColor: Colors.border,
+    paddingHorizontal: Spacing.large,
+    paddingTop: Spacing.xl,
     paddingBottom: 36,
   },
   headerSection: {
-    marginBottom: 24,
-    gap: 8,
+    marginBottom: Spacing.large,
+    gap: Spacing.small,
   },
   title: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#1E293B',
+    fontSize: Typography.heading,
+    fontWeight: Typography.bold,
+    color: Colors.text,
     fontFamily: 'DM Sans',
     lineHeight: 28.8,
   },
   subtitle: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#475569',
+    fontSize: Typography.body,
+    fontWeight: Typography.medium,
+    color: Colors.textSecondary,
     fontFamily: 'DM Sans',
     lineHeight: 20.8,
   },
   formSection: {
-    gap: 16,
-    marginBottom: 24,
+    gap: Spacing.medium,
+    marginBottom: Spacing.large,
   },
   inputContainer: {
-    gap: 8,
+    gap: Spacing.small,
   },
   inputLabel: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#1E293B',
+    fontSize: Typography.body,
+    fontWeight: Typography.semibold,
+    color: Colors.text,
     fontFamily: 'DM Sans',
     lineHeight: 19.2,
   },
   inputField: {
-    borderRadius: 12,
+    borderRadius: BorderRadius.input,
     borderWidth: 1,
-    borderColor: '#CFCFCF',
-    backgroundColor: '#FFF',
-    paddingHorizontal: 16,
+    borderColor: Colors.border,
+    backgroundColor: Colors.white,
+    paddingHorizontal: Spacing.medium,
     paddingVertical: 14,
   },
   inputContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: Spacing.small,
   },
   emailText: {
     flex: 1,
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#334155',
+    fontSize: Typography.body,
+    fontWeight: Typography.medium,
+    color: Colors.text,
     fontFamily: 'DM Sans',
     lineHeight: 19.2,
   },
   textInput: {
     flex: 1,
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#334155',
+    fontSize: Typography.body,
+    fontWeight: Typography.medium,
+    color: Colors.text,
     fontFamily: 'DM Sans',
     paddingVertical: 0,
   },
@@ -348,8 +368,8 @@ const styles = StyleSheet.create({
     height: 13.3334,
     borderRadius: 1,
     borderWidth: 1,
-    borderColor: '#334155',
-    backgroundColor: 'transparent',
+    borderColor: Colors.text,
+    backgroundColor: Colors.transparent,
     position: 'absolute',
     top: 3.9173,
   },
@@ -362,9 +382,9 @@ const styles = StyleSheet.create({
     borderLeftWidth: 8,
     borderRightWidth: 8,
     borderTopWidth: 5,
-    borderLeftColor: 'transparent',
-    borderRightColor: 'transparent',
-    borderTopColor: '#334155',
+    borderLeftColor: Colors.transparent,
+    borderRightColor: Colors.transparent,
+    borderTopColor: Colors.text,
   },
   lockContainer: {
     width: 20,
@@ -379,9 +399,9 @@ const styles = StyleSheet.create({
     left: 5.83333,
     width: 8.33334,
     height: 7.5,
-    backgroundColor: 'transparent',
+    backgroundColor: Colors.transparent,
     borderWidth: 1.66667,
-    borderColor: '#000000',
+    borderColor: Colors.black,
     borderBottomWidth: 0,
     borderRadius: 4.16667,
   },
@@ -391,21 +411,21 @@ const styles = StyleSheet.create({
     left: 2.5,
     width: 15,
     height: 9.16667,
-    backgroundColor: 'transparent',
+    backgroundColor: Colors.transparent,
     borderWidth: 1.66667,
-    borderColor: '#000000',
+    borderColor: Colors.black,
     borderRadius: 1,
   },
   passwordDots: {
     flexDirection: 'row',
-    gap: 8,
+    gap: Spacing.small,
     flex: 1,
   },
   dot: {
     width: 3,
     height: 6,
     borderRadius: 1.5,
-    backgroundColor: '#334155',
+    backgroundColor: Colors.text,
   },
   eyeIcon: {
     width: 20,
@@ -426,8 +446,8 @@ const styles = StyleSheet.create({
     height: 10,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#334155',
-    backgroundColor: 'transparent',
+    borderColor: Colors.text,
+    backgroundColor: Colors.transparent,
   },
   eyeInner: {
     position: 'absolute',
@@ -436,7 +456,7 @@ const styles = StyleSheet.create({
     width: 4,
     height: 4,
     borderRadius: 2,
-    backgroundColor: '#334155',
+    backgroundColor: Colors.text,
   },
   eyeSlash: {
     position: 'absolute',
@@ -444,36 +464,36 @@ const styles = StyleSheet.create({
     left: -2,
     width: 24,
     height: 2,
-    backgroundColor: '#334155',
+    backgroundColor: Colors.text,
     transform: [{ rotate: '45deg' }],
   },
   forgotPasswordContainer: {
     alignSelf: 'flex-end',
-    marginTop: 4,
+    marginTop: Spacing.xs,
   },
   forgotPasswordText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#009D66',
+    fontSize: Typography.body,
+    fontWeight: Typography.semibold,
+    color: Colors.success,
     fontFamily: 'DM Sans',
     lineHeight: 19.2,
   },
   loginButton: {
-    backgroundColor: '#026A49',
-    borderRadius: 12,
-    paddingVertical: 16,
-    paddingHorizontal: 8,
+    backgroundColor: Colors.primaryDark,
+    borderRadius: BorderRadius.input,
+    paddingVertical: Spacing.medium,
+    paddingHorizontal: Spacing.small,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 20,
+    marginBottom: Spacing.screenPadding,
   },
   loginButtonDisabled: {
     opacity: 0.6,
   },
   loginButtonText: {
-    color: '#F1F5F9',
-    fontSize: 18,
-    fontWeight: '600',
+    color: Colors.textWhite,
+    fontSize: Typography.h5,
+    fontWeight: Typography.semibold,
     textAlign: 'center',
     fontFamily: 'DM Sans',
     lineHeight: 21.6,
@@ -482,18 +502,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   signUpText: {
-    fontSize: 16,
+    fontSize: Typography.body,
     fontFamily: 'DM Sans',
     lineHeight: 19.2,
     textAlign: 'center',
   },
   signUpRegularText: {
-    fontWeight: '400',
-    color: '#334155',
+    fontWeight: Typography.regular,
+    color: Colors.text,
   },
   signUpLink: {
-    fontWeight: '600',
-    color: '#009D66',
+    fontWeight: Typography.semibold,
+    color: Colors.success,
   },
 });
 

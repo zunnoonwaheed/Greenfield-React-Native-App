@@ -17,6 +17,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
 import type { RootStackParamList } from '../App';
+import { Colors, Typography, Spacing, BorderRadius, Layout } from '../constants/theme';
 
 type PaymentMethodsScreenNavigationProp = StackNavigationProp<RootStackParamList>;
 
@@ -134,16 +135,16 @@ const PaymentMethodsScreen: React.FC = () => {
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           activeOpacity={0.7}
         >
-          <Ionicons name="arrow-back" size={24} color="#000000" />
+          <Ionicons name="arrow-back" size={Layout.iconSize} color={Colors.black} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Payment Methods</Text>
-        <View style={{ width: 24 }} />
+        <View style={{ width: Layout.iconSize }} />
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* Info Banner */}
         <View style={styles.infoBanner}>
-          <Ionicons name="lock-closed-outline" size={20} color="#00A86B" />
+          <Ionicons name="lock-closed-outline" size={20} color={Colors.success} />
           <Text style={styles.infoBannerText}>
             Your payment information is encrypted and secure
           </Text>
@@ -174,7 +175,7 @@ const PaymentMethodsScreen: React.FC = () => {
                 >
                   <Ionicons
                     name={getCardIcon(card.type)}
-                    size={24}
+                    size={Layout.iconSize}
                     color={getCardColor(card.type)}
                   />
                 </View>
@@ -184,7 +185,7 @@ const PaymentMethodsScreen: React.FC = () => {
                     <Text style={styles.cardType}>{getCardLabel(card.type)}</Text>
                     {card.isActive && (
                       <View style={styles.activeBadge}>
-                        <Ionicons name="checkmark" size={12} color="#FFFFFF" />
+                        <Ionicons name="checkmark" size={Typography.caption} color={Colors.white} />
                         <Text style={styles.activeBadgeText}>Active</Text>
                       </View>
                     )}
@@ -203,7 +204,7 @@ const PaymentMethodsScreen: React.FC = () => {
                   activeOpacity={0.7}
                   style={styles.deleteButton}
                 >
-                  <Ionicons name="trash-outline" size={20} color="#E53935" />
+                  <Ionicons name="trash-outline" size={20} color={Colors.error} />
                 </TouchableOpacity>
               </TouchableOpacity>
             </View>
@@ -217,7 +218,7 @@ const PaymentMethodsScreen: React.FC = () => {
             onPress={() => navigation.navigate('AddPaymentMethod')}
             activeOpacity={0.7}
           >
-            <Ionicons name="add-circle-outline" size={20} color="#FFFFFF" />
+            <Ionicons name="add-circle-outline" size={20} color={Colors.white} />
             <Text style={styles.addButtonText}>Add Payment Method</Text>
           </TouchableOpacity>
         </View>
@@ -229,79 +230,79 @@ const PaymentMethodsScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: Colors.backgroundGray,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    backgroundColor: '#FFFFFF',
+    paddingHorizontal: Spacing.screenPadding,
+    paddingVertical: Spacing.medium,
+    backgroundColor: Colors.white,
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E5E5',
+    borderBottomColor: Colors.border,
   },
   headerTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#000000',
+    fontSize: Typography.h4,
+    fontWeight: Typography.bold,
+    color: Colors.black,
     fontFamily: 'Poppins',
   },
   infoBanner: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#E8F5E9',
-    marginHorizontal: 20,
-    marginTop: 20,
-    marginBottom: 16,
-    padding: 16,
-    borderRadius: 12,
-    gap: 12,
+    marginHorizontal: Spacing.screenPadding,
+    marginTop: Spacing.screenPadding,
+    marginBottom: Spacing.medium,
+    padding: Spacing.medium,
+    borderRadius: BorderRadius.medium,
+    gap: Spacing.gap,
   },
   infoBannerText: {
     flex: 1,
     fontSize: 13,
-    color: '#00A86B',
+    color: Colors.success,
     lineHeight: 18,
   },
   cardsContainer: {
-    marginHorizontal: 20,
-    marginBottom: 20,
+    marginHorizontal: Spacing.screenPadding,
+    marginBottom: Spacing.screenPadding,
   },
   sectionTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#000000',
-    marginBottom: 16,
+    fontSize: Typography.body,
+    fontWeight: Typography.semibold,
+    color: Colors.black,
+    marginBottom: Spacing.medium,
     fontFamily: 'Poppins',
   },
   cardItem: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    marginBottom: 12,
-    shadowColor: '#000',
+    backgroundColor: Colors.white,
+    borderRadius: BorderRadius.medium,
+    marginBottom: Spacing.gap,
+    shadowColor: Colors.black,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08,
     shadowRadius: 4,
     elevation: 3,
     borderWidth: 2,
-    borderColor: 'transparent',
+    borderColor: Colors.transparent,
   },
   cardItemActive: {
-    borderColor: '#00A86B',
+    borderColor: Colors.success,
   },
   cardContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 16,
+    padding: Spacing.medium,
   },
   cardIconContainer: {
     width: 48,
     height: 48,
-    borderRadius: 24,
+    borderRadius: BorderRadius.round,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 12,
+    marginRight: Spacing.gap,
   },
   cardDetails: {
     flex: 1,
@@ -309,39 +310,39 @@ const styles = StyleSheet.create({
   cardHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 4,
-    gap: 8,
+    marginBottom: Spacing.xs,
+    gap: Spacing.small,
   },
   cardType: {
     fontSize: 15,
-    fontWeight: '600',
-    color: '#000000',
+    fontWeight: Typography.semibold,
+    color: Colors.black,
     fontFamily: 'Poppins',
   },
   activeBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#00A86B',
-    paddingHorizontal: 8,
+    backgroundColor: Colors.success,
+    paddingHorizontal: Spacing.small,
     paddingVertical: 3,
-    borderRadius: 12,
-    gap: 4,
+    borderRadius: BorderRadius.medium,
+    gap: Spacing.xs,
   },
   activeBadgeText: {
-    fontSize: 10,
-    fontWeight: '600',
-    color: '#FFFFFF',
+    fontSize: Typography.tiny,
+    fontWeight: Typography.semibold,
+    color: Colors.white,
   },
   cardNumber: {
     fontSize: 13,
-    color: '#000000',
-    marginBottom: 4,
+    color: Colors.black,
+    marginBottom: Spacing.xs,
     fontFamily: 'Courier',
     letterSpacing: 1,
   },
   cardExpiry: {
     fontSize: 11,
-    color: '#777',
+    color: Colors.textSecondary,
   },
   deleteButton: {
     width: 40,
@@ -350,27 +351,27 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   buttonContainer: {
-    paddingHorizontal: 20,
-    paddingBottom: 32,
+    paddingHorizontal: Spacing.screenPadding,
+    paddingBottom: Spacing.xl,
   },
   addButton: {
     flexDirection: 'row',
-    backgroundColor: '#00A86B',
-    borderRadius: 12,
-    paddingVertical: 16,
+    backgroundColor: Colors.success,
+    borderRadius: BorderRadius.medium,
+    paddingVertical: Spacing.medium,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
-    shadowColor: '#000',
+    gap: Spacing.small,
+    shadowColor: Colors.black,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
   },
   addButtonText: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#FFFFFF',
+    fontSize: Typography.body,
+    fontWeight: Typography.bold,
+    color: Colors.white,
     fontFamily: 'Poppins',
   },
 });

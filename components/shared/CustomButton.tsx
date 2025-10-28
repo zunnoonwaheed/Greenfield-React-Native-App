@@ -1,51 +1,54 @@
-/**
- * CustomButton - Reusable Button Component
- * Active/Inactive states with consistent styling
- */
-
 import React from 'react';
-import { TouchableOpacity, Text, StyleSheet, ActivityIndicator } from 'react-native';
+import { TouchableOpacity, Text, StyleSheet, ActivityIndicator, ViewStyle, TextStyle } from 'react-native';
+import { Colors, Typography, Spacing, BorderRadius, Shadows } from '../../constants/theme';
 
 interface CustomButtonProps {
   title: string;
   onPress: () => void;
-  disabled?: boolean;
+  variant?: 'primary' | 'secondary' | 'outline';
   loading?: boolean;
-  variant?: 'primary' | 'outline';
+  disabled?: boolean;
+  style?: ViewStyle;
+  textStyle?: TextStyle;
 }
 
 const CustomButton: React.FC<CustomButtonProps> = ({
   title,
   onPress,
-  disabled = false,
-  loading = false,
   variant = 'primary',
+  loading = false,
+  disabled = false,
+  style,
+  textStyle,
 }) => {
-  const isPrimary = variant === 'primary';
+  const buttonStyle = [
+    styles.button,
+    variant === 'primary' && styles.primaryButton,
+    variant === 'secondary' && styles.secondaryButton,
+    variant === 'outline' && styles.outlineButton,
+    (disabled || loading) && styles.disabledButton,
+    style,
+  ];
+
+  const textStyleCombined = [
+    styles.buttonText,
+    variant === 'primary' && styles.primaryText,
+    variant === 'secondary' && styles.secondaryText,
+    variant === 'outline' && styles.outlineText,
+    textStyle,
+  ];
 
   return (
     <TouchableOpacity
-      style={[
-        styles.button,
-        isPrimary ? styles.primaryButton : styles.outlineButton,
-        (disabled || loading) && styles.disabledButton,
-      ]}
+      style={buttonStyle}
       onPress={onPress}
       disabled={disabled || loading}
       activeOpacity={0.8}
     >
       {loading ? (
-        <ActivityIndicator size="small" color={isPrimary ? '#FFFFFF' : '#00A86B'} />
+        <ActivityIndicator color={variant === 'outline' ? Colors.primary : Colors.white} />
       ) : (
-        <Text
-          style={[
-            styles.buttonText,
-            isPrimary ? styles.primaryText : styles.outlineText,
-            (disabled || loading) && styles.disabledText,
-          ]}
-        >
-          {title}
-        </Text>
+        <Text style={textStyleCombined}>{title}</Text>
       )}
     </TouchableOpacity>
   );
@@ -53,43 +56,40 @@ const CustomButton: React.FC<CustomButtonProps> = ({
 
 const styles = StyleSheet.create({
   button: {
-    borderRadius: 12,
-    paddingVertical: 16,
+    paddingVertical: Spacing.medium,
+    borderRadius: BorderRadius.button,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    minHeight: 48,
   },
   primaryButton: {
-    backgroundColor: '#00A86B',
+    backgroundColor: Colors.primary,
+    ...Shadows.button,
+  },
+  secondaryButton: {
+    backgroundColor: Colors.secondary,
+    ...Shadows.button,
   },
   outlineButton: {
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1.5,
-    borderColor: '#00A86B',
+    backgroundColor: Colors.transparent,
+    borderWidth: 1,
+    borderColor: Colors.primary,
   },
   disabledButton: {
-    backgroundColor: '#E5E5E5',
-    borderColor: '#E5E5E5',
-    shadowOpacity: 0,
-    elevation: 0,
+    opacity: 0.5,
   },
   buttonText: {
-    fontSize: 16,
-    fontWeight: '700',
-    fontFamily: 'Poppins',
+    fontSize: Typography.body,
+    fontWeight: Typography.semibold,
   },
   primaryText: {
-    color: '#FFFFFF',
+    color: Colors.white,
+  },
+  secondaryText: {
+    color: Colors.text,
   },
   outlineText: {
-    color: '#00A86B',
-  },
-  disabledText: {
-    color: '#9E9E9E',
+    color: Colors.primary,
   },
 });
 

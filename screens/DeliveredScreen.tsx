@@ -11,9 +11,12 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
-import type { RootStackParamList } from '../App';
+import type { MainStackParamList } from '../navigation/MainStack';
+import { Colors, Typography, Spacing, BorderRadius, Layout } from '../constants/theme';
+import { AppHeader } from '../components/shared/AppHeader';
+import { ThemedButton } from '../components/ThemedButton';
 
-type DeliveredNavigationProp = StackNavigationProp<RootStackParamList>;
+type DeliveredNavigationProp = StackNavigationProp<MainStackParamList, 'Delivered'>;
 
 const DeliveredScreen: React.FC = () => {
   const navigation = useNavigation<DeliveredNavigationProp>();
@@ -30,7 +33,8 @@ const DeliveredScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+      <StatusBar barStyle="dark-content" backgroundColor={Colors.background} />
+      <AppHeader title="Delivered" showBack={true} showHome={true} />
 
       <Animated.View style={[styles.content, { opacity: fadeAnim }]}>
         {/* Progress Bar */}
@@ -59,24 +63,24 @@ const DeliveredScreen: React.FC = () => {
 
         {/* Buttons */}
         <View style={styles.buttonsContainer}>
-          <TouchableOpacity
-            style={styles.primaryButton}
-            onPress={() => navigation.navigate('HomescreenNew')}
-            activeOpacity={0.8}
-          >
-            <Text style={styles.primaryButtonText}>Back to Home</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.secondaryButton}
+          <ThemedButton
+            title="Back to Home"
+            onPress={() => {
+              navigation.reset({
+                index: 0,
+                routes: [{ name: 'MainTabs' }],
+              });
+            }}
+            type="solid"
+          />
+          <ThemedButton
+            title="Rate Order ⭐"
             onPress={() => {
               // Navigate to rating screen (can be added later)
               console.log('Rate order');
             }}
-            activeOpacity={0.8}
-          >
-            <Text style={styles.secondaryButtonText}>Rate Order ⭐</Text>
-          </TouchableOpacity>
+            type="outline"
+          />
         </View>
       </Animated.View>
     </SafeAreaView>
@@ -86,96 +90,63 @@ const DeliveredScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.background,
   },
   content: {
     flex: 1,
-    paddingHorizontal: 32,
+    paddingHorizontal: Spacing.xl,
     justifyContent: 'center',
     alignItems: 'center',
   },
   progressContainer: {
     position: 'absolute',
-    top: 40,
-    left: 32,
-    right: 32,
+    top: Spacing.xxl,
+    left: Spacing.xl,
+    right: Spacing.xl,
   },
   progressBackground: {
     height: 6,
-    backgroundColor: '#E8F5E9',
-    borderRadius: 3,
+    backgroundColor: Colors.backgroundGray,
+    borderRadius: BorderRadius.small,
     overflow: 'hidden',
   },
   progressFill: {
     height: '100%',
-    backgroundColor: '#0A8A4E',
-    borderRadius: 3,
+    backgroundColor: Colors.primary,
+    borderRadius: BorderRadius.small,
   },
   imageContainer: {
     width: '100%',
     height: 280,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 32,
+    marginBottom: Spacing.xl,
   },
   illustration: {
     width: '85%',
     height: '100%',
   },
   title: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: '#000000',
+    fontSize: Typography.h2,
+    fontWeight: Typography.bold,
+    color: Colors.text,
     textAlign: 'center',
-    marginBottom: 16,
+    marginBottom: Spacing.medium,
     fontFamily: 'Poppins',
   },
   description: {
-    fontSize: 16,
-    fontWeight: '400',
-    color: '#757575',
+    fontSize: Typography.body,
+    fontWeight: Typography.regular,
+    color: Colors.textSecondary,
     textAlign: 'center',
     lineHeight: 24,
-    marginBottom: 48,
-    paddingHorizontal: 8,
+    marginBottom: Spacing.xxl + Spacing.small,
+    paddingHorizontal: Spacing.small,
     fontFamily: 'Poppins',
   },
   buttonsContainer: {
     width: '100%',
-    gap: 16,
-  },
-  primaryButton: {
-    backgroundColor: '#0A8A4E',
-    borderRadius: 16,
-    paddingVertical: 18,
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#0A8A4E',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 6,
-  },
-  primaryButtonText: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#FFFFFF',
-    fontFamily: 'Poppins',
-  },
-  secondaryButton: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    paddingVertical: 18,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 2,
-    borderColor: '#0A8A4E',
-  },
-  secondaryButtonText: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#0A8A4E',
-    fontFamily: 'Poppins',
+    gap: Spacing.medium,
   },
 });
 

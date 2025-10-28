@@ -1,83 +1,64 @@
-/**
- * ImageUploadBox - Image upload placeholder component
- * Dashed border with camera icon
- */
-
 import React from 'react';
-import { TouchableOpacity, View, Image, StyleSheet, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, Image, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import * as ImagePicker from 'expo-image-picker';
+import { Colors, Typography, Spacing, BorderRadius } from '../../constants/theme';
 
 interface ImageUploadBoxProps {
+  label?: string;
   imageUri?: string;
-  onImageSelected: (uri: string) => void;
-  index: number;
+  onPress: () => void;
 }
 
-const ImageUploadBox: React.FC<ImageUploadBoxProps> = ({
-  imageUri,
-  onImageSelected,
-  index,
-}) => {
-  const handlePickImage = async () => {
-    const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
-
-    if (permissionResult.granted === false) {
-      Alert.alert('Permission Required', 'Please allow access to your photo library.');
-      return;
-    }
-
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 0.8,
-    });
-
-    if (!result.canceled && result.assets[0]) {
-      onImageSelected(result.assets[0].uri);
-    }
-  };
-
+const ImageUploadBox: React.FC<ImageUploadBoxProps> = ({ label, imageUri, onPress }) => {
   return (
-    <TouchableOpacity
-      style={styles.container}
-      onPress={handlePickImage}
-      activeOpacity={0.7}
-    >
-      {imageUri ? (
-        <Image source={{ uri: imageUri }} style={styles.image} resizeMode="cover" />
-      ) : (
-        <View style={styles.placeholder}>
-          <Ionicons name="camera-outline" size={32} color="#9E9E9E" />
-        </View>
-      )}
-    </TouchableOpacity>
+    <View style={styles.container}>
+      {label && <Text style={styles.label}>{label}</Text>}
+      <TouchableOpacity style={styles.uploadBox} onPress={onPress}>
+        {imageUri ? (
+          <Image source={{ uri: imageUri }} style={styles.image} />
+        ) : (
+          <View style={styles.placeholder}>
+            <Ionicons name="image-outline" size={40} color={Colors.textLight} />
+            <Text style={styles.placeholderText}>Tap to upload image</Text>
+          </View>
+        )}
+      </TouchableOpacity>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    width: 100,
-    height: 100,
-    borderRadius: 12,
-    overflow: 'hidden',
-    marginRight: 12,
+    marginBottom: Spacing.medium,
   },
-  placeholder: {
-    flex: 1,
-    backgroundColor: '#FFFFFF',
+  label: {
+    fontSize: Typography.bodySmall,
+    fontWeight: Typography.semibold,
+    color: Colors.text,
+    marginBottom: Spacing.xs,
+  },
+  uploadBox: {
     borderWidth: 2,
+    borderColor: Colors.border,
     borderStyle: 'dashed',
-    borderColor: '#E5E5E5',
-    borderRadius: 12,
+    borderRadius: BorderRadius.medium,
+    height: 150,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: Colors.backgroundGray,
+  },
+  placeholder: {
+    alignItems: 'center',
+  },
+  placeholderText: {
+    fontSize: Typography.bodySmall,
+    color: Colors.textLight,
+    marginTop: Spacing.xs,
   },
   image: {
     width: '100%',
     height: '100%',
-    backgroundColor: '#F5F5F5',
+    borderRadius: BorderRadius.medium,
   },
 });
 

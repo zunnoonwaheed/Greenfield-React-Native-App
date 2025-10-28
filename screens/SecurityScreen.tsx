@@ -18,6 +18,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
 import type { RootStackParamList } from '../App';
+import { Colors, Typography, Spacing, BorderRadius, Layout } from '../constants/theme';
 
 type SecurityScreenNavigationProp = StackNavigationProp<RootStackParamList>;
 
@@ -81,16 +82,16 @@ const SecurityScreen: React.FC = () => {
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           activeOpacity={0.7}
         >
-          <Ionicons name="arrow-back" size={24} color="#000000" />
+          <Ionicons name="arrow-back" size={Layout.iconSize} color={Colors.black} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Security</Text>
-        <View style={{ width: 24 }} />
+        <View style={{ width: Layout.iconSize }} />
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* Info Card */}
         <View style={styles.infoCard}>
-          <Ionicons name="shield-checkmark-outline" size={48} color="#00A86B" />
+          <Ionicons name="shield-checkmark-outline" size={48} color={Colors.primary} />
           <Text style={styles.infoTitle}>Change Password</Text>
           <Text style={styles.infoText}>
             Keep your account secure by using a strong password
@@ -109,14 +110,14 @@ const SecurityScreen: React.FC = () => {
                 hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                 activeOpacity={0.7}
               >
-                <Ionicons name="information-circle-outline" size={18} color="#00A86B" />
+                <Ionicons name="information-circle-outline" size={18} color={Colors.primary} />
               </TouchableOpacity>
             </View>
             <View style={styles.passwordInputContainer}>
               <TextInput
                 style={styles.passwordInput}
                 placeholder="Enter current password"
-                placeholderTextColor="#999"
+                placeholderTextColor={Colors.textLight}
                 value={currentPassword}
                 onChangeText={setCurrentPassword}
                 secureTextEntry={!showCurrentPassword}
@@ -130,7 +131,7 @@ const SecurityScreen: React.FC = () => {
                 <Ionicons
                   name={showCurrentPassword ? 'eye-off-outline' : 'eye-outline'}
                   size={20}
-                  color="#777"
+                  color={Colors.textSecondary}
                 />
               </TouchableOpacity>
             </View>
@@ -145,7 +146,7 @@ const SecurityScreen: React.FC = () => {
               <TextInput
                 style={styles.passwordInput}
                 placeholder="Enter new password (min 8 characters)"
-                placeholderTextColor="#999"
+                placeholderTextColor={Colors.textLight}
                 value={newPassword}
                 onChangeText={setNewPassword}
                 secureTextEntry={!showNewPassword}
@@ -159,7 +160,7 @@ const SecurityScreen: React.FC = () => {
                 <Ionicons
                   name={showNewPassword ? 'eye-off-outline' : 'eye-outline'}
                   size={20}
-                  color="#777"
+                  color={Colors.textSecondary}
                 />
               </TouchableOpacity>
             </View>
@@ -177,7 +178,7 @@ const SecurityScreen: React.FC = () => {
               <TextInput
                 style={styles.passwordInput}
                 placeholder="Re-enter new password"
-                placeholderTextColor="#999"
+                placeholderTextColor={Colors.textLight}
                 value={confirmPassword}
                 onChangeText={setConfirmPassword}
                 secureTextEntry={!showConfirmPassword}
@@ -191,7 +192,7 @@ const SecurityScreen: React.FC = () => {
                 <Ionicons
                   name={showConfirmPassword ? 'eye-off-outline' : 'eye-outline'}
                   size={20}
-                  color="#777"
+                  color={Colors.textSecondary}
                 />
               </TouchableOpacity>
             </View>
@@ -207,7 +208,7 @@ const SecurityScreen: React.FC = () => {
               <Ionicons
                 name={newPassword.length >= 8 ? 'checkmark-circle' : 'ellipse-outline'}
                 size={16}
-                color={newPassword.length >= 8 ? '#00A86B' : '#9E9E9E'}
+                color={newPassword.length >= 8 ? Colors.primary : Colors.textLight}
               />
               <Text style={styles.requirementText}>At least 8 characters</Text>
             </View>
@@ -215,7 +216,7 @@ const SecurityScreen: React.FC = () => {
               <Ionicons
                 name={/[A-Z]/.test(newPassword) ? 'checkmark-circle' : 'ellipse-outline'}
                 size={16}
-                color={/[A-Z]/.test(newPassword) ? '#00A86B' : '#9E9E9E'}
+                color={/[A-Z]/.test(newPassword) ? Colors.primary : Colors.textLight}
               />
               <Text style={styles.requirementText}>One uppercase letter</Text>
             </View>
@@ -223,7 +224,7 @@ const SecurityScreen: React.FC = () => {
               <Ionicons
                 name={/[0-9]/.test(newPassword) ? 'checkmark-circle' : 'ellipse-outline'}
                 size={16}
-                color={/[0-9]/.test(newPassword) ? '#00A86B' : '#9E9E9E'}
+                color={/[0-9]/.test(newPassword) ? Colors.primary : Colors.textLight}
               />
               <Text style={styles.requirementText}>One number</Text>
             </View>
@@ -249,150 +250,150 @@ const SecurityScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: Colors.backgroundGray,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    backgroundColor: '#FFFFFF',
+    paddingHorizontal: Spacing.screenPadding,
+    paddingVertical: Spacing.medium,
+    backgroundColor: Colors.white,
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E5E5',
+    borderBottomColor: Colors.border,
   },
   headerTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#000000',
+    fontSize: Typography.h4,
+    fontWeight: Typography.bold,
+    color: Colors.black,
     fontFamily: 'Poppins',
   },
   infoCard: {
-    backgroundColor: '#FFFFFF',
-    marginHorizontal: 20,
-    marginTop: 20,
-    marginBottom: 16,
-    padding: 24,
-    borderRadius: 16,
+    backgroundColor: Colors.white,
+    marginHorizontal: Spacing.screenPadding,
+    marginTop: Spacing.screenPadding,
+    marginBottom: Spacing.medium,
+    padding: Spacing.large,
+    borderRadius: BorderRadius.modal,
     alignItems: 'center',
-    shadowColor: '#000',
+    shadowColor: Colors.black,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08,
     shadowRadius: 4,
     elevation: 3,
   },
   infoTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#000000',
-    marginTop: 12,
-    marginBottom: 8,
+    fontSize: Typography.h5,
+    fontWeight: Typography.bold,
+    color: Colors.black,
+    marginTop: Spacing.gap,
+    marginBottom: Spacing.small,
     fontFamily: 'Poppins',
   },
   infoText: {
-    fontSize: 13,
-    color: '#777',
+    fontSize: Typography.caption + 1,
+    color: Colors.textSecondary,
     textAlign: 'center',
     lineHeight: 20,
   },
   formContainer: {
-    backgroundColor: '#FFFFFF',
-    marginHorizontal: 20,
-    paddingHorizontal: 20,
-    paddingVertical: 24,
-    borderRadius: 16,
-    marginBottom: 16,
-    shadowColor: '#000',
+    backgroundColor: Colors.white,
+    marginHorizontal: Spacing.screenPadding,
+    paddingHorizontal: Spacing.screenPadding,
+    paddingVertical: Spacing.large,
+    borderRadius: BorderRadius.modal,
+    marginBottom: Spacing.medium,
+    shadowColor: Colors.black,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08,
     shadowRadius: 4,
     elevation: 3,
   },
   inputGroup: {
-    marginBottom: 20,
+    marginBottom: Spacing.screenPadding,
   },
   labelRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: Spacing.small,
   },
   label: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#000000',
+    fontSize: Typography.bodySmall,
+    fontWeight: Typography.semibold,
+    color: Colors.black,
     fontFamily: 'Poppins',
   },
   required: {
-    color: '#E53935',
+    color: Colors.error,
   },
   passwordInputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F5F5F5',
-    borderRadius: 12,
+    backgroundColor: Colors.backgroundGray,
+    borderRadius: BorderRadius.medium,
     borderWidth: 1,
-    borderColor: '#E5E5E5',
-    paddingHorizontal: 16,
-    paddingVertical: 14,
+    borderColor: Colors.border,
+    paddingHorizontal: Spacing.medium,
+    paddingVertical: Spacing.bodySmall,
   },
   passwordInput: {
     flex: 1,
-    fontSize: 14,
-    color: '#000000',
+    fontSize: Typography.bodySmall,
+    color: Colors.black,
     padding: 0,
   },
   errorText: {
-    fontSize: 12,
-    color: '#E53935',
-    marginTop: 6,
+    fontSize: Typography.caption,
+    color: Colors.error,
+    marginTop: Spacing.small - 2,
   },
   requirementsCard: {
-    backgroundColor: '#F5F5F5',
-    borderRadius: 12,
-    padding: 16,
-    marginTop: 4,
+    backgroundColor: Colors.backgroundGray,
+    borderRadius: BorderRadius.medium,
+    padding: Spacing.medium,
+    marginTop: Spacing.xs,
   },
   requirementsTitle: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#000000',
-    marginBottom: 12,
+    fontSize: Typography.caption + 1,
+    fontWeight: Typography.semibold,
+    color: Colors.black,
+    marginBottom: Spacing.gap,
     fontFamily: 'Poppins',
   },
   requirementItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    marginBottom: 8,
+    gap: Spacing.small,
+    marginBottom: Spacing.small,
   },
   requirementText: {
-    fontSize: 12,
-    color: '#777',
+    fontSize: Typography.caption,
+    color: Colors.textSecondary,
   },
   buttonContainer: {
-    paddingHorizontal: 20,
-    paddingBottom: 32,
+    paddingHorizontal: Spacing.screenPadding,
+    paddingBottom: Spacing.xl,
   },
   saveButton: {
-    backgroundColor: '#00A86B',
-    borderRadius: 12,
-    paddingVertical: 16,
+    backgroundColor: Colors.primary,
+    borderRadius: BorderRadius.medium,
+    paddingVertical: Spacing.medium,
     alignItems: 'center',
-    shadowColor: '#000',
+    shadowColor: Colors.black,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
   },
   saveButtonDisabled: {
-    backgroundColor: '#9E9E9E',
+    backgroundColor: Colors.textLight,
     opacity: 0.5,
   },
   saveButtonText: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#FFFFFF',
+    fontSize: Typography.body,
+    fontWeight: Typography.bold,
+    color: Colors.white,
     fontFamily: 'Poppins',
   },
 });

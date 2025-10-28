@@ -15,7 +15,6 @@ import type { StackNavigationProp } from '@react-navigation/stack';
 import type { RootStackParamList } from '../App';
 import { Ionicons } from '@expo/vector-icons';
 import SavedAddressesScreen from './SavedAddressesScreen';
-// import { getDefaultLocation } from '../api/locationAPI'; // Commented out - using local data
 
 type HomescreenNavigationProp = StackNavigationProp<RootStackParamList>;
 
@@ -40,8 +39,6 @@ const HomescreenNew: React.FC = () => {
   const [showAddressModal, setShowAddressModal] = useState(false);
   const [deliveryAddress, setDeliveryAddress] = useState('Sky Avenue');
 
-  // Use local default address instead of API call
-  // TODO: Re-enable API call when backend is ready
   useFocusEffect(
     React.useCallback(() => {
       loadDefaultAddress();
@@ -49,30 +46,11 @@ const HomescreenNew: React.FC = () => {
   );
 
   const loadDefaultAddress = () => {
-    // Use fallback address - update when backend is ready
     setDeliveryAddress('Sky Avenue');
   };
 
-  // Commented out for now - re-enable when backend is ready
-  // const fetchDefaultAddress = async () => {
-  //   try {
-  //     const response = await getDefaultLocation();
-  //     if (response.success && response.data?.location) {
-  //       const location = response.data.location;
-  //       // Format address for display
-  //       const addressLabel = location.area && location.sector
-  //         ? `${location.area} - ${location.sector}`
-  //         : location.area || location.sector || location.city || 'Sky Avenue';
-  //       setDeliveryAddress(addressLabel);
-  //     }
-  //   } catch (error) {
-  //     console.log('No default address set, using default');
-  //   }
-  // };
-
   const handleAddressModalClose = () => {
     setShowAddressModal(false);
-    // Refresh the default address when modal closes
     loadDefaultAddress();
   };
 
@@ -158,7 +136,7 @@ const HomescreenNew: React.FC = () => {
   );
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top']}>
       <StatusBar barStyle="light-content" backgroundColor="#166534" />
 
       {/* Header Section */}
@@ -197,7 +175,11 @@ const HomescreenNew: React.FC = () => {
         </View>
       </View>
 
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView 
+        style={styles.content} 
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
+      >
         {/* Banner Section */}
         <View style={styles.bannerSection}>
           <Image
@@ -304,48 +286,21 @@ const HomescreenNew: React.FC = () => {
         </View>
       </ScrollView>
 
-      {/* Floating Chatbot Button - Updated with message-circle icon and matching green */}
-      <View style={styles.chatbotWrapper}>
-        <TouchableOpacity
-          style={styles.floatingChatButton}
-          onPress={() => {
-            // Add chatbot navigation logic here
-            console.log('Open chatbot');
-          }}
-        >
-          <Image
-            source={require('../images/homepage-assets/message-circle.png')}
-            style={styles.chatbotIcon}
-            resizeMode="contain"
-          />
-        </TouchableOpacity>
-      </View>
-
-      {/* Bottom Navigation */}
-      <View style={styles.bottomNav}>
-        <TouchableOpacity style={styles.navItem} onPress={() => navigation.navigate('HomescreenNew')}>
-          <Ionicons name="home" size={24} color="#166534" />
-          <Text style={styles.navLabelActive}>Home</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.navItem} onPress={() => navigation.navigate('Categories')}>
-          <Ionicons name="grid-outline" size={24} color="#64748B" />
-          <Text style={styles.navLabel}>Categories</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.navItem} onPress={() => navigation.navigate('Sell/Ads' as any)}>
-          <Ionicons name="trending-up-outline" size={24} color="#64748B" />
-          <Text style={styles.navLabel}>Sell/Ads</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity 
-          style={[styles.navItem, styles.profileButton]} 
-          onPress={() => navigation.navigate('Profile' as any)}
-        >
-          <Ionicons name="person-outline" size={24} color="#64748B" />
-          <Text style={styles.navLabel}>Profile</Text>
-        </TouchableOpacity>
-      </View>
+      {/* Floating Chatbot Button */}
+      <TouchableOpacity
+        style={styles.chatbotButton}
+        onPress={() => {
+          console.log('Opening Messages screen');
+          navigation.navigate('Messages');
+        }}
+        activeOpacity={0.8}
+      >
+        <Image 
+          source={require('../images/homepage-assets/message-circle.png')}
+          style={styles.chatbotIcon}
+          resizeMode="contain"
+        />
+      </TouchableOpacity>
 
       {showAddressModal && (
         <SavedAddressesScreen 
@@ -379,11 +334,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  iconImage: {
-    width: 24,
-    height: 24,
-    tintColor: '#FFFFFF',
-  },
   headerContent: {
     gap: 12,
   },
@@ -413,7 +363,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    justifyContent: 'space-between',
   },
   searchPlaceholder: {
     color: '#94A3B8',
@@ -421,13 +371,11 @@ const styles = StyleSheet.create({
     fontWeight: '400',
     fontFamily: 'DM Sans',
   },
-  cursor: {
-    width: 1,
-    height: 16,
-    backgroundColor: '#94A3B8',
-  },
   content: {
     flex: 1,
+  },
+  scrollContent: {
+    paddingBottom: 100,
   },
   bannerSection: {
     paddingHorizontal: 16,
@@ -611,6 +559,7 @@ const styles = StyleSheet.create({
   },
   listsContainer: {
     flexDirection: 'row',
+    paddingLeft: 16,
   },
   createListCard: {
     width: 164,
@@ -669,9 +618,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  listImage: {
-    fontSize: 40,
-  },
   listImageIcon: {
     width: 60,
     height: 60,
@@ -703,85 +649,25 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     fontFamily: 'DM Sans',
   },
-  bottomNav: {
-    flexDirection: 'row',
-    backgroundColor: '#FFFFFF',
-    borderTopWidth: 1,
-    borderTopColor: '#E5E7EB',
-    paddingHorizontal: 8,
-    paddingTop: 10,
-    paddingBottom: 8,
-    justifyContent: 'space-around',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 8,
-  },
-  navItem: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 4,
-    paddingVertical: 4,
-    paddingHorizontal: 12,
-    minWidth: 70,
-  },
-  navIconActive: {
-    color: '#166534',
-    fontSize: 20,
-  },
-  navIcon: {
-    color: '#334155',
-    fontSize: 20,
-  },
-  navIconImage: {
-    width: 24,
-    height: 24,
-    opacity: 0.6,
-  },
-  navIconImageActive: {
-    opacity: 1,
-    tintColor: '#166534',
-  },
-  navLabelActive: {
-    color: '#166534',
-    fontSize: 11,
-    fontWeight: '500',
-    fontFamily: 'Poppins',
-  },
-  navLabel: {
-    color: '#64748B',
-    fontSize: 11,
-    fontWeight: '400',
-    fontFamily: 'Poppins',
-  },
-  profileButton: {
-    zIndex: 10,
-  },
-  chatbotWrapper: {
+  chatbotButton: {
     position: 'absolute',
-    bottom: 0,
-    right: 0,
-    left: 0,
-    top: 0,
-    pointerEvents: 'box-none',
-  },
-  floatingChatButton: {
-    position: 'absolute',
-    bottom: 90,
     right: 20,
-    backgroundColor: '#166534',
-    borderRadius: 50,
+    bottom: 90,
     width: 56,
     height: 56,
+    borderRadius: 28,
+    backgroundColor: '#166534',
     justifyContent: 'center',
     alignItems: 'center',
-    elevation: 8,
     shadowColor: '#000',
-    shadowOpacity: 0.25,
-    shadowOffset: { width: 0, height: 4 },
-    shadowRadius: 8,
-    zIndex: 5,
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 4.65,
+    elevation: 8,
+    zIndex: 999,
   },
   chatbotIcon: {
     width: 28,

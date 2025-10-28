@@ -4,29 +4,30 @@ import {
   Text,
   TouchableOpacity,
   StyleSheet,
-  SafeAreaView,
   StatusBar,
   Animated,
   Dimensions,
   ActivityIndicator,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
-import type { RootStackParamList } from '../App';
-import { getProfile } from '../api/userAPI';
-import { getUserData } from '../api/axiosConfig';
+import type { AuthStackParamList } from '../navigation/AuthStack';
+import { useAuth } from '../contexts/AuthContext';
+import { Colors, Typography, Spacing, BorderRadius, Layout } from '../constants/theme';
 
-type WelcomeScreenNavigationProp = StackNavigationProp<RootStackParamList>;
+type WelcomeScreenNavigationProp = StackNavigationProp<AuthStackParamList>;
 
 const { width, height } = Dimensions.get('window');
 
 const WelcomeScreen = () => {
   const navigation = useNavigation<WelcomeScreenNavigationProp>();
+  const { user } = useAuth();
   const confettiAnimations = useRef<Animated.Value[]>([]);
   const confettiCount = 50;
   const [userName, setUserName] = useState('');
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     // Initialize confetti animations
@@ -37,30 +38,9 @@ const WelcomeScreen = () => {
     // Start confetti animation
     startConfettiAnimation();
 
-    // Load user data
-    loadUserData();
-  }, []);
-
-  const loadUserData = async () => {
-    try {
-      // First try to get from local storage
-      const userData = await getUserData();
-      if (userData) {
-        setUserName(userData.name || 'User');
-      } else {
-        // Fetch from API
-        const response = await getProfile();
-        if (response.success && response.data.user) {
-          setUserName(response.data.user.name || 'User');
-        }
-      }
-    } catch (error) {
-      console.error('Failed to load user data:', error);
-      setUserName('User');
-    } finally {
-      setLoading(false);
-    }
-  };
+    // Get user name from AuthContext
+    setUserName(user?.name || 'User');
+  }, [user]);
 
   const startConfettiAnimation = () => {
     const animations = confettiAnimations.current.map((anim, index) => {
@@ -84,7 +64,9 @@ const WelcomeScreen = () => {
   };
 
   const handleStartExploring = () => {
-    navigation.navigate('Home');
+    // Since this is in AuthStack and we're authenticated,
+    // just going back will trigger the auth check and switch to MainStack
+    navigation.goBack();
   };
 
   const handleBack = () => {
@@ -93,7 +75,7 @@ const WelcomeScreen = () => {
 
   const renderConfetti = () => {
     const confettiElements = [];
-    const colors = ['#E84118', '#9C88FF', '#FF6B9D', '#4834DF'];
+    const colors = [Colors.error, Colors.primary, Colors.accent, Colors.info];
 
     for (let i = 0; i < confettiCount; i++) {
       const randomX = Math.random() * width;
@@ -137,7 +119,7 @@ const WelcomeScreen = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#F8F9FA" />
+      <StatusBar barStyle="dark-content" backgroundColor={Colors.backgroundGray} />
 
       {/* Confetti Animation */}
       <View style={styles.confettiContainer}>
@@ -151,7 +133,7 @@ const WelcomeScreen = () => {
           onPress={handleBack}
           activeOpacity={0.7}
         >
-          <Ionicons name="arrow-back" size={24} color="#1A1A1A" />
+          <Ionicons name="arrow-back" size={Layout.iconSize} color={Colors.black} />
         </TouchableOpacity>
       </View>
 
@@ -160,14 +142,14 @@ const WelcomeScreen = () => {
         {/* Illustration Placeholder */}
         <View style={styles.illustrationContainer}>
           <View style={styles.illustrationPlaceholder}>
-            <Ionicons name="checkmark-circle" size={120} color="#0D7F6F" />
+            <Ionicons name="checkmark-circle" size={120} color={Colors.primary} />
           </View>
         </View>
 
         {/* Text Content */}
         <View style={styles.textContent}>
           {loading ? (
-            <ActivityIndicator size="large" color="#0D7F6F" />
+            <ActivityIndicator size="large" color={Colors.primary} />
           ) : (
             <>
               <Text style={styles.title}>Welcome aboard{userName ? `, ${userName}` : ''}!</Text>
@@ -194,7 +176,7 @@ const WelcomeScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8F9FA',
+    backgroundColor: Colors.backgroundGray,
   },
   confettiContainer: {
     position: 'absolute',
@@ -206,62 +188,62 @@ const styles = StyleSheet.create({
   },
   confetti: {
     position: 'absolute',
-    borderRadius: 2,
+    borderRadius: BorderRadius.none,
   },
   header: {
-    paddingHorizontal: 20,
-    paddingTop: 20,
+    paddingHorizontal: Spacing.screenPadding,
+    paddingTop: Spacing.screenPadding,
     zIndex: 2,
   },
   backButton: {
-    width: 40,
-    height: 40,
+    width: Spacing.xxl,
+    height: Spacing.xxl,
     justifyContent: 'center',
   },
   content: {
     flex: 1,
     justifyContent: 'space-between',
-    paddingHorizontal: 24,
-    paddingBottom: 40,
+    paddingHorizontal: Spacing.large,
+    paddingBottom: Spacing.xxl,
     zIndex: 2,
   },
   illustrationContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 20,
+    marginTop: Spacing.screenPadding,
   },
   illustrationPlaceholder: {
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 40,
+    padding: Spacing.xxl,
   },
   textContent: {
     alignItems: 'center',
-    paddingHorizontal: 20,
-    marginBottom: 24,
+    paddingHorizontal: Spacing.screenPadding,
+    marginBottom: Spacing.large,
   },
   title: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: '#1A1A1A',
-    marginBottom: 12,
+    fontSize: Typography.h2,
+    fontWeight: Typography.bold,
+    color: Colors.black,
+    marginBottom: Spacing.gap,
     textAlign: 'center',
   },
   subtitle: {
-    fontSize: 16,
-    color: '#666',
+    fontSize: Typography.body,
+    color: Colors.textSecondary,
     textAlign: 'center',
-    lineHeight: 24,
-    paddingHorizontal: 10,
+    lineHeight: Spacing.large,
+    paddingHorizontal: Spacing.small + 2,
   },
   startButton: {
-    backgroundColor: '#0D7F6F',
-    borderRadius: 12,
+    backgroundColor: Colors.primary,
+    borderRadius: BorderRadius.medium,
     height: 56,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#0D7F6F',
+    shadowColor: Colors.primary,
     shadowOffset: {
       width: 0,
       height: 4,
@@ -271,9 +253,9 @@ const styles = StyleSheet.create({
     elevation: 6,
   },
   startButtonText: {
-    color: '#fff',
-    fontSize: 17,
-    fontWeight: '600',
+    color: Colors.textWhite,
+    fontSize: Typography.h6 + 1,
+    fontWeight: Typography.semibold,
   },
 });
 

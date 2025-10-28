@@ -8,20 +8,21 @@ import axiosInstance, { setUserData } from './axiosConfig';
 /**
  * GET PROFILE - Fetch current user profile
  * @returns {Promise} User profile data
- * 
+ *
  * Usage:
  * const response = await getProfile();
- * console.log(response.data.user);
+ * console.log(response.user);
  */
 export const getProfile = async () => {
   try {
     const response = await axiosInstance.get('/user/profile');
-    
-    if (response.success && response.data.user) {
+
+    // Response interceptor returns response.data, so access properties directly
+    if (response && response.success && response.user) {
       // Update stored user data
-      await setUserData(response.data.user);
+      await setUserData(response.user);
     }
-    
+
     return response;
   } catch (error) {
     throw error;
@@ -42,12 +43,13 @@ export const getProfile = async () => {
 export const updateProfile = async (profileData) => {
   try {
     const response = await axiosInstance.put('/user/profile', profileData);
-    
-    if (response.success && response.data.user) {
+
+    // Response interceptor returns response.data, so access properties directly
+    if (response && response.success && response.user) {
       // Update stored user data
-      await setUserData(response.data.user);
+      await setUserData(response.user);
     }
-    
+
     return response;
   } catch (error) {
     throw error;

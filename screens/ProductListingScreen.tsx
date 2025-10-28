@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { getAllProducts, searchProducts } from '../api/productAPI';
+import { Colors, Typography, Spacing, BorderRadius, Layout } from '../constants/theme';
 
 const { width } = Dimensions.get('window');
 const cardWidth = (width - 48) / 2;
@@ -47,8 +48,11 @@ const ProductListingScreen = () => {
       setError(null);
       const response = await getAllProducts({ limit: 50 });
 
-      if (response.success && response.data) {
-        setProducts(response.data.map((product: any) => ({
+      // Response interceptor unwraps response.data
+      // Handle both array response and object with data property
+      const productData = Array.isArray(response) ? response : (response?.data || response?.products || []);
+      if (productData && productData.length > 0) {
+        setProducts(productData.map((product: any) => ({
           id: product.id.toString(),
           name: product.name,
           description: product.description || '',
@@ -121,7 +125,7 @@ const ProductListingScreen = () => {
       {/* Loading State */}
       {loading && (
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#059669" />
+          <ActivityIndicator size="large" color={Colors.primary} />
           <Text style={styles.loadingText}>Loading products...</Text>
         </View>
       )}
@@ -195,50 +199,50 @@ const ProductListingScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.background,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingHorizontal: Spacing.medium,
+    paddingVertical: Spacing.gap,
     paddingTop: 50,
   },
   backIcon: {
-    fontSize: 24,
-    color: '#000',
+    fontSize: Layout.iconSize,
+    color: Colors.black,
   },
   headerTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#000',
+    fontSize: Typography.h5,
+    fontWeight: Typography.semibold,
+    color: Colors.black,
   },
   filterIcon: {
-    fontSize: 24,
-    color: '#000',
+    fontSize: Layout.iconSize,
+    color: Colors.black,
   },
   filterContainer: {
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingHorizontal: Spacing.medium,
+    paddingVertical: Spacing.gap,
   },
   filterChip: {
-    paddingHorizontal: 20,
-    paddingVertical: 8,
-    borderRadius: 20,
-    backgroundColor: '#F3F4F6',
-    marginRight: 8,
+    paddingHorizontal: Spacing.screenPadding,
+    paddingVertical: Spacing.small,
+    borderRadius: BorderRadius.large,
+    backgroundColor: Colors.backgroundGray,
+    marginRight: Spacing.small,
   },
   filterChipActive: {
-    backgroundColor: '#059669',
+    backgroundColor: Colors.primary,
   },
   filterText: {
-    fontSize: 14,
-    color: '#6B7280',
-    fontWeight: '500',
+    fontSize: Typography.bodySmall,
+    color: Colors.textSecondary,
+    fontWeight: Typography.medium,
   },
   filterTextActive: {
-    color: '#FFFFFF',
+    color: Colors.textWhite,
   },
   scrollView: {
     flex: 1,
@@ -246,19 +250,19 @@ const styles = StyleSheet.create({
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    paddingHorizontal: 16,
-    paddingBottom: 20,
+    paddingHorizontal: Spacing.medium,
+    paddingBottom: Spacing.screenPadding,
   },
   card: {
     width: cardWidth,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    padding: 12,
-    marginRight: 16,
-    marginBottom: 16,
+    backgroundColor: Colors.background,
+    borderRadius: BorderRadius.card,
+    padding: Spacing.gap,
+    marginRight: Spacing.medium,
+    marginBottom: Spacing.medium,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
-    shadowColor: '#000',
+    borderColor: Colors.border,
+    shadowColor: Colors.black,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
     shadowRadius: 4,
@@ -266,115 +270,115 @@ const styles = StyleSheet.create({
   },
   discountBadge: {
     position: 'absolute',
-    top: 8,
-    left: 8,
-    backgroundColor: '#FCD34D',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
+    top: Spacing.small,
+    left: Spacing.small,
+    backgroundColor: Colors.warning,
+    paddingHorizontal: Spacing.small,
+    paddingVertical: Spacing.xs,
+    borderRadius: BorderRadius.small,
     zIndex: 1,
   },
   discountText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#000',
+    fontSize: Typography.caption,
+    fontWeight: Typography.semibold,
+    color: Colors.black,
   },
   productImage: {
     width: '100%',
     height: 120,
-    borderRadius: 8,
-    marginBottom: 8,
+    borderRadius: BorderRadius.button,
+    marginBottom: Spacing.small,
   },
   productName: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#000',
-    marginBottom: 4,
+    fontSize: Typography.bodySmall,
+    fontWeight: Typography.semibold,
+    color: Colors.black,
+    marginBottom: Spacing.xs,
   },
   productDescription: {
-    fontSize: 12,
-    color: '#6B7280',
-    marginBottom: 8,
+    fontSize: Typography.caption,
+    color: Colors.textSecondary,
+    marginBottom: Spacing.small,
   },
   productPrice: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#F97316',
-    marginBottom: 12,
+    fontSize: Typography.body,
+    fontWeight: Typography.bold,
+    color: Colors.accent,
+    marginBottom: Spacing.gap,
   },
   actionRow: {
     flexDirection: 'column',
-    gap: 8,
+    gap: Spacing.small,
   },
   quantitySelector: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: '#E5E7EB',
-    borderRadius: 6,
-    paddingVertical: 4,
+    borderColor: Colors.border,
+    borderRadius: BorderRadius.small,
+    paddingVertical: Spacing.xs,
   },
   quantityButton: {
-    paddingHorizontal: 12,
-    paddingVertical: 4,
+    paddingHorizontal: Spacing.gap,
+    paddingVertical: Spacing.xs,
   },
   quantityButtonText: {
-    fontSize: 18,
-    color: '#6B7280',
+    fontSize: Typography.h5,
+    color: Colors.textSecondary,
   },
   quantityText: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#000',
+    fontSize: Typography.bodySmall,
+    fontWeight: Typography.medium,
+    color: Colors.black,
     minWidth: 20,
     textAlign: 'center',
   },
   addButton: {
-    backgroundColor: '#059669',
-    borderRadius: 6,
-    paddingVertical: 10,
+    backgroundColor: Colors.primary,
+    borderRadius: BorderRadius.small,
+    paddingVertical: Spacing.small,
     alignItems: 'center',
   },
   addButtonText: {
-    color: '#FFFFFF',
+    color: Colors.textWhite,
     fontSize: 13,
-    fontWeight: '600',
+    fontWeight: Typography.semibold,
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingVertical: 40,
+    paddingVertical: Spacing.xxl,
   },
   loadingText: {
-    marginTop: 12,
-    fontSize: 14,
-    color: '#6B7280',
+    marginTop: Spacing.gap,
+    fontSize: Typography.bodySmall,
+    color: Colors.textSecondary,
   },
   errorContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 32,
-    paddingVertical: 40,
+    paddingHorizontal: Spacing.xl,
+    paddingVertical: Spacing.xxl,
   },
   errorText: {
-    fontSize: 14,
-    color: '#EF4444',
+    fontSize: Typography.bodySmall,
+    color: Colors.error,
     textAlign: 'center',
-    marginBottom: 16,
+    marginBottom: Spacing.medium,
   },
   retryButton: {
-    backgroundColor: '#059669',
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 8,
+    backgroundColor: Colors.primary,
+    paddingHorizontal: Spacing.large,
+    paddingVertical: Spacing.gap,
+    borderRadius: BorderRadius.button,
   },
   retryButtonText: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: '600',
+    color: Colors.textWhite,
+    fontSize: Typography.bodySmall,
+    fontWeight: Typography.semibold,
   },
 });
 

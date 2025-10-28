@@ -21,6 +21,7 @@ import { useNavigation } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
 import type { RootStackParamList } from '../App';
 import * as ImagePicker from 'expo-image-picker';
+import { Colors, Typography, Spacing, BorderRadius, Layout } from '../constants/theme';
 
 type EditProfileScreenNavigationProp = StackNavigationProp<RootStackParamList>;
 
@@ -116,10 +117,10 @@ const EditProfileScreen: React.FC = () => {
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           activeOpacity={0.7}
         >
-          <Ionicons name="arrow-back" size={24} color="#000000" />
+          <Ionicons name="arrow-back" size={Layout.iconSize} color={Colors.black} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Edit Profile</Text>
-        <View style={{ width: 24 }} />
+        <View style={{ width: Layout.iconSize }} />
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false}>
@@ -139,7 +140,7 @@ const EditProfileScreen: React.FC = () => {
               onPress={handlePickPhoto}
               activeOpacity={0.7}
             >
-              <Ionicons name="camera" size={20} color="#FFFFFF" />
+              <Ionicons name="camera" size={20} color={Colors.white} />
             </TouchableOpacity>
           </View>
           <Text style={styles.photoLabel}>Profile Photo</Text>
@@ -154,7 +155,7 @@ const EditProfileScreen: React.FC = () => {
             <TextInput
               style={styles.input}
               placeholder="Enter your full name"
-              placeholderTextColor="#999"
+              placeholderTextColor={Colors.textLight}
               value={fullName}
               onChangeText={setFullName}
               autoCapitalize="words"
@@ -167,7 +168,7 @@ const EditProfileScreen: React.FC = () => {
             <TextInput
               style={styles.input}
               placeholder="Enter your email"
-              placeholderTextColor="#999"
+              placeholderTextColor={Colors.textLight}
               value={email}
               onChangeText={setEmail}
               keyboardType="email-address"
@@ -186,12 +187,12 @@ const EditProfileScreen: React.FC = () => {
               >
                 <Text style={styles.countryFlag}>{selectedCountry.flag}</Text>
                 <Text style={styles.countryCode}>{selectedCountry.code}</Text>
-                <Ionicons name="chevron-down" size={16} color="#777" />
+                <Ionicons name="chevron-down" size={16} color={Colors.textSecondary} />
               </TouchableOpacity>
               <TextInput
                 style={styles.phoneInput}
                 placeholder="3001234567"
-                placeholderTextColor="#999"
+                placeholderTextColor={Colors.textLight}
                 value={phone}
                 onChangeText={setPhone}
                 keyboardType="phone-pad"
@@ -228,7 +229,7 @@ const EditProfileScreen: React.FC = () => {
                 onPress={() => setShowCountryModal(false)}
                 hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
               >
-                <Ionicons name="close" size={24} color="#000000" />
+                <Ionicons name="close" size={Layout.iconSize} color={Colors.black} />
               </TouchableOpacity>
             </View>
             <ScrollView style={styles.countryList} showsVerticalScrollIndicator={false}>
@@ -246,7 +247,7 @@ const EditProfileScreen: React.FC = () => {
                   <Text style={styles.countryItemName}>{country.country}</Text>
                   <Text style={styles.countryItemCode}>{country.code}</Text>
                   {selectedCountry.code === country.code && (
-                    <Ionicons name="checkmark" size={20} color="#00A86B" />
+                    <Ionicons name="checkmark" size={20} color={Colors.success} />
                   )}
                 </TouchableOpacity>
               ))}
@@ -261,39 +262,39 @@ const EditProfileScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: Colors.backgroundGray,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    backgroundColor: '#FFFFFF',
+    paddingHorizontal: Spacing.screenPadding,
+    paddingVertical: Spacing.medium,
+    backgroundColor: Colors.white,
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E5E5',
+    borderBottomColor: Colors.border,
   },
   headerTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#000000',
+    fontSize: Typography.h4,
+    fontWeight: Typography.bold,
+    color: Colors.black,
     fontFamily: 'Poppins',
   },
   photoSection: {
     alignItems: 'center',
-    paddingVertical: 32,
-    backgroundColor: '#FFFFFF',
-    marginBottom: 20,
+    paddingVertical: Spacing.xl,
+    backgroundColor: Colors.white,
+    marginBottom: Spacing.screenPadding,
   },
   photoContainer: {
     position: 'relative',
-    marginBottom: 12,
+    marginBottom: Spacing.gap,
   },
   profilePhoto: {
     width: 120,
     height: 120,
     borderRadius: 60,
-    backgroundColor: '#E5E5E5',
+    backgroundColor: Colors.border,
   },
   cameraButton: {
     position: 'absolute',
@@ -301,169 +302,169 @@ const styles = StyleSheet.create({
     right: 0,
     width: 40,
     height: 40,
-    borderRadius: 20,
-    backgroundColor: '#00A86B',
+    borderRadius: BorderRadius.large,
+    backgroundColor: Colors.success,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 3,
-    borderColor: '#FFFFFF',
-    shadowColor: '#000',
+    borderColor: Colors.white,
+    shadowColor: Colors.black,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
   },
   photoLabel: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#000000',
+    fontSize: Typography.body,
+    fontWeight: Typography.semibold,
+    color: Colors.black,
     fontFamily: 'Poppins',
   },
   photoHint: {
-    fontSize: 12,
-    color: '#777',
-    marginTop: 4,
+    fontSize: Typography.caption,
+    color: Colors.textSecondary,
+    marginTop: Spacing.xs,
   },
   formContainer: {
-    backgroundColor: '#FFFFFF',
-    paddingHorizontal: 20,
-    paddingVertical: 24,
-    marginBottom: 20,
+    backgroundColor: Colors.white,
+    paddingHorizontal: Spacing.screenPadding,
+    paddingVertical: Spacing.large,
+    marginBottom: Spacing.screenPadding,
   },
   inputGroup: {
-    marginBottom: 20,
+    marginBottom: Spacing.screenPadding,
   },
   label: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#000000',
-    marginBottom: 8,
+    fontSize: Typography.bodySmall,
+    fontWeight: Typography.semibold,
+    color: Colors.black,
+    marginBottom: Spacing.small,
     fontFamily: 'Poppins',
   },
   input: {
-    backgroundColor: '#F5F5F5',
-    borderRadius: 12,
+    backgroundColor: Colors.backgroundGray,
+    borderRadius: BorderRadius.medium,
     borderWidth: 1,
-    borderColor: '#E5E5E5',
-    paddingHorizontal: 16,
+    borderColor: Colors.border,
+    paddingHorizontal: Spacing.medium,
     paddingVertical: 14,
-    fontSize: 14,
-    color: '#000000',
+    fontSize: Typography.bodySmall,
+    color: Colors.black,
   },
   phoneInputContainer: {
     flexDirection: 'row',
-    gap: 12,
+    gap: Spacing.gap,
   },
   countryCodeButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F5F5F5',
-    borderRadius: 12,
+    backgroundColor: Colors.backgroundGray,
+    borderRadius: BorderRadius.medium,
     borderWidth: 1,
-    borderColor: '#E5E5E5',
-    paddingHorizontal: 12,
+    borderColor: Colors.border,
+    paddingHorizontal: Spacing.gap,
     paddingVertical: 14,
-    gap: 6,
+    gap: Spacing.small,
   },
   countryFlag: {
-    fontSize: 20,
+    fontSize: Typography.h4,
   },
   countryCode: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#000000',
+    fontSize: Typography.bodySmall,
+    fontWeight: Typography.semibold,
+    color: Colors.black,
   },
   phoneInput: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
-    borderRadius: 12,
+    backgroundColor: Colors.backgroundGray,
+    borderRadius: BorderRadius.medium,
     borderWidth: 1,
-    borderColor: '#E5E5E5',
-    paddingHorizontal: 16,
+    borderColor: Colors.border,
+    paddingHorizontal: Spacing.medium,
     paddingVertical: 14,
-    fontSize: 14,
-    color: '#000000',
+    fontSize: Typography.bodySmall,
+    color: Colors.black,
   },
   buttonContainer: {
-    paddingHorizontal: 20,
-    paddingBottom: 32,
+    paddingHorizontal: Spacing.screenPadding,
+    paddingBottom: Spacing.xl,
   },
   saveButton: {
-    backgroundColor: '#00A86B',
-    borderRadius: 12,
-    paddingVertical: 16,
+    backgroundColor: Colors.success,
+    borderRadius: BorderRadius.medium,
+    paddingVertical: Spacing.medium,
     alignItems: 'center',
-    shadowColor: '#000',
+    shadowColor: Colors.black,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
   },
   saveButtonDisabled: {
-    backgroundColor: '#9E9E9E',
+    backgroundColor: Colors.textLight,
     opacity: 0.5,
   },
   saveButtonText: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#FFFFFF',
+    fontSize: Typography.body,
+    fontWeight: Typography.bold,
+    color: Colors.white,
     fontFamily: 'Poppins',
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: Colors.overlay,
     justifyContent: 'flex-end',
   },
   modalContent: {
-    backgroundColor: '#FFFFFF',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    paddingTop: 20,
+    backgroundColor: Colors.white,
+    borderTopLeftRadius: BorderRadius.large,
+    borderTopRightRadius: BorderRadius.large,
+    paddingTop: Spacing.screenPadding,
     maxHeight: '70%',
   },
   modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingBottom: 16,
+    paddingHorizontal: Spacing.screenPadding,
+    paddingBottom: Spacing.medium,
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E5E5',
+    borderBottomColor: Colors.border,
   },
   modalTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#000000',
+    fontSize: Typography.h5,
+    fontWeight: Typography.bold,
+    color: Colors.black,
     fontFamily: 'Poppins',
   },
   countryList: {
-    paddingHorizontal: 20,
-    paddingTop: 12,
+    paddingHorizontal: Spacing.screenPadding,
+    paddingTop: Spacing.gap,
   },
   countryItem: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 14,
     borderBottomWidth: 1,
-    borderBottomColor: '#F5F5F5',
+    borderBottomColor: Colors.backgroundGray,
   },
   countryItemSelected: {
-    backgroundColor: '#E8F5E9',
+    backgroundColor: Colors.backgroundGray,
   },
   countryItemFlag: {
-    fontSize: 24,
-    marginRight: 12,
+    fontSize: Typography.h3,
+    marginRight: Spacing.gap,
   },
   countryItemName: {
     flex: 1,
-    fontSize: 14,
-    color: '#000000',
-    fontWeight: '500',
+    fontSize: Typography.bodySmall,
+    color: Colors.black,
+    fontWeight: Typography.medium,
   },
   countryItemCode: {
-    fontSize: 14,
-    color: '#777',
-    marginRight: 12,
+    fontSize: Typography.bodySmall,
+    color: Colors.textSecondary,
+    marginRight: Spacing.gap,
   },
 });
 

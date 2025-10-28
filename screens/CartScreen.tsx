@@ -11,10 +11,12 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
-import type { RootStackParamList } from '../App';
-import { Colors, Typography, BorderRadius, Shadows } from '../constants/theme';
+import type { MainStackParamList } from '../navigation/MainStack';
+import { Colors, Typography, Spacing, BorderRadius, Layout } from '../constants/theme';
+import { AppHeader } from '../components/shared/AppHeader';
+import { ThemedButton } from '../components/ThemedButton';
 
-type CartNavigationProp = StackNavigationProp<RootStackParamList>;
+type CartNavigationProp = StackNavigationProp<MainStackParamList, 'Cart'>;
 
 interface CartItem {
   id: string;
@@ -62,17 +64,9 @@ const CartScreen: React.FC = () => {
   const finalAmount = subtotal + deliveryCharges + gst;
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
       <StatusBar barStyle="dark-content" backgroundColor={Colors.background} />
-
-      {/* Header */}
-      <SafeAreaView edges={['top']} style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-          <Text style={styles.backIcon}>←</Text>
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Shopping Cart</Text>
-        <View style={styles.placeholder} />
-      </SafeAreaView>
+      <AppHeader title="Shopping Cart" showBack={true} showHome={true} />
 
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         {/* Cart Items */}
@@ -168,14 +162,13 @@ const CartScreen: React.FC = () => {
 
       {/* Checkout Button */}
       <View style={styles.bottomBar}>
-        <TouchableOpacity
-          style={styles.checkoutButton}
-          onPress={() => navigation.navigate('AddNewAddressConfirm' as any)}
-        >
-          <Text style={styles.checkoutButtonText}>Checkout</Text>
-        </TouchableOpacity>
+        <ThemedButton
+          title="Checkout"
+          onPress={() => navigation.navigate('AddNewAddressConfirm', { address: {} })}
+          type="solid"
+        />
       </View>
-    </View>
+    </SafeAreaView>
   );
 };
 
@@ -188,53 +181,52 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingVertical: 12,
+    paddingHorizontal: Spacing.screenPadding,
+    paddingVertical: Spacing.gap,
     backgroundColor: Colors.background,
   },
   backButton: {
-    width: 40,
-    height: 40,
+    width: Layout.avatarSize,
+    height: Layout.avatarSize,
     justifyContent: 'center',
     alignItems: 'flex-start',
   },
   backIcon: {
-    fontSize: 24,
-    color: Colors.text.secondary,
+    fontSize: Typography.h3,
+    color: Colors.textSecondary,
   },
   headerTitle: {
-    fontSize: Typography.fontSize.lg,
-    fontWeight: Typography.fontWeight.semibold,
-    color: Colors.text.primary,
+    fontSize: Typography.h5,
+    fontWeight: Typography.semibold,
+    color: Colors.text,
   },
   placeholder: {
-    width: 40,
+    width: Layout.avatarSize,
   },
   scrollView: {
     flex: 1,
   },
   cartItems: {
-    paddingHorizontal: 20,
-    paddingTop: 16,
+    paddingHorizontal: Spacing.screenPadding,
+    paddingTop: Spacing.medium,
   },
   cartItemCard: {
     flexDirection: 'row',
-    backgroundColor: Colors.surface,
-    borderRadius: BorderRadius.lg,
+    backgroundColor: Colors.white,
+    borderRadius: BorderRadius.large,
     borderWidth: 1,
-    borderColor: Colors.borderLight,
-    padding: 12,
-    marginBottom: 12,
-    ...Shadows.sm,
+    borderColor: Colors.border,
+    padding: Spacing.gap,
+    marginBottom: Spacing.gap,
   },
   itemImageContainer: {
     width: 80,
     height: 80,
-    backgroundColor: Colors.gray[100],
-    borderRadius: BorderRadius.md,
+    backgroundColor: Colors.backgroundGray,
+    borderRadius: BorderRadius.medium,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 12,
+    marginRight: Spacing.gap,
   },
   itemImage: {
     fontSize: 36,
@@ -244,190 +236,174 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   itemName: {
-    fontSize: Typography.fontSize.md,
-    fontWeight: Typography.fontWeight.semibold,
-    color: Colors.text.primary,
-    marginBottom: 4,
+    fontSize: Typography.body,
+    fontWeight: Typography.semibold,
+    color: Colors.text,
+    marginBottom: Spacing.xs,
   },
   itemSize: {
-    fontSize: Typography.fontSize.xs,
-    color: Colors.text.tertiary,
-    marginBottom: 8,
+    fontSize: Typography.caption,
+    color: Colors.textLight,
+    marginBottom: Spacing.small,
   },
   quantityControls: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.gray[100],
-    borderRadius: BorderRadius.md,
-    padding: 4,
-    gap: 12,
+    backgroundColor: Colors.backgroundGray,
+    borderRadius: BorderRadius.medium,
+    padding: Spacing.xs,
+    gap: Spacing.gap,
     alignSelf: 'flex-start',
   },
   quantityButton: {
-    width: 32,
-    height: 32,
+    width: Spacing.xl,
+    height: Spacing.xl,
     justifyContent: 'center',
     alignItems: 'center',
   },
   quantityButtonText: {
-    fontSize: Typography.fontSize.lg,
-    color: Colors.text.secondary,
-    fontWeight: Typography.fontWeight.medium,
+    fontSize: Typography.h5,
+    color: Colors.textSecondary,
+    fontWeight: Typography.medium,
   },
   quantityValue: {
-    fontSize: Typography.fontSize.base,
-    fontWeight: Typography.fontWeight.semibold,
-    color: Colors.text.primary,
-    minWidth: 24,
+    fontSize: Typography.body,
+    fontWeight: Typography.semibold,
+    color: Colors.text,
+    minWidth: Layout.iconSize,
     textAlign: 'center',
   },
   removeButton: {
-    width: 32,
-    height: 32,
+    width: Spacing.xl,
+    height: Spacing.xl,
     justifyContent: 'center',
     alignItems: 'center',
   },
   removeIcon: {
-    fontSize: 20,
+    fontSize: Typography.h4,
   },
   addOnsSection: {
-    marginTop: 16,
-    paddingHorizontal: 20,
+    marginTop: Spacing.medium,
+    paddingHorizontal: Spacing.screenPadding,
   },
   addOnsHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: Spacing.gap,
   },
   addOnsTitle: {
-    fontSize: Typography.fontSize.md,
-    fontWeight: Typography.fontWeight.semibold,
-    color: Colors.text.primary,
+    fontSize: Typography.body,
+    fontWeight: Typography.semibold,
+    color: Colors.text,
   },
   optionalBadge: {
     backgroundColor: '#D1FAE5',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
+    paddingHorizontal: Spacing.small,
+    paddingVertical: Spacing.xs,
+    borderRadius: Spacing.gap,
   },
   optionalText: {
-    fontSize: Typography.fontSize.xs,
-    fontWeight: Typography.fontWeight.semibold,
+    fontSize: Typography.caption,
+    fontWeight: Typography.semibold,
     color: '#059669',
   },
   addOnsScroll: {
-    paddingRight: 20,
+    paddingRight: Spacing.screenPadding,
   },
   addOnCard: {
     width: 140,
-    backgroundColor: Colors.surface,
-    borderRadius: BorderRadius.lg,
+    backgroundColor: Colors.white,
+    borderRadius: BorderRadius.large,
     borderWidth: 1,
-    borderColor: Colors.borderLight,
-    padding: 10,
-    marginRight: 12,
-    ...Shadows.sm,
+    borderColor: Colors.border,
+    padding: Spacing.small,
+    marginRight: Spacing.gap,
   },
   addOnImage: {
     width: '100%',
     height: 80,
-    borderRadius: BorderRadius.md,
-    marginBottom: 8,
+    borderRadius: BorderRadius.medium,
+    marginBottom: Spacing.small,
   },
   addOnName: {
-    fontSize: Typography.fontSize.sm,
-    fontWeight: Typography.fontWeight.semibold,
-    color: Colors.text.primary,
-    marginBottom: 4,
+    fontSize: Typography.bodySmall,
+    fontWeight: Typography.semibold,
+    color: Colors.text,
+    marginBottom: Spacing.xs,
   },
   addOnPrice: {
-    fontSize: Typography.fontSize.sm,
-    fontWeight: Typography.fontWeight.bold,
+    fontSize: Typography.bodySmall,
+    fontWeight: Typography.bold,
     color: Colors.accent,
-    marginBottom: 8,
+    marginBottom: Spacing.small,
   },
   addOnButton: {
     backgroundColor: Colors.primary,
-    borderRadius: BorderRadius.sm,
-    paddingVertical: 6,
+    borderRadius: BorderRadius.small,
+    paddingVertical: Spacing.xs + 2,
     justifyContent: 'center',
     alignItems: 'center',
   },
   addOnButtonText: {
-    fontSize: Typography.fontSize.xs,
-    fontWeight: Typography.fontWeight.bold,
+    fontSize: Typography.caption,
+    fontWeight: Typography.bold,
     color: Colors.background,
   },
   subtotalSection: {
-    marginHorizontal: 20,
-    marginTop: 24,
-    padding: 16,
-    backgroundColor: Colors.surface,
-    borderRadius: BorderRadius.lg,
+    marginHorizontal: Spacing.screenPadding,
+    marginTop: Spacing.sectionSpacing,
+    padding: Spacing.medium,
+    backgroundColor: Colors.white,
+    borderRadius: BorderRadius.large,
     borderWidth: 1,
-    borderColor: Colors.borderLight,
-    ...Shadows.sm,
+    borderColor: Colors.border,
   },
   summaryRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: Spacing.small,
   },
   summaryLabel: {
-    fontSize: Typography.fontSize.base,
-    color: Colors.text.tertiary,
+    fontSize: Typography.body,
+    color: Colors.textLight,
   },
   summaryValue: {
-    fontSize: Typography.fontSize.base,
-    fontWeight: Typography.fontWeight.medium,
-    color: Colors.text.primary,
+    fontSize: Typography.body,
+    fontWeight: Typography.medium,
+    color: Colors.text,
   },
   divider: {
     height: 1,
-    backgroundColor: Colors.borderLight,
-    marginVertical: 12,
+    backgroundColor: Colors.border,
+    marginVertical: Spacing.gap,
   },
   finalLabel: {
-    fontSize: Typography.fontSize.md,
-    fontWeight: Typography.fontWeight.bold,
-    color: Colors.text.primary,
+    fontSize: Typography.body,
+    fontWeight: Typography.bold,
+    color: Colors.text,
   },
   finalValue: {
-    fontSize: Typography.fontSize.md,
-    fontWeight: Typography.fontWeight.bold,
+    fontSize: Typography.body,
+    fontWeight: Typography.bold,
     color: Colors.primary,
   },
   totalItemsText: {
-    fontSize: Typography.fontSize.sm,
-    color: Colors.text.tertiary,
-    marginTop: 8,
+    fontSize: Typography.bodySmall,
+    color: Colors.textLight,
+    marginTop: Spacing.small,
   },
   bottomBar: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: Colors.surface,
+    backgroundColor: Colors.white,
     borderTopWidth: 1,
-    borderTopColor: Colors.borderLight,
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    ...Shadows.lg,
-  },
-  checkoutButton: {
-    backgroundColor: '#0A7D44',
-    borderRadius: BorderRadius.lg,
-    paddingVertical: 16,
-    justifyContent: 'center',
-    alignItems: 'center',
-    ...Shadows.md,
-  },
-  checkoutButtonText: {
-    fontSize: Typography.fontSize.md,
-    fontWeight: Typography.fontWeight.bold,
-    color: Colors.surface,
+    borderTopColor: Colors.border,
+    paddingHorizontal: Spacing.screenPadding,
+    paddingVertical: Spacing.medium,
   },
 });
 

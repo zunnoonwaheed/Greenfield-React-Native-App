@@ -1,121 +1,133 @@
 import React, { useState } from 'react';
 import {
+  Modal,
   View,
   Text,
-  StyleSheet,
-  Modal,
-  TouchableOpacity,
   TextInput,
-  ScrollView,
+  TouchableOpacity,
+  StyleSheet,
   KeyboardAvoidingView,
   Platform,
-  Animated,
+  ScrollView,
+  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { Colors, Typography, Spacing, BorderRadius, Shadows, Layout } from '../constants/theme';
+
+/**
+ * Card details interface
+ */
+export interface CardDetails {
+  cardNumber: string;
+  cardholderName: string;
+  expiryMonth: string;
+  expiryYear: string;
+  cvv: string;
+}
 
 interface PaymentCardModalProps {
   visible: boolean;
   onClose: () => void;
-  onAddCard: (cardDetails: CardDetails) => void;
+  onAddCard: (details: CardDetails) => void;
 }
-
-export interface CardDetails {
-  paymentMethod: string;
-  nameOnCard: string;
-  cardNumber: string;
-  expiryDate: string;
-  cvc: string;
-}
-
-interface PaymentOption {
-  id: string;
-  label: string;
-  icon: string;
-}
-
-const paymentOptions: PaymentOption[] = [
-  { id: 'card', label: 'Credit / Debit Card', icon: 'card' },
-  { id: 'paypal', label: 'PayPal', icon: 'logo-paypal' },
-  { id: 'apple', label: 'Apple Pay', icon: 'logo-apple' },
-  { id: 'google', label: 'Google Pay', icon: 'logo-google' },
-  { id: 'cash', label: 'Cash on Delivery', icon: 'cash' },
-];
 
 const PaymentCardModal: React.FC<PaymentCardModalProps> = ({
   visible,
   onClose,
   onAddCard,
 }) => {
-  const [paymentMethod, setPaymentMethod] = useState('');
-  const [showDropdown, setShowDropdown] = useState(false);
-  const [nameOnCard, setNameOnCard] = useState('');
   const [cardNumber, setCardNumber] = useState('');
-  const [expiryDate, setExpiryDate] = useState('');
-  const [cvc, setCvc] = useState('');
+  const [cardholderName, setCardholderName] = useState('');
+  const [expiryMonth, setExpiryMonth] = useState('');
+  const [expiryYear, setExpiryYear] = useState('');
+  const [cvv, setCvv] = useState('');
 
-  // Validation states
-  const [errors, setErrors] = useState<{[key: string]: string}>({});
-  const [touched, setTouched] = useState<{[key: string]: boolean}>({});
+  // Format card number with spaces (XXXX XXXX XXXX XXXX)
+  const formatCardNumber = (text: string) => {
+    const cleaned = text.replace(/\s/g, '');
+    const formatted = cleaned.match(/.{1,4}/g)?.join(' ') || cleaned;
+    return formatted.slice(0, 19); // Max 16 digits + 3 spaces
+  };
 
-  const selectedOption = paymentOptions.find(opt => opt.id === paymentMethod);
+  const handleCardNumberChange = (text: string) => {
+    const formatted = formatCardNumber(text);
+    setCardNumber(formatted);
+  };
 
-  const handleAddCard = () => {
-    // Validate all fields
-    const newErrors: {[key: string]: string} = {};
-
-    if (!paymentMethod) {
-      newErrors.paymentMethod = 'Please select a payment method';
-    }
-
-    if (paymentMethod === 'card') {
-      if (!nameOnCard.trim()) {
-        newErrors.nameOnCard = 'Name on card is required';
-      }
-      if (!cardNumber.trim() || cardNumber.replace(/\s/g, '').length < 16) {
-        newErrors.cardNumber = 'Valid card number is required';
-      }
-      if (!expiryDate.trim() || expiryDate.length < 5) {
-        newErrors.expiryDate = 'Valid expiry date is required';
-      }
-      if (!cvc.trim() || cvc.length < 3) {
-        newErrors.cvc = 'Valid CVC is required';
+  const handleExpiryMonthChange = (text: string) => {
+    const cleaned = text.replace(/\D/g, '');
+    if (cleaned.length <= 2) {
+      const month = parseInt(cleaned, 10);
+      if (month >= 1 && month <= 12) {
+        setExpiryMonth(cleaned);
+      } else if (cleaned.length === 1) {
+        setExpiryMonth(cleaned);
       }
     }
+  };
 
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
-      setTouched({
-        paymentMethod: true,
-        nameOnCard: true,
-        cardNumber: true,
-        expiryDate: true,
-        cvc: true,
-      });
+  const handleExpiryYearChange = (text: string) => {
+    const cleaned = text.replace(/\D/g, '');
+    if (cleaned.length <= 2) {
+      setExpiryYear(cleaned);
+    }
+  };
+
+  const handleCvvChange = (text: string) => {
+    const cleaned = text.replace(/\D/g, '');
+    if (cleaned.length <= 3) {
+      setCvv(cleaned);
+    }
+  };
+
+  const handleSave = () => {
+    // Validation
+    const cardNumberCleaned = cardNumber.replace(/\s/g, '');
+
+    if (!cardholderName.trim()) {
+      Alert.alert('Error', 'Please enter cardholder name');
       return;
     }
 
-    const cardDetails: CardDetails = {
-      paymentMethod: selectedOption?.label || paymentMethod,
-      nameOnCard,
-      cardNumber,
-      expiryDate,
-      cvc,
-    };
-    onAddCard(cardDetails);
+    if (cardNumberCleaned.length < 15 || cardNumberCleaned.length > 16) {
+      Alert.alert('Error', 'Please enter a valid card number (15-16 digits)');
+      return;
+    }
+
+    if (!expiryMonth || parseInt(expiryMonth, 10) < 1 || parseInt(expiryMonth, 10) > 12) {
+      Alert.alert('Error', 'Please enter a valid expiry month (01-12)');
+      return;
+    }
+
+    if (!expiryYear || expiryYear.length !== 2) {
+      Alert.alert('Error', 'Please enter a valid expiry year (YY)');
+      return;
+    }
+
+    if (cvv.length < 3) {
+      Alert.alert('Error', 'Please enter a valid CVV (3 digits)');
+      return;
+    }
+
+    // Call the callback with card details
+    onAddCard({
+      cardNumber: cardNumberCleaned,
+      cardholderName: cardholderName.trim(),
+      expiryMonth,
+      expiryYear,
+      cvv,
+    });
 
     // Reset form
     resetForm();
   };
 
   const resetForm = () => {
-    setPaymentMethod('');
-    setNameOnCard('');
     setCardNumber('');
-    setExpiryDate('');
-    setCvc('');
-    setErrors({});
-    setTouched({});
-    setShowDropdown(false);
+    setCardholderName('');
+    setExpiryMonth('');
+    setExpiryYear('');
+    setCvv('');
   };
 
   const handleClose = () => {
@@ -123,443 +135,250 @@ const PaymentCardModal: React.FC<PaymentCardModalProps> = ({
     onClose();
   };
 
-  const selectPaymentMethod = (optionId: string) => {
-    setPaymentMethod(optionId);
-    setShowDropdown(false);
-    setErrors({ ...errors, paymentMethod: '' });
-  };
-
-  const formatCardNumber = (text: string) => {
-    const cleaned = text.replace(/\D/g, '');
-    const formatted = cleaned.match(/.{1,4}/g)?.join(' ') || cleaned;
-    return formatted.substring(0, 19);
-  };
-
-  const formatExpiryDate = (text: string) => {
-    const cleaned = text.replace(/\D/g, '');
-    if (cleaned.length >= 2) {
-      return cleaned.substring(0, 2) + '/' + cleaned.substring(2, 4);
-    }
-    return cleaned;
-  };
-
-  const handleBlur = (field: string) => {
-    setTouched({ ...touched, [field]: true });
-  };
-
   return (
     <Modal
       visible={visible}
-      transparent={true}
-      animationType="fade"
+      transparent
+      animationType="slide"
       onRequestClose={handleClose}
     >
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.modalOverlay}
+        style={styles.overlay}
       >
-        <TouchableOpacity
-          style={styles.modalBackground}
-          activeOpacity={1}
-          onPress={handleClose}
-        >
-          <TouchableOpacity activeOpacity={1} onPress={(e) => e.stopPropagation()}>
-            <View style={styles.modalContainer}>
-              <ScrollView
-                showsVerticalScrollIndicator={false}
-                keyboardShouldPersistTaps="handled"
-              >
-                {/* Header */}
-                <View style={styles.modalHeader}>
-                  <Text style={styles.modalTitle}>Enter Card Details</Text>
-                  <TouchableOpacity onPress={handleClose} style={styles.closeButton}>
-                    <Ionicons name="close" size={24} color="#424242" />
-                  </TouchableOpacity>
-                </View>
-
-                {/* Payment Method Dropdown */}
-                <View style={styles.inputGroup}>
-                  <Text style={styles.label}>
-                    Payment Method <Text style={styles.required}>*</Text>
-                  </Text>
-                  <TouchableOpacity
-                    style={[
-                      styles.dropdownContainer,
-                      touched.paymentMethod && errors.paymentMethod && styles.inputError
-                    ]}
-                    onPress={() => setShowDropdown(!showDropdown)}
-                    activeOpacity={0.7}
-                  >
-                    {selectedOption ? (
-                      <View style={styles.selectedOption}>
-                        <Ionicons name={selectedOption.icon as any} size={20} color="#2E7D32" />
-                        <Text style={styles.dropdownText}>{selectedOption.label}</Text>
-                      </View>
-                    ) : (
-                      <Text style={styles.placeholderText}>Select a payment method</Text>
-                    )}
-                    <Ionicons
-                      name={showDropdown ? "chevron-up" : "chevron-down"}
-                      size={20}
-                      color="#757575"
-                    />
-                  </TouchableOpacity>
-                  {touched.paymentMethod && errors.paymentMethod && (
-                    <Text style={styles.errorText}>{errors.paymentMethod}</Text>
-                  )}
-
-                  {/* Dropdown Menu */}
-                  {showDropdown && (
-                    <View style={styles.dropdownMenu}>
-                      {paymentOptions.map((option) => (
-                        <TouchableOpacity
-                          key={option.id}
-                          style={[
-                            styles.dropdownOption,
-                            paymentMethod === option.id && styles.dropdownOptionSelected
-                          ]}
-                          onPress={() => selectPaymentMethod(option.id)}
-                          activeOpacity={0.7}
-                        >
-                          <Ionicons
-                            name={option.icon as any}
-                            size={20}
-                            color={paymentMethod === option.id ? "#2E7D32" : "#757575"}
-                          />
-                          <Text style={[
-                            styles.dropdownOptionText,
-                            paymentMethod === option.id && styles.dropdownOptionTextSelected
-                          ]}>
-                            {option.label}
-                          </Text>
-                          {paymentMethod === option.id && (
-                            <Ionicons name="checkmark" size={20} color="#2E7D32" />
-                          )}
-                        </TouchableOpacity>
-                      ))}
-                    </View>
-                  )}
-                </View>
-
-                {/* Show card fields only if Credit/Debit Card is selected */}
-                {paymentMethod === 'card' && (
-                  <>
-                    {/* Name on Card */}
-                    <View style={styles.inputGroup}>
-                      <Text style={styles.label}>
-                        Name on Card <Text style={styles.required}>*</Text>
-                      </Text>
-                      <TextInput
-                        style={[
-                          styles.input,
-                          touched.nameOnCard && errors.nameOnCard && styles.inputError
-                        ]}
-                        placeholder="Enter name"
-                        placeholderTextColor="#9E9E9E"
-                        value={nameOnCard}
-                        onChangeText={(text) => {
-                          setNameOnCard(text);
-                          setErrors({ ...errors, nameOnCard: '' });
-                        }}
-                        onBlur={() => handleBlur('nameOnCard')}
-                      />
-                      {touched.nameOnCard && errors.nameOnCard && (
-                        <Text style={styles.errorText}>{errors.nameOnCard}</Text>
-                      )}
-                    </View>
-
-                    {/* Card Number */}
-                    <View style={styles.inputGroup}>
-                      <Text style={styles.label}>
-                        Card Number <Text style={styles.required}>*</Text>
-                      </Text>
-                      <TextInput
-                        style={[
-                          styles.input,
-                          touched.cardNumber && errors.cardNumber && styles.inputError
-                        ]}
-                        placeholder="1234 5678 9012 3456"
-                        placeholderTextColor="#9E9E9E"
-                        value={cardNumber}
-                        onChangeText={(text) => {
-                          setCardNumber(formatCardNumber(text));
-                          setErrors({ ...errors, cardNumber: '' });
-                        }}
-                        onBlur={() => handleBlur('cardNumber')}
-                        keyboardType="numeric"
-                        maxLength={19}
-                      />
-                      {touched.cardNumber && errors.cardNumber && (
-                        <Text style={styles.errorText}>{errors.cardNumber}</Text>
-                      )}
-                    </View>
-
-                    {/* Expiry and CVC */}
-                    <View style={styles.rowInputs}>
-                      <View style={[styles.inputGroup, styles.halfWidth]}>
-                        <Text style={styles.label}>
-                          Expiry Date <Text style={styles.required}>*</Text>
-                        </Text>
-                        <TextInput
-                          style={[
-                            styles.input,
-                            touched.expiryDate && errors.expiryDate && styles.inputError
-                          ]}
-                          placeholder="MM/YY"
-                          placeholderTextColor="#9E9E9E"
-                          value={expiryDate}
-                          onChangeText={(text) => {
-                            setExpiryDate(formatExpiryDate(text));
-                            setErrors({ ...errors, expiryDate: '' });
-                          }}
-                          onBlur={() => handleBlur('expiryDate')}
-                          keyboardType="numeric"
-                          maxLength={5}
-                        />
-                        {touched.expiryDate && errors.expiryDate && (
-                          <Text style={styles.errorText}>{errors.expiryDate}</Text>
-                        )}
-                      </View>
-
-                      <View style={[styles.inputGroup, styles.halfWidth]}>
-                        <Text style={styles.label}>
-                          CVC <Text style={styles.required}>*</Text>
-                        </Text>
-                        <TextInput
-                          style={[
-                            styles.input,
-                            touched.cvc && errors.cvc && styles.inputError
-                          ]}
-                          placeholder="123"
-                          placeholderTextColor="#9E9E9E"
-                          value={cvc}
-                          onChangeText={(text) => {
-                            setCvc(text);
-                            setErrors({ ...errors, cvc: '' });
-                          }}
-                          onBlur={() => handleBlur('cvc')}
-                          keyboardType="numeric"
-                          maxLength={3}
-                          secureTextEntry={true}
-                        />
-                        {touched.cvc && errors.cvc && (
-                          <Text style={styles.errorText}>{errors.cvc}</Text>
-                        )}
-                      </View>
-                    </View>
-                  </>
-                )}
-
-                {/* Buttons */}
-                <View style={styles.buttonContainer}>
-                  <TouchableOpacity
-                    style={styles.addCardButton}
-                    onPress={handleAddCard}
-                    activeOpacity={0.8}
-                  >
-                    <Text style={styles.addCardButtonText}>
-                      {paymentMethod === 'card' ? 'Add Card' : 'Continue'}
-                    </Text>
-                  </TouchableOpacity>
-
-                  <TouchableOpacity
-                    style={styles.cancelButton}
-                    onPress={handleClose}
-                    activeOpacity={0.8}
-                  >
-                    <Text style={styles.cancelButtonText}>Cancel</Text>
-                  </TouchableOpacity>
-                </View>
-              </ScrollView>
+        <View style={styles.modalContainer}>
+          <ScrollView
+            contentContainerStyle={styles.scrollContent}
+            keyboardShouldPersistTaps="handled"
+          >
+            {/* Header */}
+            <View style={styles.header}>
+              <Text style={styles.title}>Add Payment Card</Text>
+              <TouchableOpacity onPress={handleClose} style={styles.closeButton}>
+                <Ionicons name="close" size={28} color={Colors.text} />
+              </TouchableOpacity>
             </View>
-          </TouchableOpacity>
-        </TouchableOpacity>
+
+            {/* Card Number */}
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Card Number</Text>
+              <View style={styles.inputWrapper}>
+                <Ionicons name="card-outline" size={20} color={Colors.textSecondary} style={styles.inputIcon} />
+                <TextInput
+                  style={styles.input}
+                  placeholder="1234 5678 9012 3456"
+                  keyboardType="numeric"
+                  value={cardNumber}
+                  onChangeText={handleCardNumberChange}
+                  maxLength={19}
+                />
+              </View>
+            </View>
+
+            {/* Cardholder Name */}
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Cardholder Name</Text>
+              <View style={styles.inputWrapper}>
+                <Ionicons name="person-outline" size={20} color={Colors.textSecondary} style={styles.inputIcon} />
+                <TextInput
+                  style={styles.input}
+                  placeholder="John Doe"
+                  value={cardholderName}
+                  onChangeText={setCardholderName}
+                  autoCapitalize="words"
+                />
+              </View>
+            </View>
+
+            {/* Expiry Date and CVV Row */}
+            <View style={styles.row}>
+              {/* Expiry Month */}
+              <View style={[styles.inputGroup, styles.halfWidth]}>
+                <Text style={styles.label}>Expiry Month</Text>
+                <View style={styles.inputWrapper}>
+                  <Ionicons name="calendar-outline" size={20} color={Colors.textSecondary} style={styles.inputIcon} />
+                  <TextInput
+                    style={styles.input}
+                    placeholder="MM"
+                    keyboardType="numeric"
+                    value={expiryMonth}
+                    onChangeText={handleExpiryMonthChange}
+                    maxLength={2}
+                  />
+                </View>
+              </View>
+
+              {/* Expiry Year */}
+              <View style={[styles.inputGroup, styles.halfWidth]}>
+                <Text style={styles.label}>Expiry Year</Text>
+                <View style={styles.inputWrapper}>
+                  <TextInput
+                    style={[styles.input, { paddingLeft: Spacing.gap }]}
+                    placeholder="YY"
+                    keyboardType="numeric"
+                    value={expiryYear}
+                    onChangeText={handleExpiryYearChange}
+                    maxLength={2}
+                  />
+                </View>
+              </View>
+            </View>
+
+            {/* CVV */}
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>CVV</Text>
+              <View style={styles.inputWrapper}>
+                <Ionicons name="lock-closed-outline" size={20} color={Colors.textSecondary} style={styles.inputIcon} />
+                <TextInput
+                  style={styles.input}
+                  placeholder="123"
+                  keyboardType="numeric"
+                  secureTextEntry
+                  value={cvv}
+                  onChangeText={handleCvvChange}
+                  maxLength={3}
+                />
+              </View>
+            </View>
+
+            {/* Info Text */}
+            <View style={styles.infoBox}>
+              <Ionicons name="information-circle-outline" size={20} color={Colors.primary} />
+              <Text style={styles.infoText}>
+                Your card information is securely encrypted and stored
+              </Text>
+            </View>
+
+            {/* Buttons */}
+            <View style={styles.buttonContainer}>
+              <TouchableOpacity
+                style={styles.saveButton}
+                onPress={handleSave}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.saveButtonText}>Save Card</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.cancelButton}
+                onPress={handleClose}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.cancelButtonText}>Cancel</Text>
+              </TouchableOpacity>
+            </View>
+          </ScrollView>
+        </View>
       </KeyboardAvoidingView>
     </Modal>
   );
 };
 
 const styles = StyleSheet.create({
-  modalOverlay: {
+  overlay: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  modalBackground: {
-    flex: 1,
-    width: '100%',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 20,
+    justifyContent: 'flex-end',
+    backgroundColor: Colors.overlay,
   },
   modalContainer: {
-    width: '100%',
-    maxWidth: 400,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 20,
-    padding: 24,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.15,
-    shadowRadius: 16,
-    elevation: 10,
+    backgroundColor: Colors.white,
+    borderTopLeftRadius: BorderRadius.large,
+    borderTopRightRadius: BorderRadius.large,
+    maxHeight: '90%',
   },
-  modalHeader: {
+  scrollContent: {
+    padding: Spacing.large,
+  },
+  header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 24,
+    marginBottom: Spacing.large,
   },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#000000',
-    fontFamily: 'Poppins',
+  title: {
+    fontSize: Typography.heading,
+    fontWeight: Typography.bold,
+    color: Colors.text,
   },
   closeButton: {
-    padding: 4,
+    padding: Spacing.xs,
   },
   inputGroup: {
     marginBottom: 20,
   },
   label: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#424242',
-    marginBottom: 8,
-    fontFamily: 'Poppins',
+    fontSize: Typography.bodySmall,
+    fontWeight: Typography.semibold,
+    color: Colors.text,
+    marginBottom: Spacing.small,
   },
-  required: {
-    color: '#FF3B30',
-    fontSize: 14,
+  inputWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: Colors.border,
+    borderRadius: BorderRadius.input,
+    backgroundColor: Colors.backgroundGray,
+    paddingHorizontal: Spacing.gap,
+  },
+  inputIcon: {
+    marginRight: Spacing.small,
   },
   input: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#E5E5E5',
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    fontSize: 14,
-    color: '#000000',
-    fontFamily: 'Poppins',
+    flex: 1,
+    height: Layout.inputHeight,
+    fontSize: Typography.body,
+    color: Colors.text,
   },
-  inputError: {
-    borderColor: '#FF3B30',
-    borderWidth: 1.5,
-  },
-  errorText: {
-    fontSize: 12,
-    color: '#FF3B30',
-    marginTop: 4,
-    fontFamily: 'Poppins',
-  },
-  dropdownContainer: {
+  row: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#E5E5E5',
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-  },
-  selectedOption: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  dropdownText: {
-    fontSize: 14,
-    color: '#000000',
-    fontFamily: 'Poppins',
-    fontWeight: '500',
-  },
-  placeholderText: {
-    fontSize: 14,
-    color: '#9E9E9E',
-    fontFamily: 'Poppins',
-  },
-  dropdownMenu: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#E5E5E5',
-    marginTop: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 5,
-    overflow: 'hidden',
-  },
-  dropdownOption: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    gap: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F5F5F5',
-  },
-  dropdownOptionSelected: {
-    backgroundColor: '#E8F5E9',
-  },
-  dropdownOptionText: {
-    flex: 1,
-    fontSize: 14,
-    color: '#424242',
-    fontFamily: 'Poppins',
-  },
-  dropdownOptionTextSelected: {
-    color: '#2E7D32',
-    fontWeight: '600',
-  },
-  rowInputs: {
-    flexDirection: 'row',
-    gap: 12,
+    gap: Spacing.gap,
   },
   halfWidth: {
     flex: 1,
   },
-  buttonContainer: {
-    marginTop: 8,
-    gap: 12,
-  },
-  addCardButton: {
-    backgroundColor: '#2E7D32',
-    borderRadius: 12,
-    paddingVertical: 16,
-    justifyContent: 'center',
+  infoBox: {
+    flexDirection: 'row',
     alignItems: 'center',
-    shadowColor: '#2E7D32',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 6,
+    backgroundColor: Colors.primaryLight + '33', // primaryLight with transparency
+    padding: Spacing.gap,
+    borderRadius: BorderRadius.button,
+    marginBottom: Spacing.large,
+    gap: Spacing.small,
   },
-  addCardButtonText: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#FFFFFF',
-    fontFamily: 'Poppins',
+  infoText: {
+    flex: 1,
+    fontSize: Typography.caption,
+    color: Colors.primaryDark,
+  },
+  buttonContainer: {
+    gap: Spacing.gap,
+  },
+  saveButton: {
+    backgroundColor: Colors.primary,
+    paddingVertical: Spacing.medium,
+    borderRadius: BorderRadius.input,
+    alignItems: 'center',
+    ...Shadows.button,
+  },
+  saveButtonText: {
+    fontSize: Typography.body,
+    fontWeight: Typography.semibold,
+    color: Colors.white,
   },
   cancelButton: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    paddingVertical: 16,
-    justifyContent: 'center',
+    backgroundColor: Colors.backgroundGray,
+    paddingVertical: Spacing.medium,
+    borderRadius: BorderRadius.input,
     alignItems: 'center',
-    borderWidth: 2,
-    borderColor: '#E5E5E5',
+    borderWidth: 1,
+    borderColor: Colors.border,
   },
   cancelButtonText: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#424242',
-    fontFamily: 'Poppins',
+    fontSize: Typography.body,
+    fontWeight: Typography.semibold,
+    color: Colors.textSecondary,
   },
 });
 

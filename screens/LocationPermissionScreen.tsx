@@ -4,17 +4,18 @@ import {
   Text,
   TouchableOpacity,
   StyleSheet,
-  SafeAreaView,
   StatusBar,
   Dimensions,
   Alert,
   ActivityIndicator,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
 import type { RootStackParamList } from '../App';
 import * as Location from 'expo-location';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Colors, Typography, Spacing, BorderRadius, Layout } from '../constants/theme';
 
 const { width } = Dimensions.get('window');
 
@@ -98,7 +99,7 @@ const LocationPermissionScreen: React.FC<LocationPermissionScreenProps> = ({
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#026A49" />
+      <StatusBar barStyle="light-content" backgroundColor={Colors.primary} />
       
       {/* Header with back arrow */}
       <View style={styles.header}>
@@ -133,7 +134,7 @@ const LocationPermissionScreen: React.FC<LocationPermissionScreenProps> = ({
               disabled={loading}
             >
               {loading ? (
-                <ActivityIndicator color="#F1F5F9" size="small" />
+                <ActivityIndicator color={Colors.backgroundGray} size="small" />
               ) : (
                 <Text style={styles.primaryButtonText}>Yes, Allow</Text>
               )}
@@ -157,83 +158,83 @@ const LocationPermissionScreen: React.FC<LocationPermissionScreenProps> = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#026A49',
+    backgroundColor: Colors.primary,
   },
   header: {
-    backgroundColor: '#026A49',
-    paddingBottom: 24,
+    backgroundColor: Colors.primary,
+    paddingBottom: Spacing.large,
   },
   topBar: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 24,
-    paddingTop: 8,
+    paddingHorizontal: Spacing.large,
+    paddingTop: Spacing.small,
     height: 56,
   },
   backButton: {
-    width: 48,
-    height: 48,
-    borderRadius: 8,
+    width: Layout.buttonHeight,
+    height: Layout.buttonHeight,
+    borderRadius: BorderRadius.button,
     justifyContent: 'center',
     alignItems: 'center',
   },
   backArrow: {
-    fontSize: 24,
-    color: '#FFFFFF',
-    fontWeight: '600',
+    fontSize: Typography.h3,
+    color: Colors.white,
+    fontWeight: Typography.semibold,
   },
   placeholder: {
-    width: 48,
-    height: 48,
+    width: Layout.buttonHeight,
+    height: Layout.buttonHeight,
   },
   contentContainer: {
     flex: 1,
     justifyContent: 'flex-end',
   },
   content: {
-    backgroundColor: '#FCFCFC',
-    borderTopLeftRadius: 40,
-    borderTopRightRadius: 40,
+    backgroundColor: Colors.backgroundGray,
+    borderTopLeftRadius: Spacing.xxl,
+    borderTopRightRadius: Spacing.xxl,
     borderWidth: 1,
-    borderColor: '#CFCFCF',
-    paddingHorizontal: 24,
-    paddingTop: 32,
+    borderColor: Colors.border,
+    paddingHorizontal: Spacing.large,
+    paddingTop: Spacing.xl,
     paddingBottom: 36,
     minHeight: 413,
   },
   privacyInfo: {
-    marginBottom: 40,
+    marginBottom: Spacing.xxl,
   },
   title: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#1E293B',
-    marginBottom: 4,
+    fontSize: Typography.h3,
+    fontWeight: Typography.bold,
+    color: Colors.text,
+    marginBottom: Spacing.xs,
     fontFamily: 'System',
   },
   description: {
-    fontSize: 20,
-    fontWeight: '400',
-    color: '#334155',
+    fontSize: Typography.h4,
+    fontWeight: Typography.regular,
+    color: Colors.textSecondary,
     lineHeight: 28,
     fontFamily: 'System',
   },
   buttonContainer: {
-    gap: 12,
+    gap: Spacing.gap,
   },
   primaryButton: {
-    backgroundColor: '#026A49',
-    borderRadius: 12,
+    backgroundColor: Colors.primary,
+    borderRadius: BorderRadius.medium,
     paddingVertical: 14,
-    paddingHorizontal: 8,
+    paddingHorizontal: Spacing.small,
     alignItems: 'center',
     justifyContent: 'center',
   },
   primaryButtonText: {
-    color: '#F1F5F9',
-    fontSize: 18,
-    fontWeight: '700',
+    color: Colors.backgroundGray,
+    fontSize: Typography.subheading,
+    fontWeight: Typography.bold,
     textAlign: 'center',
     fontFamily: 'System',
   },
@@ -241,19 +242,19 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   secondaryButton: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
+    backgroundColor: Colors.white,
+    borderRadius: BorderRadius.medium,
     borderWidth: 1,
-    borderColor: '#CFCFCF',
+    borderColor: Colors.border,
     paddingVertical: 14,
-    paddingHorizontal: 8,
+    paddingHorizontal: Spacing.small,
     alignItems: 'center',
     justifyContent: 'center',
   },
   secondaryButtonText: {
-    color: '#334155',
-    fontSize: 18,
-    fontWeight: '700',
+    color: Colors.textSecondary,
+    fontSize: Typography.subheading,
+    fontWeight: Typography.bold,
     textAlign: 'center',
     fontFamily: 'System',
   },

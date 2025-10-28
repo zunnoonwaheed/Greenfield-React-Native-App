@@ -5,7 +5,6 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  SafeAreaView,
   StatusBar,
   KeyboardAvoidingView,
   Platform,
@@ -13,13 +12,15 @@ import {
   Alert,
   ActivityIndicator,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
-import type { RootStackParamList } from '../App';
+import type { MainStackParamList } from '../navigation/MainStack';
 import { addLocation } from '../api/locationAPI';
+import { Colors, Typography, Spacing, BorderRadius } from '../constants/theme';
 
-type AddLocationScreenNavigationProp = StackNavigationProp<RootStackParamList>;
+type AddLocationScreenNavigationProp = StackNavigationProp<MainStackParamList>;
 
 const AddLocationScreen = () => {
   const navigation = useNavigation<AddLocationScreenNavigationProp>();
@@ -73,8 +74,8 @@ const AddLocationScreen = () => {
       const response = await addLocation(locationData);
 
       if (response.success) {
-        // Navigate to Welcome screen
-        navigation.navigate('Welcome');
+        // Navigate back to Home screen
+        navigation.navigate('Home');
       }
     } catch (error: any) {
       Alert.alert(

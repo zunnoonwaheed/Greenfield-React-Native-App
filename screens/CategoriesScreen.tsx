@@ -15,7 +15,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
 import type { RootStackParamList } from '../App';
-import { Colors, Typography, Spacing, BorderRadius } from '../constants/theme';
+import { Colors, Typography, Spacing, BorderRadius, Layout } from '../constants/theme';
 // import { getCategories } from '../api/categoryAPI'; // Commented out - using local data
 
 const { width } = Dimensions.get('window');
@@ -143,7 +143,7 @@ const CategoriesScreen: React.FC = () => {
         {/* Loading State */}
         {loading && (
           <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color="#059669" />
+            <ActivityIndicator size="large" color={Colors.success} />
             <Text style={styles.loadingText}>Loading categories...</Text>
           </View>
         )}
@@ -152,7 +152,7 @@ const CategoriesScreen: React.FC = () => {
         {error && !loading && (
           <View style={styles.errorContainer}>
             <Text style={styles.errorText}>{error}</Text>
-            <TouchableOpacity style={styles.retryButton} onPress={fetchCategories}>
+            <TouchableOpacity style={styles.retryButton} onPress={loadLocalCategories}>
               <Text style={styles.retryButtonText}>Retry</Text>
             </TouchableOpacity>
           </View>
@@ -180,33 +180,33 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.background,
   },
   header: {
-    paddingHorizontal: 16,
-    paddingTop: 16,
-    paddingBottom: 8,
+    paddingHorizontal: Spacing.medium,
+    paddingTop: Spacing.medium,
+    paddingBottom: Spacing.small,
     backgroundColor: Colors.background,
   },
   backButton: {
-    width: 40,
-    height: 40,
+    width: Layout.avatarSize,
+    height: Layout.avatarSize,
     justifyContent: 'center',
     alignItems: 'flex-start',
   },
   backIcon: {
-    color: Colors.text.primary,
-    fontSize: 24,
-    fontWeight: '400',
+    color: Colors.textSecondary,
+    fontSize: Typography.h3,
+    fontWeight: Typography.regular,
   },
   content: {
     flex: 1,
-    paddingHorizontal: 32,
-    paddingTop: 20,
+    paddingHorizontal: Spacing.xl,
+    paddingTop: Spacing.screenPadding,
   },
   pageTitle: {
-    color: '#1E293B',
-    fontSize: 20,
-    fontWeight: '700',
+    color: Colors.text,
+    fontSize: Typography.h4,
+    fontWeight: Typography.bold,
     fontFamily: 'DM Sans',
-    marginBottom: 20,
+    marginBottom: Spacing.screenPadding,
   },
   categoriesContainer: {
     flex: 1,
@@ -217,21 +217,21 @@ const styles = StyleSheet.create({
   categoryRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 20,
-    gap: 12,
+    marginBottom: Spacing.screenPadding,
+    gap: Spacing.gap,
   },
   categoryItem: {
     alignItems: 'center',
-    gap: 6,
+    gap: Spacing.xs,
     width: categoryItemWidth,
   },
   categoryImageContainer: {
     width: 86,
     height: 86,
-    borderRadius: 12,
+    borderRadius: BorderRadius.medium,
     borderWidth: 1,
-    borderColor: '#CFCFCF',
-    backgroundColor: '#FFF',
+    borderColor: Colors.border,
+    backgroundColor: Colors.white,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -240,9 +240,9 @@ const styles = StyleSheet.create({
     height: '80%',
   },
   categoryText: {
-    color: '#334155',
-    fontSize: 14,
-    fontWeight: '400',
+    color: Colors.textSecondary,
+    fontSize: Typography.bodySmall,
+    fontWeight: Typography.regular,
     fontFamily: 'DM Sans',
     textAlign: 'center',
     lineHeight: 18,
@@ -251,36 +251,36 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingVertical: 40,
+    paddingVertical: Spacing.xxl,
   },
   loadingText: {
-    marginTop: 12,
-    fontSize: 14,
-    color: '#6B7280',
+    marginTop: Spacing.gap,
+    fontSize: Typography.bodySmall,
+    color: Colors.textSecondary,
   },
   errorContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 32,
-    paddingVertical: 40,
+    paddingHorizontal: Spacing.xl,
+    paddingVertical: Spacing.xxl,
   },
   errorText: {
-    fontSize: 14,
-    color: '#EF4444',
+    fontSize: Typography.bodySmall,
+    color: Colors.error,
     textAlign: 'center',
-    marginBottom: 16,
+    marginBottom: Spacing.medium,
   },
   retryButton: {
-    backgroundColor: '#059669',
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 8,
+    backgroundColor: Colors.success,
+    paddingHorizontal: Spacing.large,
+    paddingVertical: Spacing.gap,
+    borderRadius: BorderRadius.button,
   },
   retryButtonText: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: '600',
+    color: Colors.textWhite,
+    fontSize: Typography.bodySmall,
+    fontWeight: Typography.semibold,
   },
 });
 

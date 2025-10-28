@@ -21,16 +21,19 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
-import type { RootStackParamList } from '../App';
+import type { MainStackParamList } from '../navigation/MainStack';
 import { addLocation } from '../api/locationAPI';
 import PaymentCardModal, { CardDetails } from '../components/PaymentCardModal';
+import { AppHeader } from '../components/shared/AppHeader';
+import { Colors, Typography, Spacing, BorderRadius } from '../constants/theme';
+import { ThemedButton } from '../components/ThemedButton';
 
 type AddNewAddressConfirmScreenNavigationProp = StackNavigationProp<
-  RootStackParamList,
+  MainStackParamList,
   'AddNewAddressConfirm'
 >;
 type AddNewAddressConfirmScreenRouteProp = RouteProp<
-  RootStackParamList,
+  MainStackParamList,
   'AddNewAddressConfirm'
 >;
 
@@ -142,7 +145,7 @@ const AddNewAddressConfirmScreen: React.FC = () => {
     setTimeout(() => {
       setPlacingOrder(false);
       // Navigate directly to Order Confirmed screen
-      navigation.navigate('OrderConfirmed' as any);
+      navigation.navigate('OrderConfirmed');
     }, 1000); // 1 second delay for UX
   };
 
@@ -527,18 +530,13 @@ const AddNewAddressConfirmScreen: React.FC = () => {
 
           {/* Place Order Button */}
           <View style={styles.placeOrderSection}>
-            <TouchableOpacity
-              style={[styles.placeOrderButton, placingOrder && styles.buttonDisabled]}
+            <ThemedButton
+              title="Place Order"
               onPress={handlePlaceOrder}
-              activeOpacity={0.8}
+              type="solid"
               disabled={placingOrder}
-            >
-              {placingOrder ? (
-                <ActivityIndicator color="#FFFFFF" size="small" />
-              ) : (
-                <Text style={styles.placeOrderButtonText}>Place order</Text>
-              )}
-            </TouchableOpacity>
+              loading={placingOrder}
+            />
           </View>
         </ScrollView>
 
@@ -920,26 +918,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     marginTop: 8,
     marginBottom: 24,
-  },
-  placeOrderButton: {
-    backgroundColor: '#0A8A4E',
-    borderRadius: 12,
-    paddingVertical: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  placeOrderButtonText: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#FFFFFF',
-  },
-  buttonDisabled: {
-    opacity: 0.6,
   },
 });
 

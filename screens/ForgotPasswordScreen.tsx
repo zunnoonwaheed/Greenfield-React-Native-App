@@ -15,6 +15,7 @@ import { useNavigation } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
 import type { RootStackParamList } from '../App';
 import { forgotPassword } from '../api/authAPI';
+import { Colors, Typography, Spacing, BorderRadius, Layout } from '../constants/theme';
 
 const { width } = Dimensions.get('window');
 
@@ -59,8 +60,9 @@ const ForgotPasswordScreen: React.FC<ForgotPasswordScreenProps> = ({
               text: 'OK',
               onPress: () => {
                 // In development, show token for testing
-                if (response.data?.token) {
-                  console.log('Reset Token (Dev Only):', response.data.token);
+                // Response interceptor unwraps response.data, so access token directly
+                if (response?.token) {
+                  console.log('Reset Token (Dev Only):', response.token);
                   // Navigate to Reset Password screen with the token
                   navigation.navigate('ResetPassword');
                 } else {
@@ -91,7 +93,7 @@ const ForgotPasswordScreen: React.FC<ForgotPasswordScreenProps> = ({
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#026A49" />
+      <StatusBar barStyle="light-content" backgroundColor={Colors.primary} />
 
       {/* Green Header with Back Arrow */}
       <SafeAreaView style={styles.safeArea}>
@@ -132,7 +134,7 @@ const ForgotPasswordScreen: React.FC<ForgotPasswordScreenProps> = ({
                   <TextInput
                     style={styles.textInput}
                     placeholder="Enter your email"
-                    placeholderTextColor="#94A3B8"
+                    placeholderTextColor={Colors.textLight}
                     value={email}
                     onChangeText={setEmail}
                     keyboardType="email-address"
@@ -152,7 +154,7 @@ const ForgotPasswordScreen: React.FC<ForgotPasswordScreenProps> = ({
             disabled={loading}
           >
             {loading ? (
-              <ActivityIndicator color="#FFF" size="small" />
+              <ActivityIndicator color={Colors.white} size="small" />
             ) : (
               <Text style={styles.sendResetButtonText}>Send Reset Link</Text>
             )}
@@ -175,31 +177,31 @@ const ForgotPasswordScreen: React.FC<ForgotPasswordScreenProps> = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#026A49',
+    backgroundColor: Colors.primary,
   },
   safeArea: {
-    backgroundColor: '#026A49',
+    backgroundColor: Colors.primary,
   },
   topBar: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 24,
-    paddingTop: 8,
+    paddingHorizontal: Spacing.large,
+    paddingTop: Spacing.small,
     height: 56,
   },
   backButton: {
-    width: 48,
-    height: 48,
-    borderRadius: 8,
+    width: Layout.buttonHeight,
+    height: Layout.buttonHeight,
+    borderRadius: BorderRadius.button,
     justifyContent: 'center',
     alignItems: 'center',
     paddingVertical: 11.667,
     paddingHorizontal: 10,
   },
   arrowContainer: {
-    width: 24,
-    height: 24,
+    width: Layout.iconSize,
+    height: Layout.iconSize,
     justifyContent: 'center',
     alignItems: 'center',
     position: 'relative',
@@ -208,7 +210,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     width: 14,
     height: 2,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.white,
     left: 5,
   },
   arrowHead: {
@@ -219,13 +221,13 @@ const styles = StyleSheet.create({
     borderTopWidth: 6,
     borderBottomWidth: 6,
     borderRightWidth: 8,
-    borderTopColor: 'transparent',
-    borderBottomColor: 'transparent',
-    borderRightColor: '#FFFFFF',
+    borderTopColor: Colors.transparent,
+    borderBottomColor: Colors.transparent,
+    borderRightColor: Colors.white,
   },
   placeholder: {
-    width: 48,
-    height: 48,
+    width: Layout.buttonHeight,
+    height: Layout.buttonHeight,
   },
   contentWrapper: {
     flex: 1,
@@ -233,74 +235,74 @@ const styles = StyleSheet.create({
     paddingHorizontal: 0,
   },
   content: {
-    backgroundColor: '#FCFCFC',
+    backgroundColor: Colors.backgroundGray,
     borderTopLeftRadius: 48,
     borderTopRightRadius: 48,
     borderWidth: 1,
-    borderColor: '#CFCFCF',
-    paddingHorizontal: 32,
-    paddingTop: 32,
+    borderColor: Colors.borderDark,
+    paddingHorizontal: Spacing.xl,
+    paddingTop: Spacing.xl,
     paddingBottom: 36,
     height: 398,
   },
   headerSection: {
-    marginBottom: 32,
-    gap: 4,
+    marginBottom: Spacing.xl,
+    gap: Spacing.xs,
   },
   title: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#1E293B',
+    fontSize: Typography.h3,
+    fontWeight: Typography.bold,
+    color: Colors.text,
     fontFamily: 'DM Sans',
     lineHeight: 28.8,
   },
   subtitle: {
-    fontSize: 20,
-    fontWeight: '400',
-    color: '#475569',
+    fontSize: Typography.h4,
+    fontWeight: Typography.regular,
+    color: Colors.textSecondary,
     fontFamily: 'DM Sans',
     lineHeight: 24,
   },
   formSection: {
-    gap: 16,
+    gap: Spacing.medium,
     marginBottom: 20,
   },
   inputContainer: {
-    gap: 12,
+    gap: Spacing.gap,
   },
   inputLabel: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#1E293B',
+    fontSize: Typography.subheading,
+    fontWeight: Typography.bold,
+    color: Colors.text,
     fontFamily: 'DM Sans',
     lineHeight: 21.6,
   },
   inputField: {
-    borderRadius: 12,
+    borderRadius: BorderRadius.medium,
     borderWidth: 1,
-    borderColor: '#CFCFCF',
-    backgroundColor: '#FFF',
-    paddingHorizontal: 16,
+    borderColor: Colors.borderDark,
+    backgroundColor: Colors.white,
+    paddingHorizontal: Spacing.medium,
     paddingVertical: 14,
   },
   inputContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: Spacing.small,
   },
   emailText: {
     flex: 1,
-    fontSize: 16,
-    fontWeight: '400',
-    color: '#334155',
+    fontSize: Typography.body,
+    fontWeight: Typography.regular,
+    color: Colors.text,
     fontFamily: 'Work Sans',
     lineHeight: 19.2,
   },
   textInput: {
     flex: 1,
-    fontSize: 16,
-    fontWeight: '400',
-    color: '#334155',
+    fontSize: Typography.body,
+    fontWeight: Typography.regular,
+    color: Colors.text,
     fontFamily: 'Work Sans',
     paddingVertical: 0,
   },
@@ -316,8 +318,8 @@ const styles = StyleSheet.create({
     height: 13.3334,
     borderRadius: 1,
     borderWidth: 1,
-    borderColor: '#334155',
-    backgroundColor: 'transparent',
+    borderColor: Colors.text,
+    backgroundColor: Colors.transparent,
     position: 'absolute',
     top: 3.9173,
   },
@@ -330,15 +332,15 @@ const styles = StyleSheet.create({
     borderLeftWidth: 8,
     borderRightWidth: 8,
     borderTopWidth: 5,
-    borderLeftColor: 'transparent',
-    borderRightColor: 'transparent',
-    borderTopColor: '#334155',
+    borderLeftColor: Colors.transparent,
+    borderRightColor: Colors.transparent,
+    borderTopColor: Colors.text,
   },
   sendResetButton: {
-    backgroundColor: '#026A49',
-    borderRadius: 12,
+    backgroundColor: Colors.primary,
+    borderRadius: BorderRadius.medium,
     paddingVertical: 14,
-    paddingHorizontal: 8,
+    paddingHorizontal: Spacing.small,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 20,
@@ -347,9 +349,9 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   sendResetButtonText: {
-    color: '#FFF',
-    fontSize: 18,
-    fontWeight: '700',
+    color: Colors.white,
+    fontSize: Typography.subheading,
+    fontWeight: Typography.bold,
     textAlign: 'center',
     fontFamily: 'DM Sans',
     lineHeight: 21.6,
@@ -358,18 +360,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   loginText: {
-    fontSize: 16,
+    fontSize: Typography.body,
     fontFamily: 'DM Sans',
     lineHeight: 19.2,
     textAlign: 'center',
   },
   loginRegularText: {
-    fontWeight: '400',
-    color: '#334155',
+    fontWeight: Typography.regular,
+    color: Colors.text,
   },
   loginLink: {
-    fontWeight: '700',
-    color: '#009D66',
+    fontWeight: Typography.bold,
+    color: Colors.primary,
   },
 });
 
