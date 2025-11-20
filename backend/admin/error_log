@@ -1,0 +1,123 @@
+[21-Sep-2025 03:41:44 UTC] PHP Warning:  Undefined array key "allow_upload" in /home/greenfieldsuperm/public_html/admin/checkadmin.php on line 25
+[21-Sep-2025 07:59:37 UTC] PHP Warning:  Undefined array key "allow_upload" in /home/greenfieldsuperm/public_html/admin/checkadmin.php on line 25
+[21-Sep-2025 07:59:39 UTC] PHP Warning:  Undefined variable $row in /home/greenfieldsuperm/public_html/admin/insertbrand.php on line 9
+[21-Sep-2025 07:59:39 UTC] PHP Warning:  Trying to access array offset on value of type null in /home/greenfieldsuperm/public_html/admin/insertbrand.php on line 9
+[21-Sep-2025 08:24:22 UTC] PHP Warning:  Undefined variable $row in /home/greenfieldsuperm/public_html/admin/insertbrand.php on line 9
+[21-Sep-2025 08:24:22 UTC] PHP Warning:  Trying to access array offset on value of type null in /home/greenfieldsuperm/public_html/admin/insertbrand.php on line 9
+[21-Sep-2025 08:31:24 UTC] PHP Warning:  Undefined variable $row in /home/greenfieldsuperm/public_html/admin/insertbrand.php on line 9
+[21-Sep-2025 08:31:24 UTC] PHP Warning:  Trying to access array offset on value of type null in /home/greenfieldsuperm/public_html/admin/insertbrand.php on line 9
+[21-Sep-2025 08:34:28 UTC] PHP Warning:  Undefined variable $row in /home/greenfieldsuperm/public_html/admin/insertbrand.php on line 9
+[21-Sep-2025 08:34:28 UTC] PHP Warning:  Trying to access array offset on value of type null in /home/greenfieldsuperm/public_html/admin/insertbrand.php on line 9
+[21-Sep-2025 08:34:40 UTC] PHP Warning:  Undefined variable $row in /home/greenfieldsuperm/public_html/admin/insertbrand.php on line 9
+[21-Sep-2025 08:34:40 UTC] PHP Warning:  Trying to access array offset on value of type null in /home/greenfieldsuperm/public_html/admin/insertbrand.php on line 9
+[21-Sep-2025 08:35:20 UTC] PHP Warning:  Undefined variable $row in /home/greenfieldsuperm/public_html/admin/insertbrand.php on line 9
+[21-Sep-2025 08:35:20 UTC] PHP Warning:  Trying to access array offset on value of type null in /home/greenfieldsuperm/public_html/admin/insertbrand.php on line 9
+[21-Sep-2025 08:56:33 UTC] PHP Warning:  Undefined variable $row in /home/greenfieldsuperm/public_html/admin/insertbrand.php on line 9
+[21-Sep-2025 08:56:33 UTC] PHP Warning:  Trying to access array offset on value of type null in /home/greenfieldsuperm/public_html/admin/insertbrand.php on line 9
+[21-Sep-2025 09:55:11 UTC] PHP Warning:  Undefined variable $row in /home/greenfieldsuperm/public_html/admin/insertbrand.php on line 9
+[21-Sep-2025 09:55:11 UTC] PHP Warning:  Trying to access array offset on value of type null in /home/greenfieldsuperm/public_html/admin/insertbrand.php on line 9
+[21-Sep-2025 11:32:16 UTC] PHP Warning:  Undefined variable $row in /home/greenfieldsuperm/public_html/admin/insertar.php on line 9
+[21-Sep-2025 11:32:16 UTC] PHP Warning:  Trying to access array offset on value of type null in /home/greenfieldsuperm/public_html/admin/insertar.php on line 9
+[21-Sep-2025 11:39:40 UTC] PHP Warning:  Undefined variable $row in /home/greenfieldsuperm/public_html/admin/insertbrand.php on line 9
+[21-Sep-2025 11:39:40 UTC] PHP Warning:  Trying to access array offset on value of type null in /home/greenfieldsuperm/public_html/admin/insertbrand.php on line 9
+[22-Sep-2025 08:31:20 UTC] PHP Warning:  Undefined array key "allow_upload" in /home/greenfieldsuperm/public_html/admin/checkadmin.php on line 25
+[22-Sep-2025 14:10:33 UTC] PHP Warning:  Undefined array key "allow_upload" in /home/greenfieldsuperm/public_html/admin/checkadmin.php on line 25
+[22-Sep-2025 15:57:44 UTC] PHP Warning:  Undefined array key "allow_upload" in /home/greenfieldsuperm/public_html/admin/checkadmin.php on line 25
+[22-Sep-2025 18:52:02 UTC] PHP Warning:  Undefined array key "allow_upload" in /home/greenfieldsuperm/public_html/admin/checkadmin.php on line 25
+[22-Sep-2025 18:52:17 UTC] PHP Warning:  Undefined variable $row in /home/greenfieldsuperm/public_html/admin/insertbrand.php on line 9
+[22-Sep-2025 18:52:17 UTC] PHP Warning:  Trying to access array offset on value of type null in /home/greenfieldsuperm/public_html/admin/insertbrand.php on line 9
+[22-Sep-2025 20:07:25 UTC] PHP Warning:  Undefined array key "allow_upload" in /home/greenfieldsuperm/public_html/admin/checkadmin.php on line 25
+[22-Sep-2025 20:07:44 UTC] PHP Warning:  Undefined variable $row in /home/greenfieldsuperm/public_html/admin/insertbrand.php on line 9
+[22-Sep-2025 20:07:44 UTC] PHP Warning:  Trying to access array offset on value of type null in /home/greenfieldsuperm/public_html/admin/insertbrand.php on line 9
+[22-Sep-2025 20:34:00 UTC] PHP Warning:  Undefined variable $row in /home/greenfieldsuperm/public_html/admin/insertbrand.php on line 9
+[22-Sep-2025 20:34:00 UTC] PHP Warning:  Trying to access array offset on value of type null in /home/greenfieldsuperm/public_html/admin/insertbrand.php on line 9
+[23-Sep-2025 08:43:02 UTC] PHP Warning:  Undefined array key "allow_upload" in /home/greenfieldsuperm/public_html/admin/checkadmin.php on line 25
+[23-Sep-2025 09:30:17 UTC] PHP Warning:  Undefined variable $row in /home/greenfieldsuperm/public_html/admin/insertbrand.php on line 9
+[23-Sep-2025 09:30:17 UTC] PHP Warning:  Trying to access array offset on value of type null in /home/greenfieldsuperm/public_html/admin/insertbrand.php on line 9
+[23-Sep-2025 11:53:05 UTC] PHP Warning:  Undefined array key "allow_upload" in /home/greenfieldsuperm/public_html/admin/checkadmin.php on line 25
+[23-Sep-2025 13:09:32 UTC] PHP Warning:  Undefined array key "allow_upload" in /home/greenfieldsuperm/public_html/admin/checkadmin.php on line 25
+[23-Sep-2025 14:17:28 UTC] PHP Warning:  Undefined array key "allow_upload" in /home/greenfieldsuperm/public_html/admin/checkadmin.php on line 25
+[23-Sep-2025 15:44:29 UTC] PHP Warning:  Undefined array key "allow_upload" in /home/greenfieldsuperm/public_html/admin/checkadmin.php on line 25
+[23-Sep-2025 16:34:02 UTC] PHP Warning:  Undefined variable $row in /home/greenfieldsuperm/public_html/admin/insertbrand.php on line 9
+[23-Sep-2025 16:34:02 UTC] PHP Warning:  Trying to access array offset on value of type null in /home/greenfieldsuperm/public_html/admin/insertbrand.php on line 9
+[23-Sep-2025 16:34:23 UTC] PHP Warning:  Undefined variable $row in /home/greenfieldsuperm/public_html/admin/insertbrand.php on line 9
+[23-Sep-2025 16:34:23 UTC] PHP Warning:  Trying to access array offset on value of type null in /home/greenfieldsuperm/public_html/admin/insertbrand.php on line 9
+[23-Sep-2025 16:39:08 UTC] PHP Warning:  Undefined variable $row in /home/greenfieldsuperm/public_html/admin/insertar.php on line 9
+[23-Sep-2025 16:39:08 UTC] PHP Warning:  Trying to access array offset on value of type null in /home/greenfieldsuperm/public_html/admin/insertar.php on line 9
+[24-Sep-2025 07:54:23 UTC] PHP Warning:  Undefined array key "allow_upload" in /home/greenfieldsuperm/public_html/admin/checkadmin.php on line 25
+[24-Sep-2025 08:50:33 UTC] PHP Warning:  Undefined array key "allow_upload" in /home/greenfieldsuperm/public_html/admin/checkadmin.php on line 25
+[24-Sep-2025 08:57:18 UTC] PHP Warning:  Undefined array key "allow_upload" in /home/greenfieldsuperm/public_html/admin/checkadmin.php on line 25
+[24-Sep-2025 11:14:22 UTC] PHP Warning:  Undefined variable $row in /home/greenfieldsuperm/public_html/admin/insertbrand.php on line 9
+[24-Sep-2025 11:14:22 UTC] PHP Warning:  Trying to access array offset on value of type null in /home/greenfieldsuperm/public_html/admin/insertbrand.php on line 9
+[24-Sep-2025 12:20:10 UTC] PHP Warning:  Undefined variable $row in /home/greenfieldsuperm/public_html/admin/insertar.php on line 9
+[24-Sep-2025 12:20:10 UTC] PHP Warning:  Trying to access array offset on value of type null in /home/greenfieldsuperm/public_html/admin/insertar.php on line 9
+[24-Sep-2025 12:33:42 UTC] PHP Warning:  Undefined variable $row in /home/greenfieldsuperm/public_html/admin/insertbrand.php on line 9
+[24-Sep-2025 12:33:42 UTC] PHP Warning:  Trying to access array offset on value of type null in /home/greenfieldsuperm/public_html/admin/insertbrand.php on line 9
+[24-Sep-2025 17:08:55 UTC] PHP Warning:  Undefined array key "allow_upload" in /home/greenfieldsuperm/public_html/admin/checkadmin.php on line 25
+[24-Sep-2025 17:54:19 UTC] PHP Warning:  imagecreatefromjpeg(): gd-jpeg: JPEG library reports unrecoverable error: Not a JPEG file: starts with 0x00 0x00 in /home/greenfieldsuperm/public_html/admin/dowUpdated.php on line 87
+[24-Sep-2025 17:54:19 UTC] PHP Warning:  imagecreatefromjpeg(): &quot;/tmp/phpFevJIw&quot; is not a valid JPEG file in /home/greenfieldsuperm/public_html/admin/dowUpdated.php on line 87
+[24-Sep-2025 17:59:54 UTC] PHP Warning:  unlink(upload/dow/): Is a directory in /home/greenfieldsuperm/public_html/admin/deldow.php on line 14
+[24-Sep-2025 21:28:58 UTC] PHP Warning:  Undefined array key "allow_upload" in /home/greenfieldsuperm/public_html/admin/checkadmin.php on line 25
+[24-Sep-2025 21:40:49 UTC] PHP Warning:  unlink(upload/dow/): Is a directory in /home/greenfieldsuperm/public_html/admin/deldow.php on line 14
+[24-Sep-2025 21:59:37 UTC] PHP Warning:  imagecreatefromjpeg(): gd-jpeg: JPEG library reports unrecoverable error: Not a JPEG file: starts with 0x00 0x00 in /home/greenfieldsuperm/public_html/admin/dowUpdated.php on line 87
+[24-Sep-2025 21:59:37 UTC] PHP Warning:  imagecreatefromjpeg(): &quot;/tmp/php7hNnCz&quot; is not a valid JPEG file in /home/greenfieldsuperm/public_html/admin/dowUpdated.php on line 87
+[25-Sep-2025 10:32:03 UTC] PHP Warning:  Undefined array key "allow_upload" in /home/greenfieldsuperm/public_html/admin/checkadmin.php on line 25
+[25-Sep-2025 10:34:42 UTC] PHP Warning:  Undefined variable $row in /home/greenfieldsuperm/public_html/admin/insertbrand.php on line 9
+[25-Sep-2025 10:34:42 UTC] PHP Warning:  Trying to access array offset on value of type null in /home/greenfieldsuperm/public_html/admin/insertbrand.php on line 9
+[25-Sep-2025 11:31:26 UTC] PHP Warning:  Undefined array key "allow_upload" in /home/greenfieldsuperm/public_html/admin/checkadmin.php on line 25
+[25-Sep-2025 11:43:19 UTC] PHP Warning:  Undefined variable $row in /home/greenfieldsuperm/public_html/admin/insertbrand.php on line 9
+[25-Sep-2025 11:43:19 UTC] PHP Warning:  Trying to access array offset on value of type null in /home/greenfieldsuperm/public_html/admin/insertbrand.php on line 9
+[25-Sep-2025 13:59:00 UTC] PHP Warning:  Undefined array key "allow_upload" in /home/greenfieldsuperm/public_html/admin/checkadmin.php on line 25
+[25-Sep-2025 14:44:43 UTC] PHP Warning:  Undefined array key "allow_upload" in /home/greenfieldsuperm/public_html/admin/checkadmin.php on line 25
+[25-Sep-2025 15:40:55 UTC] PHP Warning:  Undefined array key "allow_upload" in /home/greenfieldsuperm/public_html/admin/checkadmin.php on line 25
+[25-Sep-2025 15:42:57 UTC] PHP Warning:  Undefined array key "allow_upload" in /home/greenfieldsuperm/public_html/admin/checkadmin.php on line 25
+[25-Sep-2025 15:46:06 UTC] PHP Warning:  Undefined array key "allow_upload" in /home/greenfieldsuperm/public_html/admin/checkadmin.php on line 25
+[25-Sep-2025 16:16:25 UTC] PHP Warning:  Undefined array key "allow_upload" in /home/greenfieldsuperm/public_html/admin/checkadmin.php on line 25
+[25-Sep-2025 16:26:36 UTC] PHP Warning:  Undefined variable $row in /home/greenfieldsuperm/public_html/admin/insertbrand.php on line 9
+[25-Sep-2025 16:26:36 UTC] PHP Warning:  Trying to access array offset on value of type null in /home/greenfieldsuperm/public_html/admin/insertbrand.php on line 9
+[25-Sep-2025 16:51:16 UTC] PHP Warning:  Undefined variable $row in /home/greenfieldsuperm/public_html/admin/insertbrand.php on line 9
+[25-Sep-2025 16:51:16 UTC] PHP Warning:  Trying to access array offset on value of type null in /home/greenfieldsuperm/public_html/admin/insertbrand.php on line 9
+[25-Sep-2025 16:59:48 UTC] PHP Warning:  Undefined variable $row in /home/greenfieldsuperm/public_html/admin/insertbrand.php on line 9
+[25-Sep-2025 16:59:48 UTC] PHP Warning:  Trying to access array offset on value of type null in /home/greenfieldsuperm/public_html/admin/insertbrand.php on line 9
+[25-Sep-2025 17:15:51 UTC] PHP Warning:  Undefined variable $row in /home/greenfieldsuperm/public_html/admin/insertbrand.php on line 9
+[25-Sep-2025 17:15:51 UTC] PHP Warning:  Trying to access array offset on value of type null in /home/greenfieldsuperm/public_html/admin/insertbrand.php on line 9
+[25-Sep-2025 17:32:09 UTC] PHP Warning:  Undefined variable $row in /home/greenfieldsuperm/public_html/admin/insertbrand.php on line 9
+[25-Sep-2025 17:32:09 UTC] PHP Warning:  Trying to access array offset on value of type null in /home/greenfieldsuperm/public_html/admin/insertbrand.php on line 9
+[26-Sep-2025 09:53:27 UTC] PHP Warning:  Undefined array key "allow_upload" in /home/greenfieldsuperm/public_html/admin/checkadmin.php on line 25
+[26-Sep-2025 11:41:54 UTC] PHP Warning:  Undefined variable $row in /home/greenfieldsuperm/public_html/admin/insertbrand.php on line 9
+[26-Sep-2025 11:41:54 UTC] PHP Warning:  Trying to access array offset on value of type null in /home/greenfieldsuperm/public_html/admin/insertbrand.php on line 9
+[26-Sep-2025 11:42:13 UTC] PHP Warning:  Undefined variable $row in /home/greenfieldsuperm/public_html/admin/insertar.php on line 9
+[26-Sep-2025 11:42:13 UTC] PHP Warning:  Trying to access array offset on value of type null in /home/greenfieldsuperm/public_html/admin/insertar.php on line 9
+[26-Sep-2025 11:42:18 UTC] PHP Warning:  Undefined variable $row in /home/greenfieldsuperm/public_html/admin/insertar.php on line 9
+[26-Sep-2025 11:42:18 UTC] PHP Warning:  Trying to access array offset on value of type null in /home/greenfieldsuperm/public_html/admin/insertar.php on line 9
+[26-Sep-2025 22:05:59 UTC] PHP Warning:  Undefined array key "allow_upload" in /home/greenfieldsuperm/public_html/admin/checkadmin.php on line 25
+[26-Sep-2025 22:06:31 UTC] PHP Warning:  Undefined variable $row in /home/greenfieldsuperm/public_html/admin/insertbrand.php on line 9
+[26-Sep-2025 22:06:31 UTC] PHP Warning:  Trying to access array offset on value of type null in /home/greenfieldsuperm/public_html/admin/insertbrand.php on line 9
+[26-Sep-2025 22:07:30 UTC] PHP Fatal error:  Uncaught mysqli_sql_exception: Incorrect integer value: '' for column `greenfieldsuperm_db`.`dow`.`price` at row 1 in /home/greenfieldsuperm/public_html/admin/dowInserted.php:91
+Stack trace:
+#0 /home/greenfieldsuperm/public_html/admin/dowInserted.php(91): mysqli_query(Object(mysqli), '\r\nINSERT INTO d...')
+#1 {main}
+  thrown in /home/greenfieldsuperm/public_html/admin/dowInserted.php on line 91
+[26-Sep-2025 22:07:38 UTC] PHP Fatal error:  Uncaught mysqli_sql_exception: Incorrect integer value: '' for column `greenfieldsuperm_db`.`dow`.`price` at row 1 in /home/greenfieldsuperm/public_html/admin/dowInserted.php:91
+Stack trace:
+#0 /home/greenfieldsuperm/public_html/admin/dowInserted.php(91): mysqli_query(Object(mysqli), '\r\nINSERT INTO d...')
+#1 {main}
+  thrown in /home/greenfieldsuperm/public_html/admin/dowInserted.php on line 91
+[26-Sep-2025 22:07:55 UTC] PHP Warning:  unlink(upload/dow/): Is a directory in /home/greenfieldsuperm/public_html/admin/deldow.php on line 14
+[27-Sep-2025 08:38:09 UTC] PHP Warning:  Undefined array key "allow_upload" in /home/greenfieldsuperm/public_html/admin/checkadmin.php on line 25
+[27-Sep-2025 09:53:29 UTC] PHP Warning:  Undefined array key "allow_upload" in /home/greenfieldsuperm/public_html/admin/checkadmin.php on line 25
+[27-Sep-2025 10:43:36 UTC] PHP Warning:  Undefined array key "allow_upload" in /home/greenfieldsuperm/public_html/admin/checkadmin.php on line 25
+[27-Sep-2025 12:43:04 UTC] PHP Warning:  Undefined array key "allow_upload" in /home/greenfieldsuperm/public_html/admin/checkadmin.php on line 25
+[27-Sep-2025 13:49:14 UTC] PHP Warning:  Undefined variable $row in /home/greenfieldsuperm/public_html/admin/insertbrand.php on line 9
+[27-Sep-2025 13:49:14 UTC] PHP Warning:  Trying to access array offset on value of type null in /home/greenfieldsuperm/public_html/admin/insertbrand.php on line 9
+[27-Sep-2025 14:14:11 UTC] PHP Warning:  Undefined variable $row in /home/greenfieldsuperm/public_html/admin/insertbrand.php on line 9
+[27-Sep-2025 14:14:11 UTC] PHP Warning:  Trying to access array offset on value of type null in /home/greenfieldsuperm/public_html/admin/insertbrand.php on line 9
+[27-Sep-2025 14:26:18 UTC] PHP Fatal error:  Uncaught mysqli_sql_exception: Incorrect integer value: '' for column `greenfieldsuperm_db`.`dow`.`price` at row 1 in /home/greenfieldsuperm/public_html/admin/dowInserted.php:91
+Stack trace:
+#0 /home/greenfieldsuperm/public_html/admin/dowInserted.php(91): mysqli_query(Object(mysqli), '\r\nINSERT INTO d...')
+#1 {main}
+  thrown in /home/greenfieldsuperm/public_html/admin/dowInserted.php on line 91
+[27-Sep-2025 14:27:26 UTC] PHP Warning:  Undefined variable $row in /home/greenfieldsuperm/public_html/admin/insertbrand.php on line 9
+[27-Sep-2025 14:27:26 UTC] PHP Warning:  Trying to access array offset on value of type null in /home/greenfieldsuperm/public_html/admin/insertbrand.php on line 9
+[27-Sep-2025 14:36:25 UTC] PHP Warning:  Undefined variable $row in /home/greenfieldsuperm/public_html/admin/insertbrand.php on line 9
+[27-Sep-2025 14:36:25 UTC] PHP Warning:  Trying to access array offset on value of type null in /home/greenfieldsuperm/public_html/admin/insertbrand.php on line 9

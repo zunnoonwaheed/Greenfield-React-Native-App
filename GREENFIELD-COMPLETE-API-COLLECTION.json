@@ -1,0 +1,679 @@
+{
+	"info": {
+		"name": "Greenfield Supermarket - COMPLETE 56 ENDPOINTS",
+		"description": "Complete Production-Ready API Collection for Greenfield E-Commerce System\n\n**Test Credentials:**\n- Email: ali.hassan@testmail.com\n- Password: Test@123\n\n**Product IDs:** 10001-10029\n**User IDs:** 200-209\n**Bundle IDs:** 200-204\n**Order IDs:** 200-210\n\n**Base URL:** Change to your server (localhost:8000 or deployed URL)\n\nAll endpoints return JSON responses. Session-based authentication.\n\nGenerated: 2025-11-15",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:8000",
+			"type": "string"
+		},
+		{
+			"key": "user_id",
+			"value": "200",
+			"type": "string"
+		},
+		{
+			"key": "product_id",
+			"value": "10001",
+			"type": "string"
+		},
+		{
+			"key": "order_id",
+			"value": "200",
+			"type": "string"
+		},
+		{
+			"key": "bundle_id",
+			"value": "200",
+			"type": "string"
+		}
+	],
+	"item": [
+		{
+			"name": "1. Authentication (7 endpoints)",
+			"description": "User authentication and session management",
+			"item": [
+				{
+					"name": "Register New User",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{"key": "name", "value": "Test User", "type": "text"},
+								{"key": "email", "value": "testuser@example.com", "type": "text"},
+								{"key": "password", "value": "Test@123", "type": "text"},
+								{"key": "phone", "value": "03001234567", "type": "text"},
+								{"key": "address", "value": "Test Address, Islamabad", "type": "text"}
+							]
+						},
+						"url": {"raw": "{{base_url}}/api/register.php", "host": ["{{base_url}}"], "path": ["api", "register.php"]}
+					}
+				},
+				{
+					"name": "Login",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{"key": "email", "value": "ali.hassan@testmail.com", "type": "text"},
+								{"key": "password", "value": "Test@123", "type": "text"}
+							]
+						},
+						"url": {"raw": "{{base_url}}/login.php", "host": ["{{base_url}}"], "path": ["login.php"]}
+					}
+				},
+				{
+					"name": "Login (API Endpoint)",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{"key": "email", "value": "ali.hassan@testmail.com", "type": "text"},
+								{"key": "password", "value": "Test@123", "type": "text"}
+							]
+						},
+						"url": {"raw": "{{base_url}}/api/login.php", "host": ["{{base_url}}"], "path": ["api", "login.php"]}
+					}
+				},
+				{
+					"name": "Logout",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {"raw": "{{base_url}}/logout.php", "host": ["{{base_url}}"], "path": ["logout.php"]}
+					}
+				},
+				{
+					"name": "Logout (API Endpoint)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {"raw": "{{base_url}}/api/logout.php", "host": ["{{base_url}}"], "path": ["api", "logout.php"]}
+					}
+				},
+				{
+					"name": "Forgot Password",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{"key": "email", "value": "ali.hassan@testmail.com", "type": "text"}
+							]
+						},
+						"url": {"raw": "{{base_url}}/api/forgot-password.php", "host": ["{{base_url}}"], "path": ["api", "forgot-password.php"]}
+					}
+				},
+				{
+					"name": "Reset Password",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{"key": "token", "value": "YOUR_RESET_TOKEN", "type": "text"},
+								{"key": "new_password", "value": "NewPassword@123", "type": "text"}
+							]
+						},
+						"url": {"raw": "{{base_url}}/api/reset-password.php", "host": ["{{base_url}}"], "path": ["api", "reset-password.php"]}
+					}
+				}
+			]
+		},
+		{
+			"name": "2. User Profile (4 endpoints)",
+			"description": "User profile management",
+			"item": [
+				{
+					"name": "Get Profile",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {"raw": "{{base_url}}/api/profile.php", "host": ["{{base_url}}"], "path": ["api", "profile.php"]}
+					}
+				},
+				{
+					"name": "Get Dashboard",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {"raw": "{{base_url}}/api/dashboard.php", "host": ["{{base_url}}"], "path": ["api", "dashboard.php"]}
+					}
+				},
+				{
+					"name": "Update Profile",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{"key": "name", "value": "Ali Hassan Updated", "type": "text"},
+								{"key": "phone", "value": "03001111111", "type": "text"},
+								{"key": "address", "value": "Updated Address, Islamabad", "type": "text"}
+							]
+						},
+						"url": {"raw": "{{base_url}}/update-profile.php", "host": ["{{base_url}}"], "path": ["update-profile.php"]}
+					}
+				},
+				{
+					"name": "Update Delivery Address",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{"key": "phase_id", "value": "200", "type": "text"},
+								{"key": "sector", "value": "Test Sector A", "type": "text"},
+								{"key": "address", "value": "House 10, Street 5", "type": "text"}
+							]
+						},
+						"url": {"raw": "{{base_url}}/update-delivery.php", "host": ["{{base_url}}"], "path": ["update-delivery.php"]}
+					}
+				}
+			]
+		},
+		{
+			"name": "3. Products (8 endpoints)",
+			"description": "Product browsing and search",
+			"item": [
+				{
+					"name": "Get All Products",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {"raw": "{{base_url}}/api/products.php", "host": ["{{base_url}}"], "path": ["api", "products.php"]}
+					}
+				},
+				{
+					"name": "Get Product by ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {"raw": "{{base_url}}/api/product.php?id={{product_id}}", "host": ["{{base_url}}"], "path": ["api", "product.php"], "query": [{"key": "id", "value": "{{product_id}}"}]}
+					}
+				},
+				{
+					"name": "Search Products",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{"key": "q", "value": "tomato", "type": "text"}
+							]
+						},
+						"url": {"raw": "{{base_url}}/search-product.php", "host": ["{{base_url}}"], "path": ["search-product.php"]}
+					}
+				},
+				{
+					"name": "Shop Page (Search)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {"raw": "{{base_url}}/shop.php?q=milk", "host": ["{{base_url}}"], "path": ["shop.php"], "query": [{"key": "q", "value": "milk"}]}
+					}
+				},
+				{
+					"name": "Get Products by Category",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{"key": "category_id", "value": "53", "type": "text"}
+							]
+						},
+						"url": {"raw": "{{base_url}}/ajax/get-products.php", "host": ["{{base_url}}"], "path": ["ajax", "get-products.php"]}
+					}
+				},
+				{
+					"name": "Get Products by Brand",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{"key": "brand_filter", "value": "1000", "type": "text"}
+							]
+						},
+						"url": {"raw": "{{base_url}}/ajax/get-products.php", "host": ["{{base_url}}"], "path": ["ajax", "get-products.php"]}
+					}
+				},
+				{
+					"name": "Get Product by Slug",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {"raw": "{{base_url}}/test-tomato-fresh-1kg", "host": ["{{base_url}}"], "path": ["test-tomato-fresh-1kg"]}
+					}
+				},
+				{
+					"name": "Admin Search Products",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{"key": "q", "value": "rice", "type": "text"}
+							]
+						},
+						"url": {"raw": "{{base_url}}/admin/search_products.php", "host": ["{{base_url}}"], "path": ["admin", "search_products.php"]}
+					}
+				}
+			]
+		},
+		{
+			"name": "4. Categories (3 endpoints)",
+			"description": "Category management",
+			"item": [
+				{
+					"name": "Get All Categories",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {"raw": "{{base_url}}/api/categories.php", "host": ["{{base_url}}"], "path": ["api", "categories.php"]}
+					}
+				},
+				{
+					"name": "Get Category by ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {"raw": "{{base_url}}/api/category.php?id=53", "host": ["{{base_url}}"], "path": ["api", "category.php"], "query": [{"key": "id", "value": "53"}]}
+					}
+				},
+				{
+					"name": "Get Category by Slug",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {"raw": "{{base_url}}/category/vegetables", "host": ["{{base_url}}"], "path": ["category", "vegetables"]}
+					}
+				}
+			]
+		},
+		{
+			"name": "5. Cart Operations (6 endpoints)",
+			"description": "Shopping cart management",
+			"item": [
+				{
+					"name": "Add to Cart",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{"key": "product_id", "value": "{{product_id}}", "type": "text"},
+								{"key": "quantity", "value": "2", "type": "text"}
+							]
+						},
+						"url": {"raw": "{{base_url}}/add-to-cart.php", "host": ["{{base_url}}"], "path": ["add-to-cart.php"]}
+					}
+				},
+				{
+					"name": "Get Cart Contents",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {"raw": "{{base_url}}/cart-contents.php", "host": ["{{base_url}}"], "path": ["cart-contents.php"]}
+					}
+				},
+				{
+					"name": "Update Cart Item",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{"key": "product_id", "value": "{{product_id}}", "type": "text"},
+								{"key": "quantity", "value": "3", "type": "text"}
+							]
+						},
+						"url": {"raw": "{{base_url}}/update-cart.php", "host": ["{{base_url}}"], "path": ["update-cart.php"]}
+					}
+				},
+				{
+					"name": "Remove from Cart",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{"key": "product_id", "value": "{{product_id}}", "type": "text"}
+							]
+						},
+						"url": {"raw": "{{base_url}}/remove-from-cart.php", "host": ["{{base_url}}"], "path": ["remove-from-cart.php"]}
+					}
+				},
+				{
+					"name": "Clear Cart",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {"raw": "{{base_url}}/clear-cart.php", "host": ["{{base_url}}"], "path": ["clear-cart.php"]}
+					}
+				},
+				{
+					"name": "Add Bundle to Cart",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{"key": "bundle_id", "value": "{{bundle_id}}", "type": "text"},
+								{"key": "quantity", "value": "1", "type": "text"}
+							]
+						},
+						"url": {"raw": "{{base_url}}/add-bundle-to-cart.php", "host": ["{{base_url}}"], "path": ["add-bundle-to-cart.php"]}
+					}
+				}
+			]
+		},
+		{
+			"name": "6. Orders (5 endpoints)",
+			"description": "Order management",
+			"item": [
+				{
+					"name": "Submit Order",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{"key": "name", "value": "Ali Hassan", "type": "text"},
+								{"key": "email", "value": "ali.hassan@testmail.com", "type": "text"},
+								{"key": "phone", "value": "03001111111", "type": "text"},
+								{"key": "address", "value": "House 10, Street 5, Test DHA Phase 1", "type": "text"},
+								{"key": "payment_method", "value": "COD", "type": "text"},
+								{"key": "delivery_charge", "value": "0", "type": "text"}
+							]
+						},
+						"url": {"raw": "{{base_url}}/submit-order.php", "host": ["{{base_url}}"], "path": ["submit-order.php"]}
+					}
+				},
+				{
+					"name": "Get Order Details",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {"raw": "{{base_url}}/api/order-details.php?id={{order_id}}", "host": ["{{base_url}}"], "path": ["api", "order-details.php"], "query": [{"key": "id", "value": "{{order_id}}"}]}
+					}
+				},
+				{
+					"name": "Track Order",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {"raw": "{{base_url}}/order-tracking.php?id={{order_id}}", "host": ["{{base_url}}"], "path": ["order-tracking.php"], "query": [{"key": "id", "value": "{{order_id}}"}]}
+					}
+				},
+				{
+					"name": "Thank You Page",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {"raw": "{{base_url}}/thank-you.php?order_id={{order_id}}", "host": ["{{base_url}}"], "path": ["thank-you.php"], "query": [{"key": "order_id", "value": "{{order_id}}"}]}
+					}
+				},
+				{
+					"name": "Checkout Page",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {"raw": "{{base_url}}/checkout.php", "host": ["{{base_url}}"], "path": ["checkout.php"]}
+					}
+				}
+			]
+		},
+		{
+			"name": "7. Bundles/Packages (3 endpoints)",
+			"description": "Product bundle management",
+			"item": [
+				{
+					"name": "Get All Bundles",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {"raw": "{{base_url}}/bucket.php", "host": ["{{base_url}}"], "path": ["bucket.php"]}
+					}
+				},
+				{
+					"name": "Get Bundle Details",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {"raw": "{{base_url}}/bucket-detail.php?id={{bundle_id}}", "host": ["{{base_url}}"], "path": ["bucket-detail.php"], "query": [{"key": "id", "value": "{{bundle_id}}"}]}
+					}
+				},
+				{
+					"name": "Add Bundle to Cart",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{"key": "bundle_id", "value": "{{bundle_id}}", "type": "text"},
+								{"key": "quantity", "value": "1", "type": "text"}
+							]
+						},
+						"url": {"raw": "{{base_url}}/add-bundle-to-cart.php", "host": ["{{base_url}}"], "path": ["add-bundle-to-cart.php"]}
+					}
+				}
+			]
+		},
+		{
+			"name": "8. Locations (2 endpoints)",
+			"description": "Delivery locations",
+			"item": [
+				{
+					"name": "Get Sectors by Phase",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {"raw": "{{base_url}}/get_sectors.php?phase_id=200", "host": ["{{base_url}}"], "path": ["get_sectors.php"], "query": [{"key": "phase_id", "value": "200"}]}
+					}
+				},
+				{
+					"name": "Get All Phases",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {"raw": "{{base_url}}/api/locations.php", "host": ["{{base_url}}"], "path": ["api", "locations.php"]}
+					}
+				}
+			]
+		},
+		{
+			"name": "9. Admin (4 endpoints)",
+			"description": "Admin panel endpoints",
+			"item": [
+				{
+					"name": "Admin Login",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{"key": "username", "value": "testadmin", "type": "text"},
+								{"key": "password", "value": "password", "type": "text"}
+							]
+						},
+						"url": {"raw": "{{base_url}}/admin/checkadmin.php", "host": ["{{base_url}}"], "path": ["admin", "checkadmin.php"]}
+					}
+				},
+				{
+					"name": "Admin Dashboard",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {"raw": "{{base_url}}/admin/index.php", "host": ["{{base_url}}"], "path": ["admin", "index.php"]}
+					}
+				},
+				{
+					"name": "Admin Search Products",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{"key": "q", "value": "test", "type": "text"}
+							]
+						},
+						"url": {"raw": "{{base_url}}/admin/search_products.php", "host": ["{{base_url}}"], "path": ["admin", "search_products.php"]}
+					}
+				},
+				{
+					"name": "Access Denied",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {"raw": "{{base_url}}/admin/accessDenied.php", "host": ["{{base_url}}"], "path": ["admin", "accessDenied.php"]}
+					}
+				}
+			]
+		},
+		{
+			"name": "10. Miscellaneous (14 endpoints)",
+			"description": "Other utility endpoints",
+			"item": [
+				{
+					"name": "Home Page",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {"raw": "{{base_url}}/", "host": ["{{base_url}}"], "path": [""]}
+					}
+				},
+				{
+					"name": "Index Page",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {"raw": "{{base_url}}/index.php", "host": ["{{base_url}}"], "path": ["index.php"]}
+					}
+				},
+				{
+					"name": "Text Page (About)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {"raw": "{{base_url}}/page.php?slug=test-about-us", "host": ["{{base_url}}"], "path": ["page.php"], "query": [{"key": "slug", "value": "test-about-us"}]}
+					}
+				},
+				{
+					"name": "Text Page (Contact)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {"raw": "{{base_url}}/page.php?slug=test-contact", "host": ["{{base_url}}"], "path": ["page.php"], "query": [{"key": "slug", "value": "test-contact"}]}
+					}
+				},
+				{
+					"name": "404 Page",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {"raw": "{{base_url}}/404.php", "host": ["{{base_url}}"], "path": ["404.php"]}
+					}
+				},
+				{
+					"name": "Header Component",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {"raw": "{{base_url}}/header.php", "host": ["{{base_url}}"], "path": ["header.php"]}
+					}
+				},
+				{
+					"name": "Footer Component",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {"raw": "{{base_url}}/footer.php", "host": ["{{base_url}}"], "path": ["footer.php"]}
+					}
+				},
+				{
+					"name": "JavaScript Includes",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {"raw": "{{base_url}}/js.php", "host": ["{{base_url}}"], "path": ["js.php"]}
+					}
+				},
+				{
+					"name": "Product JavaScript",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {"raw": "{{base_url}}/product-js.php", "host": ["{{base_url}}"], "path": ["product-js.php"]}
+					}
+				},
+				{
+					"name": "HTML Head",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {"raw": "{{base_url}}/head.php", "host": ["{{base_url}}"], "path": ["head.php"]}
+					}
+				},
+				{
+					"name": "HTML Opening Tags",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {"raw": "{{base_url}}/html.php", "host": ["{{base_url}}"], "path": ["html.php"]}
+					}
+				},
+				{
+					"name": "User Login Page (HTML)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {"raw": "{{base_url}}/user-login.php", "host": ["{{base_url}}"], "path": ["user-login.php"]}
+					}
+				},
+				{
+					"name": "Dashboard (HTML)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {"raw": "{{base_url}}/dashboard.php", "host": ["{{base_url}}"], "path": ["dashboard.php"]}
+					}
+				},
+				{
+					"name": "Profile (HTML)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {"raw": "{{base_url}}/profile.php", "host": ["{{base_url}}"], "path": ["profile.php"]}
+					}
+				}
+			]
+		}
+	]
+}

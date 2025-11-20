@@ -1,0 +1,15 @@
+<script>function updateHeaderCart(e){const t=document.getElementById("cart-count"),n=document.getElementById("cart-count-desktop"),a=document.getElementById("cart-count-offcanvas");[t,n,a].forEach(t=>{t&&(e>0?(t.textContent=e,t.classList.remove("d-none")):(t.textContent=0,t.classList.add("d-none")))})}function loadCart(){fetch("/cart-contents.php").then(e=>e.text()).then(e=>{document.querySelector("#cartContent").innerHTML=e;const t=document.getElementById("cartContent");bindCartButtons(t);let n=document.getElementById("cart-count-value"),a=n?parseInt(n.value):0;updateHeaderCart(a);let c=document.getElementById("cart-total-value");c&&(document.getElementById("cart-total").textContent=c.value)})}function updateCartItem(e,t){fetch("/update-cart.php",{method:"POST",headers:{"Content-Type":"application/x-www-form-urlencoded"},body:"id="+e+"&action="+t}).then(e=>e.json()).then(e=>{e.success&&loadCart()})}function bindCartButtons(e){e.querySelectorAll(".updateQty").forEach(e=>{e.addEventListener("click",function(){updateCartItem(this.dataset.id,this.dataset.action)})}),e.querySelectorAll(".removeItem").forEach(e=>{e.addEventListener("click",function(){updateCartItem(this.dataset.id,"remove")})})}document.addEventListener("submit",function(e){if(e.target.classList.contains("addToCartForm")){e.preventDefault();const t=e.target,n=new FormData(t),a=document.getElementById("cartMsg");fetch("/add-to-cart.php",{method:"POST",body:n}).then(e=>e.json()).then(e=>{a&&(a.style.display="block",a.innerHTML=e.message),e.success&&(updateHeaderCart(e.cart_count),e.cart_html&&(document.getElementById("cartContent").innerHTML=e.cart_html,bindCartButtons(document.getElementById("cartContent")),document.getElementById("cartContent").querySelector("#cart-total-value")&&(document.getElementById("cart-total").textContent=document.getElementById("cartContent").querySelector("#cart-total-value").value)),new bootstrap.Offcanvas(document.getElementById("offcanvasCart")).show())})}}),document.addEventListener("click",function(e){if(e.target&&"continueShoppingBtn"===e.target.id){e.preventDefault();var t=document.getElementById("offcanvasCart"),n=bootstrap.Offcanvas.getInstance(t)||new bootstrap.Offcanvas(t);n.hide()}}),document.addEventListener("DOMContentLoaded",loadCart); 
+   document.addEventListener('click', function (e) {
+    if (e.target.classList.contains('qty-btn')) {
+        const input = e.target.closest('.input-group').querySelector('.qty-input');
+        let current = parseInt(input.value) || 1;
+        const min = parseInt(input.min) || 1;
+
+        if (e.target.dataset.action === "increase") {
+            input.value = current + 1;
+        } else if (e.target.dataset.action === "decrease" && current > min) {
+            input.value = current - 1;
+        }
+    }
+});
+</script>

@@ -1,0 +1,50 @@
+[05-Sep-2025 10:32:55 UTC] PHP Fatal error:  Uncaught mysqli_sql_exception: Unknown column 'status' in 'field list' in /home/greenfieldsuperm/public_html/admin/ajax/update-order-status.php:7
+Stack trace:
+#0 /home/greenfieldsuperm/public_html/admin/ajax/update-order-status.php(7): mysqli_query(Object(mysqli), 'UPDATE orders S...')
+#1 {main}
+  thrown in /home/greenfieldsuperm/public_html/admin/ajax/update-order-status.php on line 7
+[05-Sep-2025 10:33:41 UTC] PHP Fatal error:  Uncaught mysqli_sql_exception: Data truncated for column 'statuss' at row 1 in /home/greenfieldsuperm/public_html/admin/ajax/update-order-status.php:7
+Stack trace:
+#0 /home/greenfieldsuperm/public_html/admin/ajax/update-order-status.php(7): mysqli_query(Object(mysqli), 'UPDATE orders S...')
+#1 {main}
+  thrown in /home/greenfieldsuperm/public_html/admin/ajax/update-order-status.php on line 7
+[05-Sep-2025 10:33:58 UTC] PHP Fatal error:  Uncaught mysqli_sql_exception: Data truncated for column 'statuss' at row 1 in /home/greenfieldsuperm/public_html/admin/ajax/update-order-status.php:7
+Stack trace:
+#0 /home/greenfieldsuperm/public_html/admin/ajax/update-order-status.php(7): mysqli_query(Object(mysqli), 'UPDATE orders S...')
+#1 {main}
+  thrown in /home/greenfieldsuperm/public_html/admin/ajax/update-order-status.php on line 7
+[05-Sep-2025 12:10:46 UTC] PHP Fatal error:  Uncaught mysqli_sql_exception: Data truncated for column 'payment_status' at row 1 in /home/greenfieldsuperm/public_html/admin/ajax/update-payment-status.php:12
+Stack trace:
+#0 /home/greenfieldsuperm/public_html/admin/ajax/update-payment-status.php(12): mysqli_query(Object(mysqli), 'UPDATE orders S...')
+#1 {main}
+  thrown in /home/greenfieldsuperm/public_html/admin/ajax/update-payment-status.php on line 12
+[05-Sep-2025 12:11:28 UTC] PHP Fatal error:  Uncaught mysqli_sql_exception: Data truncated for column 'payment_status' at row 1 in /home/greenfieldsuperm/public_html/admin/ajax/update-payment-status.php:12
+Stack trace:
+#0 /home/greenfieldsuperm/public_html/admin/ajax/update-payment-status.php(12): mysqli_query(Object(mysqli), 'UPDATE orders S...')
+#1 {main}
+  thrown in /home/greenfieldsuperm/public_html/admin/ajax/update-payment-status.php on line 12
+[05-Sep-2025 12:11:41 UTC] PHP Fatal error:  Uncaught mysqli_sql_exception: Data truncated for column 'payment_status' at row 1 in /home/greenfieldsuperm/public_html/admin/ajax/update-payment-status.php:12
+Stack trace:
+#0 /home/greenfieldsuperm/public_html/admin/ajax/update-payment-status.php(12): mysqli_query(Object(mysqli), 'UPDATE orders S...')
+#1 {main}
+  thrown in /home/greenfieldsuperm/public_html/admin/ajax/update-payment-status.php on line 12
+[05-Sep-2025 12:12:03 UTC] PHP Fatal error:  Uncaught mysqli_sql_exception: Data truncated for column 'payment_status' at row 1 in /home/greenfieldsuperm/public_html/admin/ajax/update-payment-status.php:12
+Stack trace:
+#0 /home/greenfieldsuperm/public_html/admin/ajax/update-payment-status.php(12): mysqli_query(Object(mysqli), 'UPDATE orders S...')
+#1 {main}
+  thrown in /home/greenfieldsuperm/public_html/admin/ajax/update-payment-status.php on line 12
+[05-Sep-2025 12:12:25 UTC] PHP Fatal error:  Uncaught mysqli_sql_exception: Data truncated for column 'payment_status' at row 1 in /home/greenfieldsuperm/public_html/admin/ajax/update-payment-status.php:12
+Stack trace:
+#0 /home/greenfieldsuperm/public_html/admin/ajax/update-payment-status.php(12): mysqli_query(Object(mysqli), 'UPDATE orders S...')
+#1 {main}
+  thrown in /home/greenfieldsuperm/public_html/admin/ajax/update-payment-status.php on line 12
+[05-Sep-2025 12:13:21 UTC] PHP Fatal error:  Uncaught mysqli_sql_exception: Data truncated for column 'payment_status' at row 1 in /home/greenfieldsuperm/public_html/admin/ajax/update-payment-status.php:12
+Stack trace:
+#0 /home/greenfieldsuperm/public_html/admin/ajax/update-payment-status.php(12): mysqli_query(Object(mysqli), 'UPDATE orders S...')
+#1 {main}
+  thrown in /home/greenfieldsuperm/public_html/admin/ajax/update-payment-status.php on line 12
+[05-Sep-2025 12:14:52 UTC] PHP Fatal error:  Uncaught mysqli_sql_exception: Data truncated for column 'payment_status' at row 1 in /home/greenfieldsuperm/public_html/admin/ajax/update-payment-status.php:12
+Stack trace:
+#0 /home/greenfieldsuperm/public_html/admin/ajax/update-payment-status.php(12): mysqli_query(Object(mysqli), 'UPDATE orders S...')
+#1 {main}
+  thrown in /home/greenfieldsuperm/public_html/admin/ajax/update-payment-status.php on line 12

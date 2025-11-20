@@ -1,0 +1,7 @@
+RewriteEngine On
+
+# /category/chocolates/ → page.php?slug=chocolates
+RewriteRule ^([^/]+)/?$ page.php?slug=$1 [L,QSA]
+
+# /category/ → index.php
+DirectoryIndex index.php

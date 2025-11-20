@@ -1,0 +1,15 @@
+#----------------------------------------------------------------cp:ppd
+# Section managed by cPanel: Password Protected Directories     -cp:ppd
+# - Do not edit this section of the htaccess file!              -cp:ppd
+#----------------------------------------------------------------cp:ppd
+AuthType Basic
+AuthName "gp-admin"
+AuthUserFile "/home/greenfieldsuperm/.htpasswds/public_html/admin/passwd"
+Require valid-user
+#----------------------------------------------------------------cp:ppd
+# End section managed by cPanel: Password Protected Directories -cp:ppd
+#----------------------------------------------------------------cp:ppd
+<FilesMatch "(?i)\.(avif|png|jpg|jpeg|gif|webp)$">
+  Satisfy Any
+  Allow from all
+</FilesMatch>

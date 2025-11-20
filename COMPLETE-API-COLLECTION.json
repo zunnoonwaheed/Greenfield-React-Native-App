@@ -1,0 +1,1565 @@
+{
+	"info": {
+		"name": "Greenfield API - COMPLETE 56 ENDPOINTS",
+		"description": "Complete API collection testing all 56 endpoints\n\nTest Credentials:\n- Email: ali.hassan@test.com\n- Password: Test@123\n\nProduct IDs: 10001-10010\nUser IDs: 1000-1001\nBundle IDs: 1000-1001\nPhase IDs: 1000, 1004\nSector IDs: 1001-1006",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:3000",
+			"type": "string"
+		}
+	],
+	"item": [
+		{
+			"name": "1. Authentication & Profile (6 endpoints)",
+			"item": [
+				{
+					"name": "Login - Ali Hassan",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "login_email",
+									"value": "ali.hassan@test.com",
+									"type": "text"
+								},
+								{
+									"key": "login_password",
+									"value": "Test@123",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/login.php",
+							"host": ["{{base_url}}"],
+							"path": ["login.php"]
+						}
+					}
+				},
+				{
+					"name": "User Login/Register",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "login_email",
+									"value": "ali.hassan@test.com",
+									"type": "text"
+								},
+								{
+									"key": "login_password",
+									"value": "Test@123",
+									"type": "text"
+								},
+								{
+									"key": "phase_id",
+									"value": "1000",
+									"type": "text"
+								},
+								{
+									"key": "sector_id",
+									"value": "1001",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/user-login.php",
+							"host": ["{{base_url}}"],
+							"path": ["user-login.php"]
+						}
+					}
+				},
+				{
+					"name": "Dashboard",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/dashboard.php",
+							"host": ["{{base_url}}"],
+							"path": ["dashboard.php"]
+						}
+					}
+				},
+				{
+					"name": "Profile",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/profile.php",
+							"host": ["{{base_url}}"],
+							"path": ["profile.php"]
+						}
+					}
+				},
+				{
+					"name": "Update Profile",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "name",
+									"value": "Ali Hassan Updated",
+									"type": "text"
+								},
+								{
+									"key": "phone",
+									"value": "03001111111",
+									"type": "text"
+								},
+								{
+									"key": "address",
+									"value": "House 10, Street 5, DHA Phase 1, Sector A, Islamabad",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/update-profile.php",
+							"host": ["{{base_url}}"],
+							"path": ["update-profile.php"]
+						}
+					}
+				},
+				{
+					"name": "Logout",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/logout.php",
+							"host": ["{{base_url}}"],
+							"path": ["logout.php"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "2. Category Endpoints (5 endpoints)",
+			"item": [
+				{
+					"name": "List All Categories",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/category/",
+							"host": ["{{base_url}}"],
+							"path": ["category", ""]
+						}
+					}
+				},
+				{
+					"name": "Get Single Category by Slug",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/category/grocery/",
+							"host": ["{{base_url}}"],
+							"path": ["category", "grocery", ""]
+						}
+					}
+				},
+				{
+					"name": "Get Categories (API)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/categories.php",
+							"host": ["{{base_url}}"],
+							"path": ["api", "categories.php"]
+						}
+					}
+				},
+				{
+					"name": "Filter Products by Category (AJAX)",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "catId",
+									"value": "53",
+									"type": "text"
+								},
+								{
+									"key": "brandId",
+									"value": "1000",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/ajax/get-products.php",
+							"host": ["{{base_url}}"],
+							"path": ["ajax", "get-products.php"]
+						}
+					}
+				},
+				{
+					"name": "Admin - Get Subcategories Dropdown",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/admin/getuser1.php?p=53",
+							"host": ["{{base_url}}"],
+							"path": ["admin", "getuser1.php"],
+							"query": [
+								{
+									"key": "p",
+									"value": "53"
+								}
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "3. Product & Search Endpoints (15 endpoints)",
+			"item": [
+				{
+					"name": "Search Products",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "q",
+									"value": "tomato",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/search-product.php",
+							"host": ["{{base_url}}"],
+							"path": ["search-product.php"]
+						}
+					}
+				},
+				{
+					"name": "Search Products - Shop",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/shop.php?q=milk",
+							"host": ["{{base_url}}"],
+							"path": ["shop.php"],
+							"query": [
+								{
+									"key": "q",
+									"value": "milk"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Product by Slug (Page)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/tomato-fresh-1kg/",
+							"host": ["{{base_url}}"],
+							"path": ["tomato-fresh-1kg", ""]
+						}
+					}
+				},
+				{
+					"name": "Get Product by Slug (API)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/product.php?slug=tomato-fresh-1kg",
+							"host": ["{{base_url}}"],
+							"path": ["api", "product.php"],
+							"query": [
+								{
+									"key": "slug",
+									"value": "tomato-fresh-1kg"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Admin - Search Products (AJAX)",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "q",
+									"value": "tomato",
+									"type": "text"
+								},
+								{
+									"key": "selectedIds",
+									"value": "10001,10002",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/admin/search_products.php",
+							"host": ["{{base_url}}"],
+							"path": ["admin", "search_products.php"]
+						}
+					}
+				},
+				{
+					"name": "Admin - Product List (DataTables)",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "draw",
+									"value": "1",
+									"type": "text"
+								},
+								{
+									"key": "start",
+									"value": "0",
+									"type": "text"
+								},
+								{
+									"key": "length",
+									"value": "10",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/admin/fetch_dow_data.php",
+							"host": ["{{base_url}}"],
+							"path": ["admin", "fetch_dow_data.php"]
+						}
+					}
+				},
+				{
+					"name": "Admin - Products by Category",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/admin/products.php?catID=53&mainID=2&page=1",
+							"host": ["{{base_url}}"],
+							"path": ["admin", "products.php"],
+							"query": [
+								{
+									"key": "catID",
+									"value": "53"
+								},
+								{
+									"key": "mainID",
+									"value": "2"
+								},
+								{
+									"key": "page",
+									"value": "1"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Admin - Update Product Category",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "product_id",
+									"value": "10001",
+									"type": "text"
+								},
+								{
+									"key": "category_id",
+									"value": "53",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/admin/update-category.php",
+							"host": ["{{base_url}}"],
+							"path": ["admin", "update-category.php"]
+						}
+					}
+				},
+				{
+					"name": "Admin - Insert Product",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "namee",
+									"value": "Test Product",
+									"type": "text"
+								},
+								{
+									"key": "price",
+									"value": "100",
+									"type": "text"
+								},
+								{
+									"key": "catID",
+									"value": "53",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/admin/insertdow.php",
+							"host": ["{{base_url}}"],
+							"path": ["admin", "insertdow.php"]
+						}
+					}
+				},
+				{
+					"name": "Admin - Edit Product",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "id",
+									"value": "10001",
+									"type": "text"
+								},
+								{
+									"key": "namee",
+									"value": "Tomato Fresh 1kg Updated",
+									"type": "text"
+								},
+								{
+									"key": "price",
+									"value": "150",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/admin/editdow.php?id=10001",
+							"host": ["{{base_url}}"],
+							"path": ["admin", "editdow.php"],
+							"query": [
+								{
+									"key": "id",
+									"value": "10001"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Admin - Delete Product (Method 1)",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/admin/deldow.php?id=10001",
+							"host": ["{{base_url}}"],
+							"path": ["admin", "deldow.php"],
+							"query": [
+								{
+									"key": "id",
+									"value": "10001"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Admin - Delete Product (Method 2)",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/admin/delProducts.php?id=10001&catID=53",
+							"host": ["{{base_url}}"],
+							"path": ["admin", "delProducts.php"],
+							"query": [
+								{
+									"key": "id",
+									"value": "10001"
+								},
+								{
+									"key": "catID",
+									"value": "53"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Admin - Update Product Pricing",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "id",
+									"value": "10001",
+									"type": "text"
+								},
+								{
+									"key": "price",
+									"value": "160",
+									"type": "text"
+								},
+								{
+									"key": "dprice",
+									"value": "150",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/admin/editprice.php",
+							"host": ["{{base_url}}"],
+							"path": ["admin", "editprice.php"]
+						}
+					}
+				},
+				{
+					"name": "Admin - Insert Brand/Product",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "name",
+									"value": "New Brand",
+									"type": "text"
+								},
+								{
+									"key": "slug",
+									"value": "new-brand",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/admin/productInserted.php",
+							"host": ["{{base_url}}"],
+							"path": ["admin", "productInserted.php"]
+						}
+					}
+				},
+				{
+					"name": "Admin - Insert Subcategory Product",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "catID",
+									"value": "53",
+									"type": "text"
+								},
+								{
+									"key": "namee",
+									"value": "Subcategory Product",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/admin/subproductsinsert.php?catID=53",
+							"host": ["{{base_url}}"],
+							"path": ["admin", "subproductsinsert.php"],
+							"query": [
+								{
+									"key": "catID",
+									"value": "53"
+								}
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "4. Cart & Checkout (6 endpoints)",
+			"item": [
+				{
+					"name": "Add to Cart",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "product_id",
+									"value": "10001",
+									"type": "text"
+								},
+								{
+									"key": "qty",
+									"value": "2",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/add-to-cart.php",
+							"host": ["{{base_url}}"],
+							"path": ["add-to-cart.php"]
+						}
+					}
+				},
+				{
+					"name": "Update Cart",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "id",
+									"value": "10001",
+									"type": "text"
+								},
+								{
+									"key": "action",
+									"value": "increase",
+									"type": "text",
+									"description": "increase, decrease, or remove"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/update-cart.php",
+							"host": ["{{base_url}}"],
+							"path": ["update-cart.php"]
+						}
+					}
+				},
+				{
+					"name": "Remove from Cart",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "id",
+									"value": "10001",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/remove-from-cart.php",
+							"host": ["{{base_url}}"],
+							"path": ["remove-from-cart.php"]
+						}
+					}
+				},
+				{
+					"name": "Get Cart Contents",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/cart-contents.php",
+							"host": ["{{base_url}}"],
+							"path": ["cart-contents.php"]
+						}
+					}
+				},
+				{
+					"name": "Checkout Page",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/checkout.php",
+							"host": ["{{base_url}}"],
+							"path": ["checkout.php"]
+						}
+					}
+				},
+				{
+					"name": "Checkout Process (Legacy)",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "name",
+									"value": "Test User",
+									"type": "text"
+								},
+								{
+									"key": "email",
+									"value": "test@test.com",
+									"type": "text"
+								},
+								{
+									"key": "phone",
+									"value": "03111111111",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/checkout-process.php",
+							"host": ["{{base_url}}"],
+							"path": ["checkout-process.php"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "5. Orders & Tracking (5 endpoints)",
+			"item": [
+				{
+					"name": "Submit Order",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "name",
+									"value": "Test Guest",
+									"type": "text"
+								},
+								{
+									"key": "email",
+									"value": "guest@test.com",
+									"type": "text"
+								},
+								{
+									"key": "phone",
+									"value": "03111111111",
+									"type": "text"
+								},
+								{
+									"key": "guest_address",
+									"value": "House 10, Street 5, DHA Phase 1",
+									"type": "text"
+								},
+								{
+									"key": "payment_method",
+									"value": "COD",
+									"type": "text"
+								},
+								{
+									"key": "delivery_charge",
+									"value": "0",
+									"type": "text"
+								},
+								{
+									"key": "final_total",
+									"value": "280",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/submit-order.php",
+							"host": ["{{base_url}}"],
+							"path": ["submit-order.php"]
+						}
+					}
+				},
+				{
+					"name": "Order Details",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/order-details.php?id=1000",
+							"host": ["{{base_url}}"],
+							"path": ["order-details.php"],
+							"query": [
+								{
+									"key": "id",
+									"value": "1000"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Order Tracking",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/order-tracking.php?id=1000",
+							"host": ["{{base_url}}"],
+							"path": ["order-tracking.php"],
+							"query": [
+								{
+									"key": "id",
+									"value": "1000"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Thank You Page",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/thank-you.php?order_id=1000",
+							"host": ["{{base_url}}"],
+							"path": ["thank-you.php"],
+							"query": [
+								{
+									"key": "order_id",
+									"value": "1000"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Admin - Orders by Status",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/admin/orders.php?statuss=Current",
+							"host": ["{{base_url}}"],
+							"path": ["admin", "orders.php"],
+							"query": [
+								{
+									"key": "statuss",
+									"value": "Current",
+									"description": "Current, Processed, Delivered, Cancel"
+								}
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "6. Bundles (4 endpoints)",
+			"item": [
+				{
+					"name": "Add Bundle to Cart",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "bundle_id",
+									"value": "1000",
+									"type": "text"
+								},
+								{
+									"key": "qty",
+									"value": "1",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/add-bundle-to-cart.php",
+							"host": ["{{base_url}}"],
+							"path": ["add-bundle-to-cart.php"]
+						}
+					}
+				},
+				{
+					"name": "View All Bundles",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/bucket.php",
+							"host": ["{{base_url}}"],
+							"path": ["bucket.php"]
+						}
+					}
+				},
+				{
+					"name": "Bundle Detail",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/bucket-detail.php?id=1000",
+							"host": ["{{base_url}}"],
+							"path": ["bucket-detail.php"],
+							"query": [
+								{
+									"key": "id",
+									"value": "1000"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Admin - Bundle List",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/admin/bundle-list.php",
+							"host": ["{{base_url}}"],
+							"path": ["admin", "bundle-list.php"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "7. Admin - Bundles Management (4 endpoints)",
+			"item": [
+				{
+					"name": "Admin - Add Bundle",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "name",
+									"value": "Test Bundle",
+									"type": "text"
+								},
+								{
+									"key": "description",
+									"value": "Test bundle description",
+									"type": "text"
+								},
+								{
+									"key": "base_price",
+									"value": "1000",
+									"type": "text"
+								},
+								{
+									"key": "discount",
+									"value": "100",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/admin/bundle-add.php",
+							"host": ["{{base_url}}"],
+							"path": ["admin", "bundle-add.php"]
+						}
+					}
+				},
+				{
+					"name": "Admin - Edit Bundle",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "id",
+									"value": "1000",
+									"type": "text"
+								},
+								{
+									"key": "name",
+									"value": "Weekly Grocery Bundle Updated",
+									"type": "text"
+								},
+								{
+									"key": "base_price",
+									"value": "3500",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/admin/bundle-edit.php?id=1000",
+							"host": ["{{base_url}}"],
+							"path": ["admin", "bundle-edit.php"],
+							"query": [
+								{
+									"key": "id",
+									"value": "1000"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Admin - Delete Bundle",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/admin/bundle-delete.php?id=1000",
+							"host": ["{{base_url}}"],
+							"path": ["admin", "bundle-delete.php"],
+							"query": [
+								{
+									"key": "id",
+									"value": "1000"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Admin - Update Order Item (Out of Stock)",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "order_id",
+									"value": "1000",
+									"type": "text"
+								},
+								{
+									"key": "item_id",
+									"value": "1000",
+									"type": "text"
+								},
+								{
+									"key": "out_of_stock",
+									"value": "1",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/update-item.php",
+							"host": ["{{base_url}}"],
+							"path": ["update-item.php"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "8. Admin - Stores & Banners (4 endpoints)",
+			"item": [
+				{
+					"name": "Admin - Add/Update Banner",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "name",
+									"value": "Test Banner",
+									"type": "text"
+								},
+								{
+									"key": "sortID",
+									"value": "1",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/admin/stores.php",
+							"host": ["{{base_url}}"],
+							"path": ["admin", "stores.php"]
+						}
+					}
+				},
+				{
+					"name": "Admin - Delete Banner",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/admin/stores.php?deleteID=1&imgName=banner.jpg",
+							"host": ["{{base_url}}"],
+							"path": ["admin", "stores.php"],
+							"query": [
+								{
+									"key": "deleteID",
+									"value": "1"
+								},
+								{
+									"key": "imgName",
+									"value": "banner.jpg"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Admin - Sort Banners",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/admin/stores.php?sortID=1",
+							"host": ["{{base_url}}"],
+							"path": ["admin", "stores.php"],
+							"query": [
+								{
+									"key": "sortID",
+									"value": "1"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Admin - Edit Homepage Sections",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "id",
+									"value": "1",
+									"type": "text"
+								},
+								{
+									"key": "section25",
+									"value": "1,2,3",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/admin/edit-homep.php?id=1",
+							"host": ["{{base_url}}"],
+							"path": ["admin", "edit-homep.php"],
+							"query": [
+								{
+									"key": "id",
+									"value": "1"
+								}
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "9. Delivery & Locations (5 endpoints)",
+			"item": [
+				{
+					"name": "Get Sectors by Phase",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/get_sectors.php?phase_id=1000",
+							"host": ["{{base_url}}"],
+							"path": ["get_sectors.php"],
+							"query": [
+								{
+									"key": "phase_id",
+									"value": "1000"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Admin - Add Location",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "action",
+									"value": "add_location",
+									"type": "text"
+								},
+								{
+									"key": "name",
+									"value": "DHA Phase 3",
+									"type": "text"
+								},
+								{
+									"key": "type",
+									"value": "phase",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/admin/actions.php",
+							"host": ["{{base_url}}"],
+							"path": ["admin", "actions.php"]
+						}
+					}
+				},
+				{
+					"name": "Admin - Delete Location",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "action",
+									"value": "delete_location",
+									"type": "text"
+								},
+								{
+									"key": "id",
+									"value": "1000",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/admin/actions.php",
+							"host": ["{{base_url}}"],
+							"path": ["admin", "actions.php"]
+						}
+					}
+				},
+				{
+					"name": "Admin - Add/Update Delivery Charge",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "action",
+									"value": "add_or_update_charge",
+									"type": "text"
+								},
+								{
+									"key": "area",
+									"value": "DHA Phase 1",
+									"type": "text"
+								},
+								{
+									"key": "sector",
+									"value": "All Sectors",
+									"type": "text"
+								},
+								{
+									"key": "charge",
+									"value": "0",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/admin/actions.php",
+							"host": ["{{base_url}}"],
+							"path": ["admin", "actions.php"]
+						}
+					}
+				},
+				{
+					"name": "Admin - Delete Delivery Charge",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "action",
+									"value": "delete_charge",
+									"type": "text"
+								},
+								{
+									"key": "id",
+									"value": "1000",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/admin/actions.php",
+							"host": ["{{base_url}}"],
+							"path": ["admin", "actions.php"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "10. Client Management (2 endpoints)",
+			"item": [
+				{
+					"name": "Admin - List Clients",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/admin/clients.php?page=1",
+							"host": ["{{base_url}}"],
+							"path": ["admin", "clients.php"],
+							"query": [
+								{
+									"key": "page",
+									"value": "1"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Admin - Delete Client",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/admin/clients.php?deleteID=1000",
+							"host": ["{{base_url}}"],
+							"path": ["admin", "clients.php"],
+							"query": [
+								{
+									"key": "deleteID",
+									"value": "1000"
+								}
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "11. Utility & Legacy (8 endpoints)",
+			"item": [
+				{
+					"name": "Generate Thumbnail",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/thumb.php?file=/admin/upload/dow/1758750605_tomato.webp&size=150",
+							"host": ["{{base_url}}"],
+							"path": ["thumb.php"],
+							"query": [
+								{
+									"key": "file",
+									"value": "/admin/upload/dow/1758750605_tomato.webp"
+								},
+								{
+									"key": "size",
+									"value": "150"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Admin - Delete Category (Legacy)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/admin/delmr.php?id=53",
+							"host": ["{{base_url}}"],
+							"path": ["admin", "delmr.php"],
+							"query": [
+								{
+									"key": "id",
+									"value": "53"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Admin - Update Category Meta",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "id",
+									"value": "53",
+									"type": "text"
+								},
+								{
+									"key": "title",
+									"value": "Vegetables",
+									"type": "text"
+								},
+								{
+									"key": "descr",
+									"value": "Fresh vegetables",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/admin/nrUpdated.php",
+							"host": ["{{base_url}}"],
+							"path": ["admin", "nrUpdated.php"]
+						}
+					}
+				},
+				{
+					"name": "Admin - Edit Category (Legacy)",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "id",
+									"value": "53",
+									"type": "text"
+								},
+								{
+									"key": "name",
+									"value": "Vegetables Updated",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/admin/editmr.php?id=53",
+							"host": ["{{base_url}}"],
+							"path": ["admin", "editmr.php"],
+							"query": [
+								{
+									"key": "id",
+									"value": "53"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Admin - Add Shipping Rate",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "area",
+									"value": "DHA Phase 3",
+									"type": "text"
+								},
+								{
+									"key": "rate",
+									"value": "100",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/admin/shippingInserted.php",
+							"host": ["{{base_url}}"],
+							"path": ["admin", "shippingInserted.php"]
+						}
+					}
+				},
+				{
+					"name": "Clear Cart",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/clear-cart.php",
+							"host": ["{{base_url}}"],
+							"path": ["clear-cart.php"]
+						}
+					}
+				},
+				{
+					"name": "Home Page",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/",
+							"host": ["{{base_url}}"],
+							"path": [""]
+						}
+					}
+				},
+				{
+					"name": "API Health Check",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/",
+							"host": ["{{base_url}}"],
+							"path": ["api", ""]
+						}
+					}
+				}
+			]
+		}
+	]
+}
