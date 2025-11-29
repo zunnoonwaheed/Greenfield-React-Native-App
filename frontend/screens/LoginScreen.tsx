@@ -197,7 +197,7 @@ const LoginScreen: React.FC = () => {
 
       {/* HEADER WITH BACKGROUND IMAGE */}
       <ImageBackground
-        source={require('../images/homepage-assets/add-location.png')}
+        source={require('../images/homepage-assets/login-location.png')}
         style={styles.header}
         resizeMode="cover"
       >

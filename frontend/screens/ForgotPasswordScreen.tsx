@@ -111,7 +111,7 @@ const ForgotPasswordScreen: React.FC = () => {
 
       {/* GREEN HEADER WITH BACKGROUND IMAGE */}
       <ImageBackground
-        source={require('../images/homepage-assets/auth-signup-screen.png')}
+        source={require('../images/homepage-assets/screen.png')}
         style={styles.header}
         resizeMode="cover"
       >

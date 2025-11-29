@@ -102,7 +102,7 @@ const ResetPasswordScreen: React.FC = () => {
 
       {/* header with background image */}
       <ImageBackground
-        source={require('../images/homepage-assets/auth-reset.png')}
+        source={require('../images/homepage-assets/reset.png')}
         style={styles.header}
         resizeMode="cover"
       >
