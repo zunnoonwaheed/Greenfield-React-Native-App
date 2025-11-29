@@ -5,8 +5,9 @@
  * Params: product_id, quantity (or qty)
  * Returns: JSON
  */
+require_once("helpers/session_config.php");
+require_once("helpers/notifications.php");
 header('Content-Type: application/json');
-session_start();
 include("admin/includes/db_settings.php");
 
 $product_id = intval($_POST['product_id'] ?? 0);
@@ -34,19 +35,40 @@ $currency = mysqli_fetch_assoc($cres);
 
 $finalPrice = $product['dprice'] > 0 ? $product['dprice'] : $product['price'];
 
+// Use frontend image path if provided, otherwise use database image
+$imagePath = $_POST['image_path'] ?? '';
+if (empty($imagePath) && !empty($product['imagee'])) {
+    // Fallback to database image if frontend didn't send one
+    $protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http';
+    $host = $_SERVER['HTTP_HOST'];
+    $imagePath = $protocol . '://' . $host . '/admin/upload/dow/' . $product['imagee'];
+}
+
 // Add/update cart session
 if (!isset($_SESSION['cart'][$product['id']])) {
     $_SESSION['cart'][$product['id']] = [
         'id' => $product['id'],
         'name' => $product['namee'],
         'price' => $finalPrice,
-        'image' => $product['imagee'],
+        'image' => $imagePath,
         'currency' => $currency['currency'],
         'exchange_rate' => $currency['exchange_rate'],
-        'qty' => 0
+        'qty' => 0,
+        'type' => 'product'
     ];
 }
 $_SESSION['cart'][$product['id']]['qty'] += $qty;
+
+// Create notification for user (if logged in and table exists)
+if (isset($_SESSION['user_id'])) {
+    $user_id = $_SESSION['user_id'];
+    $tableCheck = @mysqli_query($con, "SHOW TABLES LIKE 'notifications'");
+    if ($tableCheck && mysqli_num_rows($tableCheck) > 0) {
+        $title = "Added to Cart";
+        $message = "{$product['namee']} (x{$qty}) has been added to your cart.";
+        createNotification($con, $user_id, $title, $message, 'cart');
+    }
+}
 
 // Calculate cart totals
 $cart_count = array_sum(array_column($_SESSION['cart'], 'qty'));

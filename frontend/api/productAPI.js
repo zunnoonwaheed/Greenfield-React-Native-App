@@ -6,24 +6,59 @@
 import axiosInstance from './axiosConfig';
 
 /**
- * GET ALL PRODUCTS
+ * GET ALL PRODUCTS WITH FILTERS
  * GET /api/products.php
- * @param {Object} params - { category_id, brand_id, search, limit, offset }
- * @returns {Promise} List of products
+ * @param {Object} params - Filter parameters
+ * @param {string} params.category_id - Category ID
+ * @param {string} params.brand_id - Brand ID
+ * @param {string} params.search - Search query
+ * @param {number} params.limit - Results limit
+ * @param {number} params.offset - Results offset
+ * @param {number} params.price_min - Minimum price
+ * @param {number} params.price_max - Maximum price
+ * @param {number} params.discount_min - Minimum discount percentage
+ * @param {number} params.rating_min - Minimum rating
+ * @param {string} params.delivery_type - Delivery type filter
+ * @param {string} params.packaging - Packaging type filter
+ * @param {string} params.seller - Seller/brand name filter
+ * @param {string} params.sort_by - Sort option
+ * @returns {Promise} List of products with filter metadata
  */
 export const getProducts = async (params = {}) => {
   try {
     const queryParams = new URLSearchParams();
+
+    // Basic filters
     if (params.category_id) queryParams.append('category_id', params.category_id);
     if (params.brand_id) queryParams.append('brand_id', params.brand_id);
     if (params.search) queryParams.append('search', params.search);
     if (params.limit) queryParams.append('limit', params.limit);
     if (params.offset) queryParams.append('offset', params.offset);
 
+    // Advanced filters
+    if (params.price_min !== undefined && params.price_min !== null) {
+      queryParams.append('price_min', params.price_min);
+    }
+    if (params.price_max !== undefined && params.price_max !== null) {
+      queryParams.append('price_max', params.price_max);
+    }
+    if (params.discount_min !== undefined && params.discount_min !== null) {
+      queryParams.append('discount_min', params.discount_min);
+    }
+    if (params.rating_min !== undefined && params.rating_min !== null) {
+      queryParams.append('rating_min', params.rating_min);
+    }
+    if (params.delivery_type) queryParams.append('delivery_type', params.delivery_type);
+    if (params.packaging) queryParams.append('packaging', params.packaging);
+    if (params.seller) queryParams.append('seller', params.seller);
+    if (params.sort_by) queryParams.append('sort_by', params.sort_by);
+
     const url = `/api/products.php${queryParams.toString() ? '?' + queryParams.toString() : ''}`;
+    console.log('📡 Fetching products with filters:', params);
     const response = await axiosInstance.get(url);
 
-    console.log('✅ Products fetched:', response.data?.products?.length || 0);
+    // axios interceptor returns data directly, so response IS the data object
+    console.log('✅ Products fetched:', response?.data?.products?.length || response?.products?.length || 0);
     return response;
   } catch (error) {
     console.error('❌ Error fetching products:', error);
@@ -124,6 +159,25 @@ export const getProductsByBrand = async (brandId) => {
   }
 };
 
+/**
+ * GET BEST SELLING PRODUCTS
+ * GET /api/products.php?sort_by=popular&limit=10
+ * @param {number} limit - Number of products to fetch (default: 10)
+ * @returns {Promise} List of best-selling products
+ */
+export const getBestSellingProducts = async (limit = 10) => {
+  try {
+    const response = await getProducts({
+      sort_by: 'popular',
+      limit: limit
+    });
+    return response;
+  } catch (error) {
+    console.error('❌ Error fetching best-selling products:', error);
+    throw error;
+  }
+};
+
 export default {
   getProducts,
   getProductById,
@@ -131,4 +185,5 @@ export default {
   searchProducts,
   getProductsByCategory,
   getProductsByBrand,
+  getBestSellingProducts,
 };

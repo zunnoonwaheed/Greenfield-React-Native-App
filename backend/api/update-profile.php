@@ -6,18 +6,30 @@
  * Returns: JSON
  * Requires: Authentication
  */
+
+// CORS headers
+header('Access-Control-Allow-Origin: *');
+header('Access-Control-Allow-Methods: POST, OPTIONS');
+header('Access-Control-Allow-Headers: Content-Type, Authorization');
+header('Access-Control-Allow-Credentials: true');
+header('Content-Type: application/json');
+
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(200);
+    exit();
+}
+
 session_start();
 require_once("../admin/includes/db_settings.php");
 require_once("../helpers/response.php");
 require_once("../helpers/auth.php");
 require_once("../helpers/database.php");
 
-header('Content-Type: application/json');
-
-// Require authentication
-requireAuth();
-
-$user_id = getCurrentUserId();
+// Authenticate user (supports session, token, and development mode)
+$user_id = authenticateUser($con);
+if (!$user_id) {
+    jsonError('Unauthorized - Please login', 401);
+}
 
 // Get input
 $name = trim($_POST['name'] ?? '');

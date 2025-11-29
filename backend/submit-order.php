@@ -1,6 +1,7 @@
 <?php
+require_once("helpers/session_config.php");
+require_once("helpers/notifications.php");
 header('Content-Type: application/json');
-session_start();
 include("admin/includes/db_settings.php");
 
 $cart = $_SESSION['cart'] ?? [];
@@ -114,6 +115,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
     $stmt->close();
 $payment_method = $_POST['payment_method'] ?? 'cod'; // default fallback
+
+    // Create notification for order placement
+    if ($user_id) {
+        createOrderNotification($con, $user_id, $order_id, 'placed');
+    }
 
 unset($_SESSION['cart']);
 

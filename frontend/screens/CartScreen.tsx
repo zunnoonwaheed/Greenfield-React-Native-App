@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -7,14 +7,17 @@ import {
   TouchableOpacity,
   Image,
   StatusBar,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
 import type { MainStackParamList } from '../navigation/MainStack';
 import { Colors, Typography, Spacing, BorderRadius } from '../constants/theme';
 import { AppHeader } from '../components/shared/AppHeader';
 import { Ionicons } from '@expo/vector-icons';
+import { getCartContents, updateCart, removeFromCart, addToCart } from '../api/cart';
+import { getProducts } from '../api/productAPI';
 
 type CartNavigationProp = StackNavigationProp<MainStackParamList, 'Cart'>;
 
@@ -29,66 +32,163 @@ const ASSETS = {
   onions: require('../images/homepage-assets/onions.png'),
 };
 
+// Default fallback image - only used if backend doesn't return an image URL
+const DEFAULT_PRODUCT_IMAGE = require('../images/homepage-assets/grocery-bun.png');
+
 interface CartItem {
-  id: string;
-  title: string;
-  meta: string;
-  qty: number;
-  image: any;
+  id: number | string; // Can be number for products or "bundle_X" string for bundles
+  name: string;
+  price: number;
+  quantity: number;
+  image: string;
+  subtotal: number;
 }
 
-interface AddOnItem {
-  id: string;
+interface AddOnProduct {
+  id: number;
   name: string;
-  price: string;
-  image: any;
-  discount?: string;
+  slug: string;
+  image_url: string;
+  price: number;
+  discounted_price: number;
+  discount_percentage: number;
 }
 
 const CartScreen: React.FC = () => {
   const navigation = useNavigation<CartNavigationProp>();
 
-  const [items, setItems] = useState<CartItem[]>([
-    {
-      id: '1',
-      title: 'National Iodized Pink Himalayan Salt 800g',
-      meta: 'Size: Small  •  Quantity: 2  •  Price: Rs. 12,000',
-      qty: 2,
-      image: ASSETS.salt,
-    },
-    {
-      id: '2',
-      title: 'Olpers Flavored Milk Chocolate 180ml (Pack of 24)',
-      meta: 'Size: Medium  •  Quantity: 1  •  Price: Rs. 14,500',
-      qty: 1,
-      image: ASSETS.olpers,
-    },
-    {
-      id: '3',
-      title: 'Greenfield Red Lobia Special (Kidney Beans) 1kg',
-      meta: 'Size: Large  •  Quantity: 1  •  Price: Rs. 17,500',
-      qty: 1,
-      image: ASSETS.lobia,
-    },
-  ]);
+  const [items, setItems] = useState<CartItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [subtotal, setSubtotal] = useState(0);
+  const [deliveryCharge, setDeliveryCharge] = useState(0);
+  const [gst, setGst] = useState(0);
+  const [gstPercentage, setGstPercentage] = useState(3);
+  const [finalTotal, setFinalTotal] = useState(0);
+  const [currency, setCurrency] = useState('PKR');
+  const [addOns, setAddOns] = useState<AddOnProduct[]>([]);
 
-  const addOns: AddOnItem[] = [
-    { id: 'a1', name: 'Green Chilies (250g)', price: 'Rs. 70', image: ASSETS.greenChillies, discount: '%-X23' },
-    { id: 'a2', name: 'Lemon Pack (500g)', price: 'Rs. 150', image: ASSETS.onions, discount: '%-X23' }, // using onions.png as in folder list
-  ];
+  // Load cart contents when screen is focused
+  useFocusEffect(
+    React.useCallback(() => {
+      console.log('🔄 CartScreen focused - loading cart and add-ons');
+      loadCart();
+      loadAddOns();
+    }, [])
+  );
 
-  const changeQty = (id: string, delta: number) => {
-    setItems(prev =>
-      prev
-        .map(it => (it.id === id ? { ...it, qty: Math.max(0, it.qty + delta) } : it))
-        .filter(it => it.qty > 0)
-    );
+  // Also load on mount
+  useEffect(() => {
+    console.log('🔄 CartScreen mounted - loading cart and add-ons');
+    loadCart();
+    loadAddOns();
+  }, []);
+
+  const loadCart = async () => {
+    try {
+      setLoading(true);
+      const response = await getCartContents();
+
+      console.log('📦 Cart response:', response);
+
+      if (response.success && response.data) {
+        setItems(response.data.items || []);
+        setSubtotal(response.data.subtotal || 0);
+        setDeliveryCharge(response.data.delivery_charge || 0);
+        setGst(response.data.gst || 0);
+        setGstPercentage(response.data.gst_percentage || 3);
+        setFinalTotal(response.data.total || 0);
+        setCurrency(response.data.currency || 'PKR');
+        console.log('✅ Cart loaded:', response.data.items.length, 'items');
+        console.log('💰 Charges - Subtotal:', response.data.subtotal, 'Delivery:', response.data.delivery_charge, 'GST:', response.data.gst, 'Total:', response.data.total);
+      } else {
+        // If response is not successful, clear cart
+        setItems([]);
+        setSubtotal(0);
+        setDeliveryCharge(0);
+        setGst(0);
+        setFinalTotal(0);
+        console.log('⚠️ Cart cleared - no success response');
+      }
+    } catch (error) {
+      console.error('❌ Error loading cart:', error);
+      // On error, clear cart
+      setItems([]);
+      setSubtotal(0);
+      setDeliveryCharge(0);
+      setGst(0);
+      setFinalTotal(0);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  // Numbers to match the Figma
-  const delivery = 3200;
-  const gst = 1600;
-  const finalAmount = 96000;
+  const loadAddOns = async () => {
+    try {
+      // Fetch popular products as add-ons (products frequently bought together)
+      const response = await getProducts({
+        sort_by: 'popular',
+        limit: 6
+      });
+
+      if (response.success && response.data && response.data.products) {
+        setAddOns(response.data.products);
+        console.log('✅ Add-ons loaded:', response.data.products.length, 'products');
+      }
+    } catch (error) {
+      console.error('❌ Error loading add-ons:', error);
+    }
+  };
+
+  const changeQty = async (id: number | string, delta: number) => {
+    const item = items.find(it => it.id === id);
+    if (!item) return;
+
+    const newQty = item.quantity + delta;
+
+    if (newQty <= 0) {
+      // Remove item
+      await handleRemoveItem(id);
+    } else {
+      // Update quantity
+      try {
+        const response = await updateCart(id, newQty);
+        if (response.success) {
+          await loadCart(); // Reload cart to get updated totals
+        }
+      } catch (error) {
+        console.error('Error updating cart:', error);
+      }
+    }
+  };
+
+  const handleRemoveItem = async (id: number | string) => {
+    try {
+      const response = await removeFromCart(id);
+      if (response.success) {
+        await loadCart(); // Reload cart after removal
+      }
+    } catch (error) {
+      console.error('Error removing item:', error);
+    }
+  };
+
+  const handleAddAddon = async (addon: AddOnProduct) => {
+    try {
+      console.log('🛒 Adding addon to cart:', addon.name, 'ID:', addon.id);
+
+      // Don't send image_path - let backend construct full URL from database
+      const response = await addToCart(addon.id, 1);
+
+      if (response.success) {
+        console.log('✅ Addon added successfully');
+        await loadCart(); // Reload cart to show new item with updated totals
+      }
+    } catch (error) {
+      console.error('❌ Error adding addon:', error);
+    }
+  };
+
+  // Charges are now provided by backend - no need to calculate here
 
   return (
     <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
@@ -96,114 +196,203 @@ const CartScreen: React.FC = () => {
       <AppHeader title="Shopping cart" showBack showHome />
 
       <ScrollView contentContainerStyle={{ paddingBottom: 140 }} showsVerticalScrollIndicator={false}>
-        {/* Cart items */}
-        <View style={styles.listWrap}>
-          {items.map(item => (
-            <View key={item.id} style={styles.card}>
-              <Image source={item.image} style={styles.thumb} resizeMode="contain" />
-              <View style={{ flex: 1 }}>
-                <Text style={styles.title}>{item.title}</Text>
-                <Text style={styles.meta}>{item.meta}</Text>
+        {loading ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color={GREEN} />
+            <Text style={styles.loadingText}>Loading cart...</Text>
+          </View>
+        ) : items.length === 0 ? (
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyTitle}>Your cart is empty</Text>
+            <Text style={styles.emptyText}>Add some products to get started!</Text>
+            <TouchableOpacity
+              style={styles.shopNowBtn}
+              onPress={() => navigation.navigate('MainTabs')}
+            >
+              <Text style={styles.shopNowText}>Shop Now</Text>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <>
+            {/* Cart items */}
+            <View style={styles.listWrap}>
+              {items.map((item, index) => {
+                // Use actual product images from database
+                let imageSource = DEFAULT_PRODUCT_IMAGE;
 
-                <View style={styles.rowBetween}>
-                  <View style={styles.qtyBar}>
-                    <TouchableOpacity onPress={() => changeQty(item.id, -1)} style={styles.qtyBarBtn}>
-                      <Image source={ASSETS.minus} style={styles.icon} />
-                    </TouchableOpacity>
+                if (item.image) {
+                  // Check if it's a full URL (from database)
+                  if (item.image.startsWith('http://') || item.image.startsWith('https://')) {
+                    imageSource = { uri: item.image };
+                  }
+                  // Check for local asset filenames (legacy support)
+                  else if (item.image === 'grocery-bun.png') {
+                    imageSource = require('../images/homepage-assets/grocery-bun.png');
+                  } else if (item.image === 'green-chillies.png') {
+                    imageSource = require('../images/homepage-assets/green-chillies.png');
+                  } else if (item.image === 'onions.png') {
+                    imageSource = require('../images/homepage-assets/onions.png');
+                  }
+                  // If it's just a filename without protocol, construct URL
+                  else if (item.image.includes('.')) {
+                    // Backend should send full URLs, but just in case handle filenames
+                    console.warn('⚠️ Cart item has filename instead of full URL:', item.image);
+                    // Use default image as fallback since we can't reliably construct the URL
+                    imageSource = DEFAULT_PRODUCT_IMAGE;
+                  }
+                }
 
-                    <View style={styles.qtyBarCenter}>
-                      <Text style={styles.qtyText}>{item.qty}</Text>
+                return (
+                <View key={`${item.id}-${index}`} style={styles.card}>
+                  <Image
+                    source={imageSource}
+                    style={styles.thumb}
+                    resizeMode="contain"
+                  />
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.title}>{item.name}</Text>
+                    <Text style={styles.meta}>
+                      Quantity: {item.quantity}  •  Price: Rs. {item.price.toLocaleString()}
+                    </Text>
+                    <Text style={styles.subtotalText}>
+                      Subtotal: Rs. {item.subtotal.toLocaleString()}
+                    </Text>
+
+                    <View style={styles.rowBetween}>
+                      <View style={styles.qtyBar}>
+                        <TouchableOpacity onPress={() => changeQty(item.id, -1)} style={styles.qtyBarBtn}>
+                          <Image source={ASSETS.minus} style={styles.icon} />
+                        </TouchableOpacity>
+
+                        <View style={styles.qtyBarCenter}>
+                          <Text style={styles.qtyText}>{item.quantity}</Text>
+                        </View>
+
+                        <TouchableOpacity onPress={() => changeQty(item.id, 1)} style={styles.qtyBarBtn}>
+                          <Image source={ASSETS.plus} style={styles.icon} />
+                        </TouchableOpacity>
+                      </View>
+
+                      <TouchableOpacity onPress={() => handleRemoveItem(item.id)} style={styles.trashBtn}>
+                        <Image source={ASSETS.trash} style={styles.trashIcon} />
+                      </TouchableOpacity>
                     </View>
-
-                    <TouchableOpacity onPress={() => changeQty(item.id, 1)} style={styles.qtyBarBtn}>
-                      <Image source={ASSETS.plus} style={styles.icon} />
-                    </TouchableOpacity>
                   </View>
-
-                  <TouchableOpacity onPress={() => changeQty(item.id, -item.qty)} style={styles.trashBtn}>
-                    <Image source={ASSETS.trash} style={styles.trashIcon} />
-                  </TouchableOpacity>
                 </View>
-              </View>
+                );
+              })}
             </View>
-          ))}
-        </View>
+          </>
+        )}
 
-        {/* Extra/Add-Ons */}
-        <View style={styles.addOnSection}>
-          <View style={styles.addOnHeader}>
-            <Text style={styles.addOnTitle}>Extra/Add-Ons</Text>
-            <View style={styles.optionalBadge}><Text style={styles.optionalText}>Optional</Text></View>
-          </View>
-          <Text style={styles.subText}>Other Customers Also Order These</Text>
+        {/* Extra/Add-Ons - Only show when we have add-ons loaded */}
+        {addOns.length > 0 && (
+          <View style={styles.addOnSection}>
+            <View style={styles.addOnHeader}>
+              <Text style={styles.addOnTitle}>Extra/Add-Ons</Text>
+              <View style={styles.optionalBadge}><Text style={styles.optionalText}>Optional</Text></View>
+            </View>
+            <Text style={styles.subText}>Other Customers Also Order These</Text>
 
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={{ paddingRight: 24 }}
-          >
-            {addOns.map(x => (
-              <View key={x.id} style={styles.addOnCard}>
-                <View style={styles.addOnImageContainer}>
-                  <Image source={x.image} style={styles.addOnImage} />
-                  {x.discount && (
-                    <View style={styles.discountBadge}>
-                      <Ionicons name="flash" size={12} color="#000" />
-                      <Text style={styles.discountText}>{x.discount}</Text>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={{ paddingRight: 24 }}
+            >
+              {addOns.map(addon => {
+                const hasDiscount = addon.discount_percentage > 0;
+                const displayPrice = hasDiscount && addon.discounted_price > 0 && addon.discounted_price < addon.price
+                  ? addon.discounted_price
+                  : addon.price;
+
+                const addonImage = addon.image_url
+                  ? { uri: addon.image_url }
+                  : DEFAULT_PRODUCT_IMAGE;
+
+                return (
+                  <TouchableOpacity
+                    key={addon.id}
+                    style={styles.addOnCard}
+                    onPress={() => navigation.navigate('ProductDetail', { productId: addon.id.toString() })}
+                  >
+                    <View style={styles.addOnImageContainer}>
+                      <Image source={addonImage} style={styles.addOnImage} />
+                      {hasDiscount && (
+                        <View style={styles.discountBadge}>
+                          <Ionicons name="flash" size={12} color="#000" />
+                          <Text style={styles.discountText}>-{addon.discount_percentage}%</Text>
+                        </View>
+                      )}
                     </View>
-                  )}
+                    <Text style={styles.addOnName} numberOfLines={1} ellipsizeMode="tail">{addon.name}</Text>
+                    <Text style={styles.addOnPrice}>Rs. {displayPrice.toLocaleString()}</Text>
+                    <TouchableOpacity
+                      style={styles.addOnCTA}
+                      onPress={(e) => {
+                        e.stopPropagation();
+                        handleAddAddon(addon);
+                      }}
+                    >
+                      <Text style={styles.addOnCTAText}>Add To Cart</Text>
+                    </TouchableOpacity>
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+          </View>
+        )}
+
+        {/* Charges - Only show when cart has items */}
+        {!loading && items.length > 0 && (
+          <>
+            <View style={styles.sectionPad}>
+              <Text style={styles.sectionTitle}>Subtotal</Text>
+              <View style={styles.box}>
+                <View style={styles.rowBetween}>
+                  <Text style={styles.grayText}>Items Total</Text>
+                  <Text style={styles.blackText}>Rs. {subtotal.toLocaleString()}</Text>
                 </View>
-                <Text style={styles.addOnName} numberOfLines={1} ellipsizeMode="tail">{x.name}</Text>
-                <Text style={styles.addOnPrice}>{x.price}</Text>
-                <TouchableOpacity style={styles.addOnCTA}>
-                  <Text style={styles.addOnCTAText}>Add To Cart</Text>
-                </TouchableOpacity>
+                <View style={styles.rowBetween}>
+                  <Text style={styles.grayText}>Delivery Charges</Text>
+                  <Text style={styles.blackText}>Rs. {deliveryCharge.toLocaleString()}</Text>
+                </View>
+                <View style={styles.rowBetween}>
+                  <Text style={styles.grayText}>GST ({gstPercentage}%)</Text>
+                  <Text style={styles.blackText}>Rs. {gst.toLocaleString()}</Text>
+                </View>
               </View>
-            ))}
-          </ScrollView>
-        </View>
-
-        {/* Charges */}
-        <View style={styles.sectionPad}>
-          <Text style={styles.sectionTitle}>Subtotal</Text>
-          <View style={styles.box}>
-            <View style={styles.rowBetween}>
-              <Text style={styles.grayText}>Delivery Charges</Text>
-              <Text style={styles.blackText}>Rs. {delivery.toLocaleString()}</Text>
             </View>
-            <View style={styles.rowBetween}>
-              <Text style={styles.grayText}>GST</Text>
-              <Text style={styles.blackText}>Rs. {gst.toLocaleString()}</Text>
-            </View>
-          </View>
-        </View>
 
-        {/* Final amount */}
-        <View style={styles.sectionPad}>
-          <Text style={styles.sectionTitle}>Final Amount</Text>
-          <View style={styles.totalBox}>
-            <View style={styles.rowBetween}>
-              <View>
-                <Text style={styles.totalLabel}>Total amount</Text>
-                <Text style={styles.itemsNote}>
-                  Total items: <Text style={styles.itemsCount}>{items.length}</Text>
-                </Text>
+            {/* Final amount */}
+            <View style={styles.sectionPad}>
+              <Text style={styles.sectionTitle}>Final Amount</Text>
+              <View style={styles.totalBox}>
+                <View style={styles.rowBetween}>
+                  <View>
+                    <Text style={styles.totalLabel}>Total amount</Text>
+                    <Text style={styles.itemsNote}>
+                      Total items: <Text style={styles.itemsCount}>{items.length}</Text>
+                    </Text>
+                  </View>
+                  <Text style={styles.totalValue}>Rs. {finalTotal.toLocaleString()}</Text>
+                </View>
               </View>
-              <Text style={styles.totalValue}>Rs. {finalAmount.toLocaleString()}</Text>
             </View>
-          </View>
-        </View>
+          </>
+        )}
       </ScrollView>
 
-      {/* Checkout button (fixed) */}
-      <View style={styles.bottomBar}>
-        <TouchableOpacity
-          style={styles.checkoutBtn}
-          onPress={() => navigation.navigate('AddNewAddressConfirm', { address: {} })}
-        >
-          <Text style={styles.checkoutText}>Checkout</Text>
-        </TouchableOpacity>
-      </View>
+      {/* Checkout button (fixed) - Only show when cart has items */}
+      {!loading && items.length > 0 && (
+        <View style={styles.bottomBar}>
+          <TouchableOpacity
+            style={styles.checkoutBtn}
+            onPress={() => navigation.navigate('AddNewAddressConfirm', { address: {} })}
+          >
+            <Text style={styles.checkoutText}>Checkout - Rs. {finalTotal.toLocaleString()}</Text>
+          </TouchableOpacity>
+        </View>
+      )}
     </SafeAreaView>
   );
 };
@@ -227,8 +416,52 @@ const styles = StyleSheet.create({
   },
   thumb: { width: 52, height: 52, marginRight: 12 },
   title: { fontSize: Typography.body, fontWeight: '600', color: Colors.text, marginBottom: 6 },
-  meta: { fontSize: Typography.caption, color: Colors.textLight, marginBottom: 10 },
+  meta: { fontSize: Typography.caption, color: Colors.textLight, marginBottom: 4 },
+  subtotalText: { fontSize: 14, fontWeight: '700', color: GREEN, marginBottom: 10 },
   rowBetween: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 100,
+  },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 16,
+    color: Colors.textLight,
+  },
+
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 100,
+    paddingHorizontal: 24,
+  },
+  emptyTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: Colors.text,
+    marginBottom: 8,
+  },
+  emptyText: {
+    fontSize: 16,
+    color: Colors.textLight,
+    textAlign: 'center',
+    marginBottom: 24,
+  },
+  shopNowBtn: {
+    paddingHorizontal: 32,
+    paddingVertical: 14,
+    backgroundColor: GREEN,
+    borderRadius: 12,
+  },
+  shopNowText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '700',
+  },
 
   qtyBar: {
     flex: 1,

@@ -10,9 +10,10 @@ import {
   StatusBar,
   ActivityIndicator,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
-import { getAllProducts, searchProducts } from '../api/productAPI';
+import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
+import { getProducts, searchProducts } from '../api/productAPI';
 import { Colors, Typography, Spacing, BorderRadius, Layout } from '../constants/theme';
+import type { MainStackParamList } from '../navigation/MainStack';
 
 const { width } = Dimensions.get('window');
 const cardWidth = (width - 48) / 2;
@@ -28,10 +29,14 @@ interface Product {
   brand_name?: string;
 }
 
+type ProductListingRouteProp = RouteProp<MainStackParamList, 'ProductListing'>;
+
 const ProductListingScreen = () => {
   const navigation = useNavigation();
+  const route = useRoute<ProductListingRouteProp>();
+  const { categoryId, searchQuery } = route.params || {};
+
   const [selectedFilter, setSelectedFilter] = useState('All');
-  const [quantities, setQuantities] = useState<{ [key: string]: number }>({});
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -40,46 +45,68 @@ const ProductListingScreen = () => {
 
   useEffect(() => {
     fetchProducts();
-  }, []);
+  }, [searchQuery, categoryId]);
 
   const fetchProducts = async () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await getAllProducts({ limit: 50 });
+
+      let response;
+
+      // If search query is provided, use search API
+      if (searchQuery) {
+        console.log('🔍 Searching for:', searchQuery);
+        response = await searchProducts(searchQuery);
+      }
+      // If category ID is provided, filter by category
+      else if (categoryId) {
+        console.log('📂 Fetching products for category:', categoryId);
+        response = await getProducts({ category_id: categoryId, limit: 50 });
+      }
+      // Otherwise, get all products
+      else {
+        console.log('📦 Fetching all products');
+        response = await getProducts({ limit: 50 });
+      }
+
+      console.log('📡 Products response:', response);
 
       // Response interceptor unwraps response.data
       // Handle both array response and object with data property
-      const productData = Array.isArray(response) ? response : (response?.data || response?.products || []);
+      const productData = Array.isArray(response)
+        ? response
+        : (response?.data?.products || response?.products || []);
+
       if (productData && productData.length > 0) {
         setProducts(productData.map((product: any) => ({
           id: product.id.toString(),
           name: product.name,
           description: product.description || '',
-          price: parseFloat(product.price),
-          image: product.image || require('../images/homepage-assets/home-grocery1.png'),
+          price: parseFloat(product.discounted_price || product.price),
+          image: product.image_url
+            ? { uri: product.image_url }
+            : require('../images/homepage-assets/home-grocery1.png'),
           category_name: product.category_name,
           brand_name: product.brand_name,
           discount: product.discount_percentage,
         })));
+        console.log('✅ Loaded', productData.length, 'products');
+      } else {
+        setProducts([]);
+        console.log('⚠️ No products found');
       }
     } catch (err: any) {
-      console.error('Error fetching products:', err);
+      console.error('❌ Error fetching products:', err);
       setError(err.message || 'Failed to load products');
+      setProducts([]);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleQuantityChange = (id: string, delta: number) => {
-    setQuantities(prev => ({
-      ...prev,
-      [id]: Math.max(0, (prev[id] || 0) + delta),
-    }));
-  };
-
   const handleProductPress = (product: Product) => {
-    navigation.navigate('ProductDetail' as never, { product } as never);
+    navigation.navigate('ProductDetail' as never, { productId: product.id } as never);
   };
 
   return (
@@ -91,7 +118,9 @@ const ProductListingScreen = () => {
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Text style={styles.backIcon}>←</Text>
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Searched Vegetables</Text>
+        <Text style={styles.headerTitle}>
+          {searchQuery ? `Search: "${searchQuery}"` : categoryId ? 'Category Products' : 'All Products'}
+        </Text>
         <TouchableOpacity>
           <Text style={styles.filterIcon}>☰</Text>
         </TouchableOpacity>
@@ -140,54 +169,35 @@ const ProductListingScreen = () => {
         </View>
       )}
 
-      {/* Product Grid */}
+      {/* Product Grid - 2 columns */}
       {!loading && !error && (
         <ScrollView
           style={styles.scrollView}
           showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.scrollContent}
         >
           <View style={styles.grid}>
             {products.map(product => (
-            <TouchableOpacity
-              key={product.id}
-              style={styles.card}
-              onPress={() => handleProductPress(product)}
-            >
-              {product.discount && (
-                <View style={styles.discountBadge}>
-                  <Text style={styles.discountText}>%-{product.discount}</Text>
-                </View>
-              )}
-              <Image source={product.image} style={styles.productImage} />
-              <Text style={styles.productName}>{product.name}</Text>
-              <Text style={styles.productDescription} numberOfLines={1}>
-                {product.description}
-              </Text>
-              <Text style={styles.productPrice}>{product.price} Rs</Text>
-              
-              <View style={styles.actionRow}>
-                <View style={styles.quantitySelector}>
-                  <TouchableOpacity
-                    style={styles.quantityButton}
-                    onPress={() => handleQuantityChange(product.id, -1)}
-                  >
-                    <Text style={styles.quantityButtonText}>−</Text>
-                  </TouchableOpacity>
-                  <Text style={styles.quantityText}>
-                    {quantities[product.id] || 1}
+              <TouchableOpacity
+                key={product.id}
+                style={styles.card}
+                onPress={() => handleProductPress(product)}
+                activeOpacity={0.7}
+              >
+                {product.discount && product.discount > 0 && (
+                  <View style={styles.discountBadge}>
+                    <Text style={styles.discountIcon}>⚡</Text>
+                    <Text style={styles.discountText}>-{product.discount}%</Text>
+                  </View>
+                )}
+                <Image source={product.image} style={styles.productImage} resizeMode="cover" />
+                <View style={styles.cardContent}>
+                  <Text style={styles.productName} numberOfLines={2}>
+                    {product.name}
                   </Text>
-                  <TouchableOpacity
-                    style={styles.quantityButton}
-                    onPress={() => handleQuantityChange(product.id, 1)}
-                  >
-                    <Text style={styles.quantityButtonText}>+</Text>
-                  </TouchableOpacity>
+                  <Text style={styles.productPrice}>Rs. {product.price.toLocaleString()}</Text>
                 </View>
-                <TouchableOpacity style={styles.addButton}>
-                  <Text style={styles.addButtonText}>Add To Cart</Text>
-                </TouchableOpacity>
-              </View>
-            </TouchableOpacity>
+              </TouchableOpacity>
             ))}
           </View>
         </ScrollView>
@@ -247,103 +257,73 @@ const styles = StyleSheet.create({
   scrollView: {
     flex: 1,
   },
+  scrollContent: {
+    paddingBottom: 20,
+  },
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    paddingHorizontal: Spacing.medium,
-    paddingBottom: Spacing.screenPadding,
+    paddingHorizontal: 16,
+    paddingTop: 8,
+    justifyContent: 'space-between',
   },
   card: {
     width: cardWidth,
-    backgroundColor: Colors.background,
-    borderRadius: BorderRadius.card,
-    padding: Spacing.gap,
-    marginRight: Spacing.medium,
-    marginBottom: Spacing.medium,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 10,
+    marginBottom: 16,
     borderWidth: 1,
-    borderColor: Colors.border,
-    shadowColor: Colors.black,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
+    borderColor: '#E5E7EB',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08,
+    shadowRadius: 3,
     elevation: 2,
   },
   discountBadge: {
     position: 'absolute',
-    top: Spacing.small,
-    left: Spacing.small,
-    backgroundColor: Colors.warning,
-    paddingHorizontal: Spacing.small,
-    paddingVertical: Spacing.xs,
-    borderRadius: BorderRadius.small,
+    top: 8,
+    left: 8,
+    backgroundColor: '#FAB001',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
     zIndex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+  },
+  discountIcon: {
+    fontSize: 12,
+    color: '#000',
   },
   discountText: {
-    fontSize: Typography.caption,
-    fontWeight: Typography.semibold,
-    color: Colors.black,
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#000',
   },
   productImage: {
     width: '100%',
-    height: 120,
-    borderRadius: BorderRadius.button,
-    marginBottom: Spacing.small,
+    height: 140,
+    borderRadius: 8,
+    marginBottom: 8,
+    backgroundColor: '#F9FAFB',
+  },
+  cardContent: {
+    gap: 4,
   },
   productName: {
-    fontSize: Typography.bodySmall,
-    fontWeight: Typography.semibold,
-    color: Colors.black,
-    marginBottom: Spacing.xs,
-  },
-  productDescription: {
-    fontSize: Typography.caption,
-    color: Colors.textSecondary,
-    marginBottom: Spacing.small,
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#1F2937',
+    marginBottom: 4,
+    lineHeight: 18,
   },
   productPrice: {
-    fontSize: Typography.body,
-    fontWeight: Typography.bold,
-    color: Colors.accent,
-    marginBottom: Spacing.gap,
-  },
-  actionRow: {
-    flexDirection: 'column',
-    gap: Spacing.small,
-  },
-  quantitySelector: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: Colors.border,
-    borderRadius: BorderRadius.small,
-    paddingVertical: Spacing.xs,
-  },
-  quantityButton: {
-    paddingHorizontal: Spacing.gap,
-    paddingVertical: Spacing.xs,
-  },
-  quantityButtonText: {
-    fontSize: Typography.h5,
-    color: Colors.textSecondary,
-  },
-  quantityText: {
-    fontSize: Typography.bodySmall,
-    fontWeight: Typography.medium,
-    color: Colors.black,
-    minWidth: 20,
-    textAlign: 'center',
-  },
-  addButton: {
-    backgroundColor: Colors.primary,
-    borderRadius: BorderRadius.small,
-    paddingVertical: Spacing.small,
-    alignItems: 'center',
-  },
-  addButtonText: {
-    color: Colors.textWhite,
-    fontSize: 13,
-    fontWeight: Typography.semibold,
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#026A49',
   },
   loadingContainer: {
     flex: 1,

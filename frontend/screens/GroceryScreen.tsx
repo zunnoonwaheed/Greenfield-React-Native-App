@@ -169,8 +169,8 @@ const GroceryScreen: React.FC = () => {
   };
 
   const handleProductPress = (product: ProductItem) => {
-    // Navigate to product detail screen
-    navigation.navigate('ProductDetail', { product } as any);
+    // Navigate to product detail screen with productId
+    navigation.navigate('ProductDetail', { productId: product.id.toString() });
   };
 
   const handleQuantityChange = (productId: number, change: number) => {

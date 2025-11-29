@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -11,16 +11,21 @@ import {
   Modal,
   TextInput,
   ScrollView,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
 import type { RootStackParamList } from '../App';
+import { getProducts } from '../api/productAPI';
+import { addToCart } from '../api/cart';
+import { getCartCount } from '../api/getCartCount';
 
 const { width } = Dimensions.get('window');
 const cardWidth = (width - 32 - 12) / 2; // 16px padding each side + 12px gap
 
-type GroceryListNavigationProp = StackNavigationProp<RootStackParamList>;
+type GroceryListNavigationProp = StackNavigationProp<RootStackParamList, 'GroceryList'>;
+type GroceryListRouteProp = RouteProp<RootStackParamList, 'GroceryList'>;
 
 interface GroceryItem {
   id: string;
@@ -29,12 +34,18 @@ interface GroceryItem {
   price: string;
   discount: string;
   quantity: number;
+  image_url?: string;  // Product image from backend
 }
 
 const GroceryListScreen: React.FC = () => {
   const navigation = useNavigation<GroceryListNavigationProp>();
-  const [cartCount] = useState(3);
-  const [cartTotal] = useState(1200);
+  const route = useRoute<GroceryListRouteProp>();
+
+  // Get category ID and name from navigation params
+  const categoryId = route.params?.categoryId;
+  const categoryName = route.params?.categoryName;
+  const [cartCount, setCartCount] = useState(0);
+  const [cartTotal, setCartTotal] = useState(0);
   const [showPopup, setShowPopup] = useState(true);
   const [searchInput, setSearchInput] = useState('');
   const [showFilters, setShowFilters] = useState(false);
@@ -51,6 +62,12 @@ const GroceryListScreen: React.FC = () => {
 
   // Dropdown open states
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+
+  // Tab filter states
+  const [activeTab, setActiveTab] = useState<string>('All');
+  const [showBrandsDropdown, setShowBrandsDropdown] = useState(false);
+  const [showSortDropdown, setShowSortDropdown] = useState(false);
+  const [quickSortBy, setQuickSortBy] = useState<string>('');
 
   const handleSubmit = () => {
     console.log('Search request:', searchInput);
@@ -69,8 +86,187 @@ const GroceryListScreen: React.FC = () => {
     setSelectedBrands(selectedBrands.filter(b => b !== brandName));
   };
 
+  // Fetch products from API with filters
+  const fetchProducts = useCallback(async (tabOverride?: string, overrides?: { brand?: string; sort?: string }) => {
+    try {
+      console.log('🔍 Fetching products with filters...');
+      if (categoryId) {
+        console.log(`📂 Filtering by category: ${categoryName} (ID: ${categoryId})`);
+      }
+
+      // Build filter params
+      const params: any = { limit: 50 };
+
+      // Category filter (from navigation params - same as web app)
+      if (categoryId) {
+        params.category_id = categoryId;
+      }
+
+      const currentTab = tabOverride || activeTab;
+
+      // Tab-based filters
+      if (currentTab === 'Sale') {
+        params.discount_min = 10; // Show products with at least 10% discount
+      } else if (currentTab === 'Bundles') {
+        params.packaging = 'pack_5'; // Show bundle/pack products
+      }
+
+      // Price range filter
+      if (priceRange) {
+        const numValue = parseInt(priceRange.replace(/\D/g, ''));
+        if (priceRange.includes('+')) {
+          params.price_min = numValue;
+        } else {
+          params.price_max = numValue;
+        }
+      }
+
+      // Sort by (from modal or quick sort or override)
+      // Use override if provided (even if empty string to clear), otherwise use state
+      const effectiveSortBy = overrides?.sort !== undefined ? overrides.sort : (sortBy || quickSortBy);
+      if (effectiveSortBy) params.sort_by = effectiveSortBy;
+
+      // Discount filter (from modal - adds to tab filter)
+      if (discount && discount !== 'Show all discounts') {
+        const match = discount.match(/(\d+)/);
+        if (match) {
+          const discountMin = parseInt(match[1]);
+          // Use higher of tab discount or modal discount
+          params.discount_min = Math.max(params.discount_min || 0, discountMin);
+        }
+      }
+
+      // Rating filter
+      if (ratings && ratings !== 'All ratings') {
+        const match = ratings.match(/(\d+)/);
+        if (match) params.rating_min = parseInt(match[1]);
+      }
+
+      // Delivery filter
+      if (delivery && delivery !== 'All options') {
+        params.delivery_type = delivery;
+      }
+
+      // Brand/Seller filter (from modal or override)
+      // Use override if provided (even if empty string to clear), otherwise use state
+      const effectiveBrand = overrides?.brand !== undefined ? overrides.brand : brand;
+      if (effectiveBrand) params.seller = effectiveBrand;
+
+      // Packaging filter (from modal - overrides tab if set)
+      if (packaging) params.packaging = packaging;
+
+      console.log('📡 API params:', params);
+
+      const response = await getProducts(params);
+
+      // Handle response - axios interceptor returns data directly
+      const products = response?.data?.products || response?.products || [];
+
+      if (products.length > 0) {
+        // Map API response to existing GroceryItem format
+        const mappedItems: GroceryItem[] = products.map((product: any) => ({
+          id: String(product.id),
+          name: product.name || 'Product',
+          description: product.description || product.seller || 'Fresh grocery item',
+          price: `Rs. ${product.discounted_price || product.price}`,
+          discount: product.discount_percentage > 0 ? `-${product.discount_percentage}%` : '',
+          quantity: 1,
+          image_url: product.image_url || '',  // Product image from backend database
+        }));
+        setGroceryItems(mappedItems);
+        console.log('✅ Loaded', mappedItems.length, 'products');
+        console.log('🖼️ First product image:', mappedItems[0]?.image_url || 'NO IMAGE');
+        console.log('🖼️ Products with images:', mappedItems.filter(p => p.image_url).length);
+      } else {
+        // Set empty array to show empty state message
+        setGroceryItems([]);
+        console.log('⚠️ No products found - showing empty state');
+      }
+    } catch (error) {
+      console.error('❌ Error fetching products:', error);
+    }
+  }, [priceRange, sortBy, discount, ratings, delivery, brand, packaging, activeTab, quickSortBy, categoryId, categoryName]);
+
+  // Initial load
+  useEffect(() => {
+    fetchProducts();
+    loadCartCount();
+  }, []);
+
+  // Load cart count
+  const loadCartCount = async () => {
+    try {
+      const count = await getCartCount();
+      setCartCount(count);
+    } catch (error) {
+      console.error('Error loading cart count:', error);
+    }
+  };
+
+  // Handle add to cart
+  const handleAddToCart = async (item: GroceryItem) => {
+    try {
+      console.log('🛒 Adding to cart:', item.name, 'Qty:', item.quantity);
+
+      // Extract product ID from item
+      const productId = parseInt(item.id);
+
+      // Call add to cart API
+      const response = await addToCart(productId, item.quantity);
+
+      if (response.success) {
+        Alert.alert('Success', `${item.name} added to cart!`);
+        // Reload cart count
+        await loadCartCount();
+      } else {
+        Alert.alert('Error', response.message || 'Failed to add item to cart');
+      }
+    } catch (error: any) {
+      console.error('❌ Error adding to cart:', error);
+      Alert.alert('Error', error.message || 'Failed to add item to cart');
+    }
+  };
+
+  // Handle tab selection
+  const handleTabPress = (tab: string) => {
+    if (tab === 'Brands') {
+      setShowBrandsDropdown(!showBrandsDropdown);
+      setShowSortDropdown(false);
+      return;
+    }
+    if (tab === 'Sort by') {
+      setShowSortDropdown(!showSortDropdown);
+      setShowBrandsDropdown(false);
+      return;
+    }
+
+    // Close dropdowns and set active tab
+    setShowBrandsDropdown(false);
+    setShowSortDropdown(false);
+    setActiveTab(tab);
+
+    // Fetch with new tab
+    fetchProducts(tab);
+  };
+
+  // Handle quick brand selection from tab dropdown
+  const handleQuickBrandSelect = (selectedBrand: string) => {
+    setBrand(selectedBrand);
+    setShowBrandsDropdown(false);
+    fetchProducts(undefined, { brand: selectedBrand });
+  };
+
+  // Handle quick sort selection from tab dropdown
+  const handleQuickSortSelect = (selectedSort: string) => {
+    setQuickSortBy(selectedSort);
+    setSortBy(selectedSort);
+    setShowSortDropdown(false);
+    fetchProducts(undefined, { sort: selectedSort });
+  };
+
   const handleApplyFilters = () => {
-    console.log('Applying filters...');
+    console.log('Applying filters...', { priceRange, sortBy, discount, ratings, delivery, brand, packaging });
+    fetchProducts();
     setShowFilters(false);
   };
 
@@ -169,7 +365,7 @@ const GroceryListScreen: React.FC = () => {
   const renderItem = ({ item }: { item: GroceryItem }) => (
     <TouchableOpacity
       style={styles.itemCard}
-      onPress={() => navigation.navigate('ProductDetail' as any)}
+      onPress={() => navigation.navigate('ProductDetail', { productId: item.id.toString() })}
       activeOpacity={0.7}
     >
       {/* Discount Badge */}
@@ -181,9 +377,19 @@ const GroceryListScreen: React.FC = () => {
       {/* Product Image */}
       <View style={styles.imageContainer}>
         <Image
-          source={require('../images/homepage-assets/grocery-bun.png')}
+          source={
+            item.image_url
+              ? { uri: item.image_url }  // Use dynamic image from backend
+              : require('../images/homepage-assets/grocery-bun.png')  // Fallback
+          }
           style={styles.productImage}
           resizeMode="cover"
+          onError={(error) => {
+            console.log('❌ Image load error for:', item.name, item.image_url);
+          }}
+          onLoad={() => {
+            // Image loaded successfully
+          }}
         />
       </View>
 
@@ -222,7 +428,7 @@ const GroceryListScreen: React.FC = () => {
           style={styles.addToCartButton}
           onPress={(e) => {
             e.stopPropagation();
-            console.log(`Added item ${item.id} to cart`);
+            handleAddToCart(item);
           }}
         >
           <Text style={styles.addToCartText} numberOfLines={1}>Add To Cart</Text>
@@ -332,26 +538,105 @@ const GroceryListScreen: React.FC = () => {
 
       {/* Title */}
       <View style={styles.titleContainer}>
-        <Text style={styles.title}>Grocery</Text>
+        <Text style={styles.title}>{categoryName || 'Grocery'}</Text>
       </View>
 
       {/* Filter Tabs */}
-      <View style={styles.filterTabs}>
-        <TouchableOpacity style={styles.filterTabActive}>
-          <Text style={styles.filterTabTextActive}>All</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.filterTab}>
-          <Text style={styles.filterTabText}>Sale</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.filterTab}>
-          <Text style={styles.filterTabText}>Bundles</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.filterTab}>
-          <Text style={styles.filterTabText}>Brands ⌄</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.filterTab}>
-          <Text style={styles.filterTabText}>Sort by</Text>
-        </TouchableOpacity>
+      <View style={styles.filterTabsContainer}>
+        <View style={styles.filterTabs}>
+          <TouchableOpacity
+            style={activeTab === 'All' ? styles.filterTabActive : styles.filterTab}
+            onPress={() => handleTabPress('All')}
+          >
+            <Text style={activeTab === 'All' ? styles.filterTabTextActive : styles.filterTabText}>All</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={activeTab === 'Sale' ? styles.filterTabActive : styles.filterTab}
+            onPress={() => handleTabPress('Sale')}
+          >
+            <Text style={activeTab === 'Sale' ? styles.filterTabTextActive : styles.filterTabText}>Sale</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={activeTab === 'Bundles' ? styles.filterTabActive : styles.filterTab}
+            onPress={() => handleTabPress('Bundles')}
+          >
+            <Text style={activeTab === 'Bundles' ? styles.filterTabTextActive : styles.filterTabText}>Bundles</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.filterTab, styles.filterTabWithArrow, showBrandsDropdown && styles.filterTabActive]}
+            onPress={() => handleTabPress('Brands')}
+          >
+            <Text style={[styles.filterTabText, showBrandsDropdown && styles.filterTabTextActive]}>
+              {brand || 'Brands'}
+            </Text>
+            <Text style={[styles.filterTabArrow, showBrandsDropdown && styles.filterTabTextActive]}>⌄</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.filterTab, styles.filterTabWithArrow, showSortDropdown && styles.filterTabActive]}
+            onPress={() => handleTabPress('Sort by')}
+          >
+            <Text style={[styles.filterTabText, showSortDropdown && styles.filterTabTextActive]}>
+              {quickSortBy ? quickSortBy.split(' ')[0] : 'Sort by'}
+            </Text>
+            <Text style={[styles.filterTabArrow, showSortDropdown && styles.filterTabTextActive]}>⌄</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Brands Dropdown */}
+        {showBrandsDropdown && (
+          <View style={styles.tabDropdown}>
+            {['Alyas Farms', 'Anees Farms', 'Green Valley', 'Fresh Foods', 'Organic Mart'].map((brandOption) => (
+              <TouchableOpacity
+                key={brandOption}
+                style={[styles.tabDropdownOption, brand === brandOption && styles.tabDropdownOptionActive]}
+                onPress={() => handleQuickBrandSelect(brandOption)}
+              >
+                <Text style={[styles.tabDropdownText, brand === brandOption && styles.tabDropdownTextActive]}>
+                  {brandOption}
+                </Text>
+              </TouchableOpacity>
+            ))}
+            {brand && (
+              <TouchableOpacity
+                style={styles.tabDropdownClear}
+                onPress={() => { setBrand(''); setShowBrandsDropdown(false); fetchProducts(undefined, { brand: '' }); }}
+              >
+                <Text style={styles.tabDropdownClearText}>Clear filter</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        )}
+
+        {/* Sort Dropdown */}
+        {showSortDropdown && (
+          <View style={styles.tabDropdown}>
+            {[
+              { label: 'Price: Low to High', value: 'Price (Low to High)' },
+              { label: 'Price: High to Low', value: 'Price (High to Low)' },
+              { label: 'Newest First', value: 'Newest First' },
+              { label: 'Most Popular', value: 'Most Popular' },
+              { label: 'Top Rated', value: 'Rating (High to Low)' },
+            ].map((sortOption) => (
+              <TouchableOpacity
+                key={sortOption.value}
+                style={[styles.tabDropdownOption, quickSortBy === sortOption.value && styles.tabDropdownOptionActive]}
+                onPress={() => handleQuickSortSelect(sortOption.value)}
+              >
+                <Text style={[styles.tabDropdownText, quickSortBy === sortOption.value && styles.tabDropdownTextActive]}>
+                  {sortOption.label}
+                </Text>
+              </TouchableOpacity>
+            ))}
+            {quickSortBy && (
+              <TouchableOpacity
+                style={styles.tabDropdownClear}
+                onPress={() => { setQuickSortBy(''); setSortBy(''); setShowSortDropdown(false); fetchProducts(undefined, { sort: '' }); }}
+              >
+                <Text style={styles.tabDropdownClearText}>Clear sort</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        )}
       </View>
 
       {/* Product Grid */}
@@ -363,6 +648,17 @@ const GroceryListScreen: React.FC = () => {
         contentContainerStyle={styles.listContent}
         columnWrapperStyle={styles.columnWrapper}
         showsVerticalScrollIndicator={false}
+        ListEmptyComponent={
+          <View style={styles.emptyState}>
+            <Text style={styles.emptyStateIcon}>📦</Text>
+            <Text style={styles.emptyStateTitle}>No Products Found</Text>
+            <Text style={styles.emptyStateMessage}>
+              {categoryName
+                ? `This category does not have any products yet.`
+                : 'No products match your search criteria.'}
+            </Text>
+          </View>
+        }
       />
 
       {/* View Cart Button */}
@@ -780,33 +1076,92 @@ const styles = StyleSheet.create({
   },
   filterTabs: {
     flexDirection: 'row',
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
     paddingBottom: 16,
-    gap: 8,
+    gap: 6,
   },
   filterTabActive: {
     backgroundColor: '#009D66',
     borderRadius: 8,
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
     paddingVertical: 8,
   },
   filterTabTextActive: {
     color: '#FFFFFF',
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '600',
     fontFamily: 'DM Sans',
   },
   filterTab: {
     backgroundColor: '#F1F5F9',
     borderRadius: 8,
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
     paddingVertical: 8,
   },
   filterTabText: {
     color: '#475569',
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '400',
     fontFamily: 'DM Sans',
+  },
+  filterTabWithArrow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  filterTabArrow: {
+    color: '#475569',
+    fontSize: 13,
+    marginTop: -4,
+  },
+  filterTabsContainer: {
+    position: 'relative',
+    zIndex: 10,
+  },
+  tabDropdown: {
+    position: 'absolute',
+    top: 44,
+    left: 16,
+    right: 16,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 8,
+    zIndex: 100,
+  },
+  tabDropdownOption: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F1F5F9',
+  },
+  tabDropdownOptionActive: {
+    backgroundColor: '#F0FDF4',
+  },
+  tabDropdownText: {
+    fontSize: 14,
+    fontFamily: 'DM Sans',
+    color: '#1E293B',
+  },
+  tabDropdownTextActive: {
+    color: '#009D66',
+    fontWeight: '600',
+  },
+  tabDropdownClear: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: '#FEF2F2',
+  },
+  tabDropdownClearText: {
+    fontSize: 14,
+    fontFamily: 'DM Sans',
+    color: '#EF4444',
+    fontWeight: '500',
   },
   listContent: {
     paddingHorizontal: 16,
@@ -1248,6 +1603,32 @@ const styles = StyleSheet.create({
   },
   applyButtonTextActive: {
     color: '#FFFFFF',
+  },
+  emptyState: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 80,
+    paddingHorizontal: 32,
+  },
+  emptyStateIcon: {
+    fontSize: 64,
+    marginBottom: 16,
+  },
+  emptyStateTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#1E1E1E',
+    marginBottom: 8,
+    textAlign: 'center',
+    fontFamily: 'DM Sans',
+  },
+  emptyStateMessage: {
+    fontSize: 14,
+    color: '#666666',
+    textAlign: 'center',
+    lineHeight: 20,
+    fontFamily: 'DM Sans',
   },
 });
 

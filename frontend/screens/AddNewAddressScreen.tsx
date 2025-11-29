@@ -19,6 +19,7 @@ import {
   Image,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { addAddress } from '../api/addressesAPI';
 
 type LabelType = 'Home' | 'Office' | 'Love' | 'Other';
 
@@ -70,32 +71,68 @@ const AddNewAddressScreen: React.FC<AddNewAddressScreenProps> = ({
     return true;
   };
 
-  const handleAddAddress = () => {
+  const handleAddAddress = async () => {
     if (!validateForm()) {
       return;
     }
 
     setLoading(true);
 
-    // Simulate API call
-    setTimeout(() => {
-      setLoading(false);
-      Alert.alert(
-        'Success',
-        'Address added successfully',
-        [
-          {
-            text: 'OK',
-            onPress: () => {
-              if (onAddressAdded) {
-                onAddressAdded();
-              }
-              handleClose();
+    try {
+      // Build the complete address string for display
+      const fullAddress = [
+        flat && `Flat ${flat}`,
+        floor && `Floor ${floor}`,
+        companyName && companyName,
+        searchLocation && searchLocation,
+      ]
+        .filter(Boolean)
+        .join(', ');
+
+      console.log('💾 Saving address to user_addresses table:', buildingName, fullAddress);
+
+      // Call backend API to add new address to user_addresses table
+      const response = await addAddress({
+        label: selectedLabel,
+        name: buildingName,
+        address: fullAddress,
+        building_name: buildingName,
+        flat: flat,
+        floor: floor,
+        company_name: companyName,
+        instructions: instructions,
+        is_default: true, // Make new address default
+      });
+
+      if (response.success) {
+        console.log('✅ Address saved successfully');
+        Alert.alert(
+          'Success',
+          'Address added successfully',
+          [
+            {
+              text: 'OK',
+              onPress: () => {
+                if (onAddressAdded) {
+                  onAddressAdded();
+                }
+                handleClose();
+              },
             },
-          },
-        ]
+          ]
+        );
+      } else {
+        throw new Error(response.error || 'Failed to save address');
+      }
+    } catch (error: any) {
+      console.error('❌ Error saving address:', error);
+      Alert.alert(
+        'Error',
+        error.message || 'Failed to save address. Please try again.'
       );
-    }, 1000);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -228,35 +265,59 @@ const AddNewAddressScreen: React.FC<AddNewAddressScreenProps> = ({
                 {/* Add Label Section */}
                 <View style={styles.labelSection}>
                   <Text style={styles.label}>Add Label</Text>
-                  <View style={styles.labelImageContainer}>
-                    <Image
-                      source={require('../images/homepage-assets/add-label.png')}
-                      style={styles.labelImage}
-                      resizeMode="contain"
-                    />
-                    {/* Invisible TouchableOpacity overlay for each label */}
-                    <View style={styles.labelOverlay}>
-                      <TouchableOpacity
-                        style={styles.labelTouchArea}
-                        onPress={() => setSelectedLabel('Home')}
-                        activeOpacity={1}
-                      />
-                      <TouchableOpacity
-                        style={styles.labelTouchArea}
-                        onPress={() => setSelectedLabel('Office')}
-                        activeOpacity={1}
-                      />
-                      <TouchableOpacity
-                        style={styles.labelTouchArea}
-                        onPress={() => setSelectedLabel('Love')}
-                        activeOpacity={1}
-                      />
-                      <TouchableOpacity
-                        style={styles.labelTouchArea}
-                        onPress={() => setSelectedLabel('Other')}
-                        activeOpacity={1}
-                      />
-                    </View>
+                  <View style={styles.labelButtonsContainer}>
+                    <TouchableOpacity
+                      style={[
+                        styles.labelButton,
+                        selectedLabel === 'Home' && styles.labelButtonActive
+                      ]}
+                      onPress={() => setSelectedLabel('Home')}
+                      activeOpacity={0.7}
+                    >
+                      <View style={[styles.labelIconBox, selectedLabel === 'Home' && styles.labelIconBoxActive]}>
+                        <Ionicons name="home" size={18} color="#059669" />
+                      </View>
+                      <Text style={styles.labelButtonText}>Home</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[
+                        styles.labelButton,
+                        selectedLabel === 'Office' && styles.labelButtonActive
+                      ]}
+                      onPress={() => setSelectedLabel('Office')}
+                      activeOpacity={0.7}
+                    >
+                      <View style={[styles.labelIconBox, selectedLabel === 'Office' && styles.labelIconBoxActive]}>
+                        <Ionicons name="business" size={18} color="#059669" />
+                      </View>
+                      <Text style={styles.labelButtonText}>Office</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[
+                        styles.labelButton,
+                        selectedLabel === 'Love' && styles.labelButtonActive
+                      ]}
+                      onPress={() => setSelectedLabel('Love')}
+                      activeOpacity={0.7}
+                    >
+                      <View style={[styles.labelIconBox, selectedLabel === 'Love' && styles.labelIconBoxActive]}>
+                        <Ionicons name="heart" size={18} color="#059669" />
+                      </View>
+                      <Text style={styles.labelButtonText}>Love</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[
+                        styles.labelButton,
+                        selectedLabel === 'Other' && styles.labelButtonActive
+                      ]}
+                      onPress={() => setSelectedLabel('Other')}
+                      activeOpacity={0.7}
+                    >
+                      <View style={[styles.labelIconBox, selectedLabel === 'Other' && styles.labelIconBoxActive]}>
+                        <Ionicons name="chatbox" size={18} color="#059669" />
+                      </View>
+                      <Text style={styles.labelButtonText}>Other</Text>
+                    </TouchableOpacity>
                   </View>
                 </View>
               </View>
@@ -434,25 +495,36 @@ const styles = StyleSheet.create({
     marginTop: 4,
     marginBottom: 12,
   },
-  labelImageContainer: {
-    position: 'relative',
-    alignSelf: 'flex-start',
-  },
-  labelImage: {
-    height: 60,
-    alignSelf: 'flex-start',
-  },
-  labelOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
+  labelButtonsContainer: {
     flexDirection: 'row',
+    gap: 16,
   },
-  labelTouchArea: {
-    flex: 1,
-    backgroundColor: 'transparent',
+  labelButton: {
+    alignItems: 'center',
+    gap: 6,
+  },
+  labelButtonActive: {
+    opacity: 1,
+  },
+  labelIconBox: {
+    width: 44,
+    height: 44,
+    borderRadius: 8,
+    backgroundColor: '#F0FDF4',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'transparent',
+  },
+  labelIconBoxActive: {
+    borderColor: '#059669',
+    backgroundColor: '#DCFCE7',
+  },
+  labelButtonText: {
+    fontSize: 12,
+    fontWeight: '500',
+    color: '#059669',
+    fontFamily: 'DM Sans',
   },
   buttonContainer: {
     paddingHorizontal: 20,

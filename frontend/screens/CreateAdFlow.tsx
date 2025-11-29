@@ -8,14 +8,14 @@ import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
-import type { RootStackParamList } from '../App';
+import type { MainStackParamList } from '../navigation/MainStack';
 import { Ionicons } from '@expo/vector-icons';
 import { CreateAdProvider } from './CreateAdContext';
 import CreateAdStep1 from './CreateAdStep1';
 import CreateAdStep2 from './CreateAdStep2';
 import CreateAdStep3 from './CreateAdStep3';
 
-type CreateAdFlowNavigationProp = StackNavigationProp<RootStackParamList>;
+type CreateAdFlowNavigationProp = StackNavigationProp<MainStackParamList>;
 
 const CreateAdFlowContent: React.FC = () => {
   const navigation = useNavigation<CreateAdFlowNavigationProp>();
@@ -47,8 +47,9 @@ const CreateAdFlowContent: React.FC = () => {
   };
 
   const handlePublish = () => {
-    // Navigate back to SellAds screen after successful publish
-    navigation.navigate('SellAds');
+    // Navigate back to MainTabs which contains SellAdsTab
+    // The SellAdsScreen will auto-refresh when it comes into focus
+    navigation.navigate('MainTabs', { screen: 'SellAdsTab' });
   };
 
   const getStepTitle = () => {

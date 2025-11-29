@@ -53,6 +53,15 @@ export * as LocationAPI from './locationAPI';
 // Advertisement API (if exists)
 export * as AdAPI from './adAPI';
 
+// Marketplace API (NEW - Dynamic Ads)
+export * as MarketplaceAPI from './marketplaceAPI';
+
+// Payment API (NEW - Dynamic Payment Methods)
+export * as PaymentAPI from './paymentAPI';
+
+// Order History API (NEW - Enhanced Order History)
+export * as OrderHistoryAPI from './orderHistoryAPI';
+
 // ============================================
 // SEPARATE ENDPOINT EXPORTS (Recommended)
 // ============================================
@@ -70,6 +79,7 @@ export { getCartCount } from './getCartCount';
 export { getProducts } from './getProducts';
 export { getProductById, getProductBySlug } from './getProduct';
 export { searchProducts } from './searchProducts';
+export { getBestSellingProducts } from './productAPI';
 
 // Category Endpoints
 export { getCategories, getTopLevelCategories } from './getCategories';
@@ -113,6 +123,15 @@ export { cancelOrder } from './cancelOrder';
 // Checkout Endpoints
 export { submitOrder } from './submitOrder';
 export { getCheckoutData } from './getCheckoutData';
+
+// Marketplace Endpoints (NEW)
+export { getAds, getAdDetail, createAd, deleteAd, getMyAds, searchAds } from './marketplaceAPI';
+
+// Payment Methods Endpoints (NEW)
+export { getPaymentMethods, addPaymentMethod, deletePaymentMethod } from './paymentAPI';
+
+// Order History Endpoints (NEW)
+export { getOrderHistory, getOrderById } from './orderHistoryAPI';
 
 // ============================================
 // USAGE EXAMPLES:

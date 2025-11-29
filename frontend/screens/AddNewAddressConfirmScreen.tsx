@@ -3,7 +3,7 @@
  * Pixel-perfect match to screenshot design
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -19,14 +19,17 @@ import {
   Image,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
+import { useNavigation, useRoute, RouteProp, useFocusEffect } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
 import type { MainStackParamList } from '../navigation/MainStack';
 import { addLocation } from '../api/locationAPI';
+import { getCartContents } from '../api/cart';
+import { getUserAddress } from '../api/getUserAddress';
 import PaymentCardModal, { CardDetails } from '../components/PaymentCardModal';
 import { AppHeader } from '../components/shared/AppHeader';
 import { Colors, Typography, Spacing, BorderRadius } from '../constants/theme';
 import { ThemedButton } from '../components/ThemedButton';
+import axiosInstance from '../api/axiosConfig';
 
 type AddNewAddressConfirmScreenNavigationProp = StackNavigationProp<
   MainStackParamList,
@@ -51,6 +54,7 @@ const AddNewAddressConfirmScreen: React.FC = () => {
 
   const [loading, setLoading] = useState(false);
   const [placingOrder, setPlacingOrder] = useState(false);
+  const [loadingCart, setLoadingCart] = useState(true);
 
   // Form fields
   const [searchLocation, setSearchLocation] = useState('');
@@ -61,10 +65,16 @@ const AddNewAddressConfirmScreen: React.FC = () => {
   const [instructions, setInstructions] = useState('');
   const [selectedLabel, setSelectedLabel] = useState<LabelType>('Home');
 
+  // User contact details
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
+
   // Address location data
   const [city] = useState('Karachi');
   const [area] = useState('DHA');
   const [sector, setSector] = useState('Phase 2');
+  const [userAddress, setUserAddress] = useState('');
 
   // Order preferences
   const [orderType, setOrderType] = useState<'door' | 'shop'>('door');
@@ -76,25 +86,113 @@ const AddNewAddressConfirmScreen: React.FC = () => {
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [savedCard, setSavedCard] = useState<CardDetails | null>(null);
 
-  // Mock order data
-  const orderItems = [
-    { name: 'Fresh Vegetable Bundle', qty: 1, price: 750 },
-    { name: 'Milk – 1 Litre', qty: 1, price: 200 },
-    { name: 'Eggs – 12 Pcs', qty: 1, price: 240 },
-    { name: 'Green Chilies (250g)', qty: 1, price: 100 },
-    { name: 'Lemon Pack (500g)', qty: 1, price: 100 },
-  ];
+  // Cart data from backend
+  const [orderItems, setOrderItems] = useState<any[]>([]);
+  const [subtotal, setSubtotal] = useState(0);
+  const [deliveryCharge, setDeliveryCharge] = useState(0);
+  const [gst, setGst] = useState(0);
+  const [tax, setTax] = useState(0); // Tax for display (same as GST)
+  const [discount, setDiscount] = useState(0); // Discount amount
+  const [finalAmountCalc, setFinalAmountCalc] = useState(0);
 
-  const tax = 175;
-  const discount = 185;
-  const finalAmountCalc = orderItems.reduce((sum, item) => sum + item.price * item.qty, 0) + tax - discount;
+  // Load cart contents and user data on mount
+  useEffect(() => {
+    loadCartAndUserData();
+  }, []);
+
+  const loadCartAndUserData = async () => {
+    try {
+      setLoadingCart(true);
+
+      // Load cart contents
+      const cartResponse = await getCartContents();
+      console.log('📦 Cart response:', cartResponse);
+
+      if (cartResponse.success && cartResponse.data) {
+        const items = cartResponse.data.items || [];
+        setOrderItems(items);
+
+        const cartSubtotal = cartResponse.data.total || 0;
+        setSubtotal(cartSubtotal);
+
+        // Calculate charges (with safe defaults)
+        const delivery = cartSubtotal > 0 ? Math.round(cartSubtotal * 0.05) : 0;
+        const taxAmount = cartSubtotal > 0 ? Math.round(cartSubtotal * 0.03) : 0;
+        const discountAmount = 0; // Default to 0, can be calculated if discount code applied
+
+        setDeliveryCharge(delivery);
+        setGst(taxAmount);
+        setTax(taxAmount); // Set tax for display
+        setDiscount(discountAmount); // Set discount
+        setFinalAmountCalc(cartSubtotal + delivery + taxAmount - discountAmount);
+      } else {
+        // Set safe defaults if cart is empty or response failed
+        setOrderItems([]);
+        setSubtotal(0);
+        setDeliveryCharge(0);
+        setGst(0);
+        setTax(0);
+        setDiscount(0);
+        setFinalAmountCalc(0);
+      }
+
+      // Load user address
+      const addressResponse = await getUserAddress();
+      if (addressResponse.success && addressResponse.data?.user) {
+        const user = addressResponse.data.user;
+        setUserAddress(user.address || '');
+        setName(user.name || '');
+        setEmail(user.email || '');
+        setPhone(user.phone || '');
+      }
+    } catch (error) {
+      console.error('❌ Error loading cart/user data:', error);
+      Alert.alert('Error', 'Failed to load cart contents');
+    } finally {
+      setLoadingCart(false);
+    }
+  };
 
   const handleBack = () => {
     navigation.goBack();
   };
 
   const validateForm = (): boolean => {
-    // Relaxed validation - not all fields required for order placement
+    // Validate required fields
+    if (orderItems.length === 0) {
+      Alert.alert('Error', 'Your cart is empty. Please add items to your cart before placing an order.');
+      return false;
+    }
+
+    if (!name || name.trim() === '') {
+      Alert.alert('Error', 'Please enter your name');
+      return false;
+    }
+
+    if (!email || email.trim() === '') {
+      Alert.alert('Error', 'Please enter your email address');
+      return false;
+    }
+
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      Alert.alert('Error', 'Please enter a valid email address');
+      return false;
+    }
+
+    if (!phone || phone.trim() === '') {
+      Alert.alert('Error', 'Please enter your phone number');
+      return false;
+    }
+
+    // Validate delivery address
+    const fullAddress = userAddress || buildingName;
+    if (!fullAddress || fullAddress.trim() === '') {
+      Alert.alert('Error', 'Please enter your delivery address');
+      return false;
+    }
+
     return true;
   };
 
@@ -141,13 +239,87 @@ const AddNewAddressConfirmScreen: React.FC = () => {
 
     setPlacingOrder(true);
 
-    // Simulate order processing (offline mode - no API call required)
-    setTimeout(() => {
+    try {
+      console.log('📦 Placing order...');
+
+      // Prepare order data
+      const fullAddress = userAddress || buildingName || `${area}, ${sector}`;
+      const formData = new URLSearchParams();
+
+      formData.append('name', name.trim());
+      formData.append('email', email.trim());
+      formData.append('phone', phone.trim());
+      formData.append('guest_address', fullAddress);
+      formData.append('delivery_charge', deliveryCharge.toString());
+      formData.append('final_total', finalAmountCalc.toString());
+      formData.append('payment_method', paymentMethod === 'cash' ? 'COD' : 'card');
+
+      if (instructions.trim()) {
+        formData.append('notes', instructions.trim());
+      }
+
+      // Submit order to backend
+      const response = await axiosInstance.post('/submit-order.php', formData.toString(), {
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+      });
+
+      console.log('✅ Order response:', response);
+
+      if (response.success) {
+        setPlacingOrder(false);
+        Alert.alert(
+          'Success',
+          'Your order has been placed successfully!',
+          [
+            {
+              text: 'OK',
+              onPress: () => {
+                // Navigate to order confirmed or order history
+                navigation.navigate('OrderConfirmed', {
+                  orderId: response.order_id || 'ORD' + Date.now()
+                });
+              }
+            }
+          ]
+        );
+      } else {
+        throw new Error(response.message || 'Failed to place order');
+      }
+    } catch (error: any) {
+      console.error('❌ Error placing order:', error);
       setPlacingOrder(false);
-      // Navigate directly to Order Confirmed screen
-      navigation.navigate('OrderConfirmed', { orderId: 'ORD' + Date.now() });
-    }, 1000); // 1 second delay for UX
+      Alert.alert('Error', error.message || 'Failed to place order. Please try again.');
+    }
   };
+
+  // Show loading indicator while cart is loading
+  if (loadingCart) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.header}>
+          <TouchableOpacity
+            onPress={handleBack}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            activeOpacity={0.7}
+            style={styles.backButton}
+          >
+            <Image
+              source={require('../images/homepage-assets/arrow-back.png')}
+              style={styles.backIcon}
+              resizeMode="contain"
+            />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Confirm Order Details</Text>
+        </View>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#0A8A4E" />
+          <Text style={styles.loadingText}>Loading checkout details...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -209,7 +381,9 @@ const AddNewAddressConfirmScreen: React.FC = () => {
           {/* Delivery Address Section */}
           <View style={styles.sectionContainer}>
             <Text style={styles.sectionTitle}>Delivery Address</Text>
-            <Text style={styles.simpleAddressText}>Sky Avenue, Street 5, House 14, DHA Phase 2</Text>
+            <Text style={styles.simpleAddressText}>
+              {userAddress || 'Sky Avenue, Street 5, House 14, DHA Phase 2'}
+            </Text>
             <TextInput
               style={styles.addressInput}
               placeholder="Add another address"
@@ -218,6 +392,47 @@ const AddNewAddressConfirmScreen: React.FC = () => {
               onChangeText={setBuildingName}
               multiline
             />
+          </View>
+
+          {/* Contact Information */}
+          <View style={styles.sectionContainer}>
+            <Text style={styles.sectionTitle}>Contact Information</Text>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Full Name *</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Enter your full name"
+                placeholderTextColor="#9E9E9E"
+                value={name}
+                onChangeText={setName}
+              />
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Email Address *</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Enter your email"
+                placeholderTextColor="#9E9E9E"
+                value={email}
+                onChangeText={setEmail}
+                keyboardType="email-address"
+                autoCapitalize="none"
+              />
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Phone Number *</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Enter your phone number"
+                placeholderTextColor="#9E9E9E"
+                value={phone}
+                onChangeText={setPhone}
+                keyboardType="phone-pad"
+              />
+            </View>
           </View>
 
           {/* Special Requests/Instructions */}
@@ -955,6 +1170,18 @@ const styles = StyleSheet.create({
   },
   buttonDisabled: {
     opacity: 0.6,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 40,
+  },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 14,
+    color: '#64748B',
+    fontFamily: 'DM Sans',
   },
 });
 

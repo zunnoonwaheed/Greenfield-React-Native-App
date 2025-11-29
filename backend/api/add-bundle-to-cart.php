@@ -46,6 +46,14 @@ $currency = dbFetchOne(
 // Use discounted price or final price
 $bundle_price = $bundle['discounted_price'] ?? $bundle['final_price'] ?? $bundle['base_price'];
 
+// Construct full image URL
+$imageUrl = '';
+if (!empty($bundle['image'])) {
+    $protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http';
+    $host = $_SERVER['HTTP_HOST'];
+    $imageUrl = $protocol . '://' . $host . '/uploads/bundles/' . $bundle['image'];
+}
+
 // Initialize cart if not exists
 if (!isset($_SESSION['cart'])) {
     $_SESSION['cart'] = [];
@@ -60,7 +68,7 @@ if (!isset($_SESSION['cart'][$bundle_cart_id])) {
         'bundle_id' => $bundle['id'],
         'name' => $bundle['name'],
         'price' => (float)$bundle_price,
-        'image' => $bundle['image'] ?? '',
+        'image' => $imageUrl,
         'currency' => $currency['currency'] ?? 'PKR',
         'exchange_rate' => $currency['exchange_rate'] ?? 1,
         'qty' => 0,

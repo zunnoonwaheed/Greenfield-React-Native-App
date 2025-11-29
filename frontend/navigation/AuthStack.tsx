@@ -13,6 +13,7 @@ import SignUpScreen from '../screens/SignUpScreen';
 import ForgotPasswordScreen from '../screens/ForgotPasswordScreen';
 import ResetPasswordScreen from '../screens/ResetPasswordScreen';
 import WelcomeScreen from '../screens/WelcomeScreen';
+import AddLocationScreen from '../screens/AddLocationScreen';
 
 // Type definitions
 export type AuthStackParamList = {
@@ -22,6 +23,7 @@ export type AuthStackParamList = {
   ForgotPassword: undefined;
   ResetPassword: { token?: string };
   Welcome: undefined;
+  AddLocation: undefined;
 };
 
 const Stack = createStackNavigator<AuthStackParamList>();
@@ -58,6 +60,10 @@ const AuthStack: React.FC = () => {
       <Stack.Screen
         name="Welcome"
         component={WelcomeScreen}
+      />
+      <Stack.Screen
+        name="AddLocation"
+        component={AddLocationScreen}
       />
     </Stack.Navigator>
   );

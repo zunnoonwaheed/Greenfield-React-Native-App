@@ -47,7 +47,7 @@ const WelcomeScreen: React.FC = () => {
       navigatedRef.current = true;
 
       try {
-        console.log('🏠 Navigating to MainTabs from Welcome screen');
+        console.log('🏠 Auto-navigating to MainTabs from Welcome screen');
         // Navigate to main app
         navigation.replace('MainTabs');
       } catch (error) {
@@ -63,13 +63,13 @@ const WelcomeScreen: React.FC = () => {
   }, [navigation]);
 
   const onBack = () => {
-    // Skip welcome and go directly to MainTabs
+    // Allow user to skip welcome by tapping back
     if (timerRef.current) clearTimeout(timerRef.current);
     if (navigatedRef.current) return;
     navigatedRef.current = true;
 
     try {
-      console.log('🏠 Manual navigation to MainTabs');
+      console.log('🏠 Manual back pressed, navigating to MainTabs');
       navigation.replace('MainTabs');
     } catch (error) {
       console.error('❌ Manual navigation error:', error);
@@ -125,26 +125,6 @@ const WelcomeScreen: React.FC = () => {
           style={styles.illustration}
           resizeMode="contain"
         />
-
-        {/* Manual Continue Button */}
-        <TouchableOpacity
-          style={styles.continueBtn}
-          onPress={() => {
-            if (timerRef.current) clearTimeout(timerRef.current);
-            if (navigatedRef.current) return;
-            navigatedRef.current = true;
-            try {
-              console.log('🏠 Manual Continue clicked');
-              navigation.replace('MainTabs');
-            } catch (error) {
-              console.error('❌ Continue button navigation error:', error);
-              navigation.navigate('MainTabs');
-            }
-          }}
-          activeOpacity={0.9}
-        >
-          <Text style={styles.continueText}>Continue to App</Text>
-        </TouchableOpacity>
       </View>
     </View>
   );
@@ -176,25 +156,6 @@ const styles = StyleSheet.create({
 
   centerContent: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 24 },
   illustration: { width: width * 0.8, height: width * 0.8 * 1.05 },
-
-  continueBtn: {
-    marginTop: 32,
-    backgroundColor: '#0F7B5E',
-    paddingHorizontal: 48,
-    paddingVertical: 16,
-    borderRadius: 12,
-    shadowColor: '#0F7B5E',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 6,
-  },
-  continueText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '700',
-    letterSpacing: 0.5,
-  },
 });
 
 export default WelcomeScreen;

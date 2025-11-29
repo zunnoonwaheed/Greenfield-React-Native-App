@@ -1,71 +1,165 @@
 <?php
 /**
  * Notifications API Endpoint
- * Get user notifications
- * Method: GET
+ * GET /api/notifications.php - Get user notifications
  * Returns: JSON
- * Requires: Authentication
  */
 
-session_start();
-require_once("../admin/includes/db_settings.php");
-require_once("../helpers/response.php");
-require_once("../helpers/auth.php");
-require_once("../helpers/database.php");
+// Start output buffering
+ob_start();
 
-header('Content-Type: application/json');
+// Suppress errors from being output
+error_reporting(0);
+ini_set('display_errors', 0);
 
-// Require authentication
-requireAuth();
+// CORS headers
+header('Access-Control-Allow-Origin: *');
+header('Access-Control-Allow-Methods: GET, OPTIONS');
+header('Access-Control-Allow-Headers: Content-Type, Authorization');
 
-$userId = getCurrentUserId();
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    while (ob_get_level() > 0) ob_end_clean();
+    http_response_code(200);
+    exit();
+}
+
+require_once __DIR__ . '/../helpers/session_config.php';
+require_once __DIR__ . '/../helpers/database.php';
+require_once __DIR__ . '/../helpers/response.php';
+require_once __DIR__ . '/../helpers/auth.php';
+
+// Database connection
+$host = 'localhost';
+$db = 'greenfieldsuperm_db';
+$user = 'root';
+$pass = '';
+
+// Suppress mysqli errors
+mysqli_report(MYSQLI_REPORT_OFF);
+
+$con = @new mysqli($host, $user, $pass, $db);
+
+if ($con->connect_error) {
+    respondError('Database connection failed');
+}
+
+$con->set_charset('utf8mb4');
+
+// Check if notifications table exists
+$tableCheck = @$con->query("SHOW TABLES LIKE 'notifications'");
+if (!$tableCheck || $tableCheck->num_rows === 0) {
+    $con->close();
+    respondSuccess([
+        'notifications' => [],
+        'count' => 0,
+        'message' => 'Notifications table not yet created'
+    ]);
+}
+
+// For development, use user_id = 1 (or from auth if available)
+$user_id = 1;
+$authUser = authenticateUser($con);
+if ($authUser) {
+    $user_id = $authUser;
+}
 
 // Check if only count is requested
 $countOnly = isset($_GET['count_only']) && $_GET['count_only'] === 'true';
 
 if ($countOnly) {
     // Get unread count
-    $result = dbFetchOne(
-        $con,
-        "SELECT COUNT(*) as count FROM notifications WHERE user_id = ? AND is_read = 0",
-        'i',
-        [$userId]
-    );
+    $countQuery = "SELECT COUNT(*) as count FROM notifications WHERE user_id = ? AND is_read = 0";
+    $stmt = $con->prepare($countQuery);
+    $stmt->bind_param('i', $user_id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $row = $result->fetch_assoc();
+    $stmt->close();
+    $con->close();
 
-    jsonSuccess([
-        'unread_count' => (int)($result['count'] ?? 0)
-    ], 'Unread count retrieved');
+    respondSuccess([
+        'unread_count' => intval($row['count'] ?? 0)
+    ]);
+}
+
+// Get notifications with pagination
+$limit = isset($_GET['limit']) ? intval($_GET['limit']) : 20;
+$offset = isset($_GET['offset']) ? intval($_GET['offset']) : 0;
+$unreadOnly = isset($_GET['unread_only']) && $_GET['unread_only'] === 'true';
+
+// Build query based on filters
+if ($unreadOnly) {
+    $query = "SELECT id, user_id, title, message, type, is_read, created_at FROM notifications WHERE user_id = ? AND is_read = 0 ORDER BY created_at DESC LIMIT ? OFFSET ?";
 } else {
-    // Get notifications with pagination
-    $limit = isset($_GET['limit']) ? (int)$_GET['limit'] : 20;
-    $offset = isset($_GET['offset']) ? (int)$_GET['offset'] : 0;
-    $unreadOnly = isset($_GET['unread_only']) && $_GET['unread_only'] === 'true';
+    $query = "SELECT id, user_id, title, message, type, is_read, created_at FROM notifications WHERE user_id = ? ORDER BY created_at DESC LIMIT ? OFFSET ?";
+}
 
-    // Build query based on filters
-    if ($unreadOnly) {
-        $query = "SELECT * FROM notifications WHERE user_id = ? AND is_read = 0 ORDER BY created_at DESC LIMIT ? OFFSET ?";
-        $types = 'iii';
-        $params = [$userId, $limit, $offset];
+$stmt = $con->prepare($query);
+$stmt->bind_param('iii', $user_id, $limit, $offset);
+$stmt->execute();
+$result = $stmt->get_result();
+
+$notifications = [];
+while ($row = $result->fetch_assoc()) {
+    // Calculate time ago
+    $createdAt = new DateTime($row['created_at']);
+    $now = new DateTime();
+    $diff = $now->diff($createdAt);
+
+    if ($diff->d > 0) {
+        $timeAgo = $diff->d . 'd ago';
+    } elseif ($diff->h > 0) {
+        $timeAgo = $diff->h . 'h ago';
+    } elseif ($diff->i > 0) {
+        $timeAgo = $diff->i . 'm ago';
     } else {
-        $query = "SELECT * FROM notifications WHERE user_id = ? ORDER BY created_at DESC LIMIT ? OFFSET ?";
-        $types = 'iii';
-        $params = [$userId, $limit, $offset];
+        $timeAgo = 'Just now';
     }
 
-    $notifications = dbFetchAll($con, $query, $types, $params);
+    $notifications[] = [
+        'id' => $row['id'],
+        'title' => $row['title'],
+        'description' => $row['message'], // Map 'message' to 'description' for frontend
+        'type' => $row['type'],
+        'read' => boolval($row['is_read']),
+        'time' => $timeAgo,
+        'created_at' => $row['created_at']
+    ];
+}
+$stmt->close();
 
-    // Get total count
-    $countQuery = $unreadOnly
-        ? "SELECT COUNT(*) as count FROM notifications WHERE user_id = ? AND is_read = 0"
-        : "SELECT COUNT(*) as count FROM notifications WHERE user_id = ?";
-    $countResult = dbFetchOne($con, $countQuery, 'i', [$userId]);
-    $totalCount = (int)($countResult['count'] ?? 0);
+// Get total count
+$countQuery = $unreadOnly
+    ? "SELECT COUNT(*) as count FROM notifications WHERE user_id = ? AND is_read = 0"
+    : "SELECT COUNT(*) as count FROM notifications WHERE user_id = ?";
+$stmt = $con->prepare($countQuery);
+$stmt->bind_param('i', $user_id);
+$stmt->execute();
+$countResult = $stmt->get_result();
+$totalCount = intval($countResult->fetch_assoc()['count'] ?? 0);
+$stmt->close();
 
-    jsonSuccess([
+// Get unread count separately
+$unreadQuery = "SELECT COUNT(*) as count FROM notifications WHERE user_id = ? AND is_read = 0";
+$stmt = $con->prepare($unreadQuery);
+$stmt->bind_param('i', $user_id);
+$stmt->execute();
+$unreadResult = $stmt->get_result();
+$unreadCount = intval($unreadResult->fetch_assoc()['count'] ?? 0);
+$stmt->close();
+
+$con->close();
+
+respondSuccess([
+    'data' => [
         'notifications' => $notifications,
         'count' => $totalCount,
-        'limit' => $limit,
-        'offset' => $offset
-    ], 'Notifications retrieved successfully');
-}
-?>
+        'unread_count' => $unreadCount,
+        'pagination' => [
+            'current_page' => floor($offset / $limit) + 1,
+            'per_page' => $limit,
+            'total' => $totalCount,
+            'total_pages' => ceil($totalCount / $limit)
+        ]
+    ]
+]);

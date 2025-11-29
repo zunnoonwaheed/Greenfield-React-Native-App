@@ -10,6 +10,7 @@ import {
   Alert,
   ActivityIndicator,
   Image,
+  ImageBackground,
   Platform,
   ScrollView,
 } from 'react-native';
@@ -108,12 +109,12 @@ const ForgotPasswordScreen: React.FC = () => {
     <View style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor={GREEN} />
 
-      {/* GREEN HEADER + CART PATTERN */}
-      <View style={styles.header}>
-        <Image source={require('../images/homepage-assets/cart-home1.png')} style={[styles.cart, styles.cart1]} />
-        <Image source={require('../images/homepage-assets/cart-home2.png')} style={[styles.cart, styles.cart2]} />
-        <Image source={require('../images/homepage-assets/cart-home3.png')} style={[styles.cart, styles.cart3]} />
-
+      {/* GREEN HEADER WITH BACKGROUND IMAGE */}
+      <ImageBackground
+        source={require('../images/homepage-assets/auth-signup-screen.png')}
+        style={styles.header}
+        resizeMode="cover"
+      >
         <SafeAreaView edges={['top']} style={styles.safeTop}>
           <View style={styles.topBar}>
             <TouchableOpacity style={styles.backButton} onPress={handleBack} activeOpacity={0.7}>
@@ -125,7 +126,7 @@ const ForgotPasswordScreen: React.FC = () => {
             <Text style={styles.topTitle}>Privacy</Text>
           </View>
         </SafeAreaView>
-      </View>
+      </ImageBackground>
 
       {/* WHITE SHEET (rounded, like mock) */}
       <View style={styles.sheetWrap}>
@@ -196,12 +197,6 @@ const styles = StyleSheet.create({
     borderTopColor: 'transparent', borderBottomColor: 'transparent', borderRightColor: '#FFFFFF',
   },
   topTitle: { color: '#EAF7F2', fontSize: 17, fontWeight: Platform.select({ ios: '600', android: '700' }) as any },
-
-  // CARTS — scaled/placed like your screenshot
-  cart: { position: 'absolute', opacity: 0.20, tintColor: MINT_TINT },
-  cart1: { width: 300, height: 300, top: 60, left: -108, transform: [{ rotate: '-18deg' }] },
-  cart2: { width: 260, height: 260, top: 316, right: -86, transform: [{ rotate: '24deg' }] },
-  cart3: { width: 200, height: 200, top: 182, right: -18, transform: [{ rotate: '-10deg' }] },
 
   sheetWrap: { position: 'absolute', left: 0, right: 0, bottom: 0 },
   sheet: {

@@ -7,7 +7,7 @@
  * Authentication: Not required (session-based cart)
  */
 
-session_start();
+require_once("../helpers/session_config.php");
 require_once("../helpers/response.php");
 
 header('Content-Type: application/json');
@@ -17,12 +17,17 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     jsonError('Method not allowed', 405);
 }
 
-$product_id = intval($_POST['product_id'] ?? $_POST['id'] ?? 0);
+$product_id = $_POST['product_id'] ?? $_POST['id'] ?? '';
 $action = $_POST['action'] ?? '';
 $quantity = isset($_POST['quantity']) ? intval($_POST['quantity']) : null;
 
-if ($product_id <= 0) {
+if (empty($product_id)) {
     jsonError('Product ID is required');
+}
+
+// Convert to int if numeric (for products), keep as string for bundles
+if (is_numeric($product_id) && strpos($product_id, 'bundle_') !== 0) {
+    $product_id = intval($product_id);
 }
 
 // Initialize cart if not exists

@@ -7,27 +7,27 @@
 // Suppress deprecation warnings
 error_reporting(E_ALL & ~E_DEPRECATED);
 
-// Start session with custom configuration
+// Handle session ID from headers (for React Native) BEFORE starting session
 if (session_status() === PHP_SESSION_NONE) {
+    // Check if session ID is passed in header
+    $sessionId = $_SERVER['HTTP_X_SESSION_ID'] ?? null;
+
+    if ($sessionId && strlen($sessionId) > 0) {
+        // Use existing session ID from client
+        session_id($sessionId);
+    }
+
     // Simple session config that works with React Native
     ini_set('session.use_cookies', 1);
     ini_set('session.cookie_httponly', 1);
     ini_set('session.cookie_lifetime', 86400); // 24 hours
 
     session_start();
-}
 
-// Handle session ID from headers (for React Native)
-if (!isset($_SESSION['initialized'])) {
-    // Check if session ID is passed in header
-    $sessionId = $_SERVER['HTTP_X_SESSION_ID'] ?? null;
-
-    if ($sessionId) {
-        session_id($sessionId);
-        session_start();
+    // Mark as initialized
+    if (!isset($_SESSION['initialized'])) {
+        $_SESSION['initialized'] = true;
     }
-
-    $_SESSION['initialized'] = true;
 }
 
 // Return current session ID for client to store
@@ -46,4 +46,3 @@ header('Access-Control-Expose-Headers: X-Session-ID');
 if (session_id()) {
     header('X-Session-ID: ' . session_id());
 }
-?>

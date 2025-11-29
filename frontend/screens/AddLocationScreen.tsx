@@ -5,15 +5,20 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  SafeAreaView,
   StatusBar,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
   Image,
+  ImageBackground,
   Dimensions,
+  Alert,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
+import { useAuth } from '../contexts/AuthContext';
+import { getUserData } from '../api/axiosConfig';
+import axiosInstance from '../api/axiosConfig';
 
 const ORANGE = '#EA6A2A';         // header tone per mock
 const MINT_TINT = '#FFD9BF';      // pattern tint on orange
@@ -30,6 +35,7 @@ type PropertyType = 'house' | 'apartment';
 
 const AddLocationScreen: React.FC = () => {
   const navigation = useNavigation();
+  const { login: authLogin } = useAuth();
   const [city, setCity] = useState('Islamabad');
   const [area, setArea] = useState('');
   const [sector, setSector] = useState('');
@@ -37,9 +43,51 @@ const AddLocationScreen: React.FC = () => {
   const [propertyType, setPropertyType] = useState<PropertyType>('house');
   const [houseNumber, setHouseNumber] = useState('');
 
-  const handleDone = () => {
-    // save or send to backend here
-    navigation.goBack();
+  const handleDone = async () => {
+    try {
+      // Validate required fields
+      if (!city || !area || !sector) {
+        Alert.alert('Required Fields', 'Please fill in City, Area, and Sector');
+        return;
+      }
+
+      console.log('📍 Saving location:', { city, area, sector, streetNumber, propertyType, houseNumber });
+
+      // Save address to backend
+      const formData = new URLSearchParams();
+      formData.append('label', 'Home'); // Default label
+      formData.append('name', area);
+      formData.append('address', `${sector}, ${area}, ${city}`);
+      formData.append('building_name', area);
+      formData.append('flat', houseNumber || '');
+      formData.append('floor', '');
+      formData.append('company_name', '');
+      formData.append('instructions', `${propertyType}, Street ${streetNumber}`);
+      formData.append('is_default', '1'); // Make first address default
+
+      const response = await axiosInstance.post('/api/addresses.php', formData.toString(), {
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+      });
+
+      if (response.success) {
+        console.log('✅ Address saved successfully');
+
+        // Complete authentication and navigate to Welcome screen
+        const userData = await getUserData();
+        if (userData) {
+          await authLogin('logged_in', userData);
+          // Navigate to Welcome screen with confetti animation
+          navigation.navigate('Welcome');
+        }
+      } else {
+        Alert.alert('Error', 'Failed to save address. Please try again.');
+      }
+    } catch (error) {
+      console.error('❌ Error saving address:', error);
+      Alert.alert('Error', 'Failed to save address. Please try again.');
+    }
   };
 
   const handleBack = () => navigation.goBack();
@@ -48,12 +96,12 @@ const AddLocationScreen: React.FC = () => {
     <View style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor={ORANGE} />
 
-      {/* ORANGE HEADER WITH PATTERN */}
-      <View style={styles.header}>
-        <Image source={require('../images/homepage-assets/cart-home1.png')} style={[styles.cart, styles.cart1]} />
-        <Image source={require('../images/homepage-assets/cart-home2.png')} style={[styles.cart, styles.cart2]} />
-        <Image source={require('../images/homepage-assets/cart-home3.png')} style={[styles.cart, styles.cart3]} />
-
+      {/* ORANGE HEADER WITH BACKGROUND IMAGE */}
+      <ImageBackground
+        source={require('../images/homepage-assets/add-location.png')}
+        style={styles.header}
+        resizeMode="cover"
+      >
         <SafeAreaView edges={['top']} style={styles.safeTop}>
           <View style={styles.topBar}>
             <TouchableOpacity style={styles.backBtn} onPress={handleBack} activeOpacity={0.8}>
@@ -64,7 +112,7 @@ const AddLocationScreen: React.FC = () => {
             </TouchableOpacity>
           </View>
         </SafeAreaView>
-      </View>
+      </ImageBackground>
 
       {/* SHEET */}
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.sheetWrap}>
@@ -180,12 +228,6 @@ const styles = StyleSheet.create({
     borderTopWidth: 6, borderBottomWidth: 6, borderRightWidth: 9,
     borderTopColor: 'transparent', borderBottomColor: 'transparent', borderRightColor: '#FFFFFF',
   },
-
-  // pattern
-  cart: { position: 'absolute', opacity: 0.22, tintColor: MINT_TINT },
-  cart1: { width: 290, height: 290, top: 60, left: -96, transform: [{ rotate: '-18deg' }] },
-  cart2: { width: 250, height: 250, top: 300, right: -80, transform: [{ rotate: '24deg' }] },
-  cart3: { width: 200, height: 200, top: 170, right: -16, transform: [{ rotate: '-10deg' }] },
 
   // sheet
   sheetWrap: { position: 'absolute', left: 0, right: 0, bottom: 0 },

@@ -1,9 +1,9 @@
 /**
  * NotificationsScreen - Notification List
- * Display list of user notifications
+ * Display list of user notifications - Dynamic from Backend
  */
 
-import React from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -11,12 +11,15 @@ import {
   StyleSheet,
   ScrollView,
   Image,
+  ActivityIndicator,
+  RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
 import type { RootStackParamList } from '../App';
+import { getNotifications } from '../api/getNotifications';
 
 type NotificationsScreenNavigationProp = StackNavigationProp<RootStackParamList>;
 
@@ -30,79 +33,71 @@ interface Notification {
 
 const NotificationsScreen: React.FC = () => {
   const navigation = useNavigation<NotificationsScreenNavigationProp>();
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
-  const notifications: Notification[] = [
-    {
-      id: '1',
-      title: 'Your order is on its way!',
-      description: 'Track your Weekly Essentials Bundle in real...',
-      time: '2h ago',
-      read: false,
-    },
-    {
-      id: '2',
-      title: 'Exclusive Offer: Save 15% today',
-      description: 'Get discounts on Family Bundles. Limited ti...',
-      time: '5h ago',
-      read: false,
-    },
-    {
-      id: '3',
-      title: 'New Ad Posted in Your Area',
-      description: 'A user just listed fresh electronics for sale...',
-      time: '1d ago',
-      read: false,
-    },
-    {
-      id: '4',
-      title: 'Hungry? Quick bites available now',
-      description: 'Order samosas, rolls, and burgers straight f...',
-      time: '1d ago',
-      read: false,
-    },
-    {
-      id: '5',
-      title: 'Cart Reminder',
-      description: 'You left 3 items in your cart. Complete your...',
-      time: '2d ago',
-      read: true,
-    },
-    {
-      id: '6',
-      title: 'Halfway there',
-      description: "You've completed 3 of 5 Playweek activitie...",
-      time: '2d ago',
-      read: true,
-    },
-    {
-      id: '7',
-      title: 'Your Ad is Live',
-      description: "We've published your listing. Start getting b...",
-      time: '3d ago',
-      read: true,
-    },
-    {
-      id: '8',
-      title: 'Fresh Stock Alert',
-      description: 'New fruits and vegetables just added. Shop...',
-      time: '3d ago',
-      read: true,
-    },
-    {
-      id: '9',
-      title: 'Bundle Restocked',
-      description: 'Student Saver Bundle is back! Grab yours t...',
-      time: '4d ago',
-      read: true,
-    },
-    {
-      id: '10',
-      title: 'Profile Updated Successfully',
-      description: 'Your profile information has been updated...',
-      time: '5d ago',
-      read: true,
-    },
-  ];
+  // Fetch notifications from backend
+  const fetchNotifications = async () => {
+    try {
+      const response = await getNotifications({ limit: 20 });
+      if (response && response.notifications) {
+        // Transform backend data to match frontend interface
+        const transformedNotifications: Notification[] = response.notifications.map((notif: any) => ({
+          id: String(notif.id),
+          title: notif.title,
+          description: notif.description || notif.message || '',
+          time: notif.time || 'Just now',
+          read: notif.read === true || notif.is_read === 1,
+        }));
+        setNotifications(transformedNotifications);
+      }
+    } catch (error) {
+      console.error('Error fetching notifications:', error);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  // Fetch on mount and when screen comes into focus
+  useFocusEffect(
+    useCallback(() => {
+      fetchNotifications();
+    }, [])
+  );
+
+  // Pull to refresh handler
+  const handleRefresh = () => {
+    setRefreshing(true);
+    fetchNotifications();
+  };
+
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.container} edges={['top']}>
+        <View style={styles.header}>
+          <TouchableOpacity
+            onPress={() => navigation.goBack()}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            activeOpacity={0.7}
+            style={styles.backButton}
+          >
+            <Image
+              source={require('../images/homepage-assets/arrow.png')}
+              style={styles.backArrow}
+              resizeMode="contain"
+            />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Notifications</Text>
+        </View>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#059669" />
+          <Text style={styles.loadingText}>Loading notifications...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -124,12 +119,25 @@ const NotificationsScreen: React.FC = () => {
       </View>
 
       {/* Notifications List */}
-      <ScrollView 
+      <ScrollView
         style={styles.scrollView}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={handleRefresh}
+            colors={['#059669']}
+            tintColor="#059669"
+          />
+        }
       >
-        {notifications.map((notification) => (
+        {notifications.length === 0 ? (
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyText}>No notifications</Text>
+            <Text style={styles.emptySubtext}>You're all caught up!</Text>
+          </View>
+        ) : notifications.map((notification) => (
           <TouchableOpacity
             key={notification.id}
             style={styles.notificationCard}
@@ -227,6 +235,34 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: '#64748B',
     lineHeight: 18,
+    fontFamily: 'DM Sans',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 60,
+  },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 14,
+    color: '#64748B',
+    fontFamily: 'DM Sans',
+  },
+  emptyContainer: {
+    alignItems: 'center',
+    paddingVertical: 60,
+  },
+  emptyText: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#1E293B',
+    marginBottom: 8,
+    fontFamily: 'DM Sans',
+  },
+  emptySubtext: {
+    fontSize: 14,
+    color: '#64748B',
     fontFamily: 'DM Sans',
   },
 });

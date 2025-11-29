@@ -15,10 +15,12 @@ import {
   FlatList,
   Alert,
   Image,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useCreateAd } from './CreateAdContext';
+import { createAd } from '../api/marketplaceAPI';
 
 interface CreateAdStep3Props {
   onPublish: () => void;
@@ -43,6 +45,7 @@ const CITIES = [
 const CreateAdStep3: React.FC<CreateAdStep3Props> = ({ onPublish, onBack, showDifferentInfo }) => {
   const { adData, updateAdData, resetAdData } = useCreateAd();
   const [showCityModal, setShowCityModal] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const isFormValid = () => {
     return (
@@ -59,25 +62,66 @@ const CreateAdStep3: React.FC<CreateAdStep3Props> = ({ onPublish, onBack, showDi
     setShowCityModal(false);
   };
 
-  const handlePublish = () => {
+  const handlePublish = async () => {
     if (!isFormValid()) {
       Alert.alert('Incomplete Form', 'Please fill in all required fields.');
       return;
     }
 
-    Alert.alert(
-      'Success! 🎉',
-      'Your ad has been published successfully!',
-      [
-        {
-          text: 'OK',
-          onPress: () => {
-            resetAdData();
-            onPublish();
-          },
-        },
-      ]
-    );
+    setIsSubmitting(true);
+
+    try {
+      // Prepare data for backend API
+      const adPayload = {
+        title: adData.title,
+        description: adData.description,
+        price: parseFloat(adData.price.replace(/[^0-9.]/g, '')),
+        category: adData.categoryName,
+        subcategory: adData.subcategory || null,
+        condition: adData.condition === 'new' ? 'New' : 'Used',
+        location: `${adData.city}, ${adData.address}`,
+        address: adData.address,
+        specifications: adData.specifications,
+        images: adData.images.filter((img) => img && img.trim() !== ''),
+        // Contact info stored in description/location for now
+        seller_name: adData.fullName,
+        seller_phone: adData.phone,
+        seller_email: adData.email,
+      };
+
+      const result = await createAd(adPayload);
+
+      if (result.success) {
+        Alert.alert(
+          'Success!',
+          'Your ad has been published successfully!',
+          [
+            {
+              text: 'OK',
+              onPress: () => {
+                resetAdData();
+                onPublish();
+              },
+            },
+          ]
+        );
+      } else {
+        Alert.alert(
+          'Error',
+          result.error || 'Failed to create ad. Please try again.',
+          [{ text: 'OK' }]
+        );
+      }
+    } catch (error) {
+      console.error('Error creating ad:', error);
+      Alert.alert(
+        'Error',
+        'Something went wrong. Please try again.',
+        [{ text: 'OK' }]
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -210,14 +254,21 @@ const CreateAdStep3: React.FC<CreateAdStep3Props> = ({ onPublish, onBack, showDi
       {/* Bottom Button */}
       <View style={styles.bottomContainer}>
         <TouchableOpacity
-          style={[styles.publishButton, !isFormValid() && styles.publishButtonDisabled]}
+          style={[styles.publishButton, (!isFormValid() || isSubmitting) && styles.publishButtonDisabled]}
           onPress={handlePublish}
-          disabled={!isFormValid()}
+          disabled={!isFormValid() || isSubmitting}
           activeOpacity={0.8}
         >
-          <Text style={[styles.publishButtonText, !isFormValid() && styles.publishButtonTextDisabled]}>
-            Post Ad
-          </Text>
+          {isSubmitting ? (
+            <View style={styles.buttonLoadingContainer}>
+              <ActivityIndicator size="small" color="#FFFFFF" />
+              <Text style={styles.publishButtonText}>Publishing...</Text>
+            </View>
+          ) : (
+            <Text style={[styles.publishButtonText, !isFormValid() && styles.publishButtonTextDisabled]}>
+              Post Ad
+            </Text>
+          )}
         </TouchableOpacity>
       </View>
 
@@ -395,6 +446,12 @@ const styles = StyleSheet.create({
   },
   publishButtonTextDisabled: {
     color: '#FFFFFF',
+  },
+  buttonLoadingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
   },
   modalOverlay: {
     flex: 1,

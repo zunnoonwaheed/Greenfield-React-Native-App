@@ -19,10 +19,10 @@ import CartScreen from '../screens/CartScreen';
 import NotificationsScreen from '../screens/NotificationsScreen';
 import NotificationSettingsScreen from '../screens/NotificationSettingsScreen';
 import SecurityScreen from '../screens/SecurityScreen';
-import SavedAddressesScreen from '../screens/SavedAddressesScreen';
+import SavedAddressesScreen from '../screens/SavedAddressesFullScreen';
 import PaymentMethodsScreen from '../screens/PaymentMethodsScreen';
 import AddPaymentMethodScreen from '../screens/AddPaymentMethodScreen';
-import AddNewAddressScreen from '../screens/AddNewAddressScreen';
+import AddNewAddressScreen from '../screens/AddNewAddressFullScreen';
 import AddNewAddressConfirmScreen from '../screens/AddNewAddressConfirmScreen';
 import ContactUsScreen from '../screens/ContactUsScreen';
 import CreateAdScreen from '../screens/CreateAdScreen';
@@ -43,10 +43,14 @@ import NetworkDiagnosticScreen from '../screens/NetworkDiagnosticScreen';
 import APITestScreen from '../screens/APITestScreen';
 import MessagesScreen from '../screens/MessagesScreen';
 
+// Import BottomTabParamList for nested navigation typing
+import { NavigatorScreenParams } from '@react-navigation/native';
+import type { BottomTabParamList } from './BottomTabNavigator';
+
 // Type definitions for all screens
 export type MainStackParamList = {
   Welcome: undefined; // Welcome splash screen after login
-  MainTabs: undefined; // Bottom tab navigator
+  MainTabs: NavigatorScreenParams<BottomTabParamList> | undefined; // Bottom tab navigator with nested params
   Messages: undefined; // Chatbot/Messages screen (accessed via floating button)
   AddLocation: undefined;
   EditProfile: undefined;
@@ -64,7 +68,7 @@ export type MainStackParamList = {
   ContactUs: undefined;
   CreateAd: undefined;
   CreateAdFlow: undefined;
-  GroceryList: undefined;
+  GroceryList: { categoryId?: string; categoryName?: string } | undefined; // Category filter params
   Grocery: undefined;
   MarketplaceProductDetail: { productId: string };
   ContactSeller: { sellerId: string };

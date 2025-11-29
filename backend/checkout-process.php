@@ -1,6 +1,6 @@
 <?php
+require_once("helpers/session_config.php");
 header('Content-Type: application/json');
-session_start();
 include("admin/includes/db_settings.php"); // mysqli connection $con
 
 $cart = $_SESSION['cart'] ?? [];

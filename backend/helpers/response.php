@@ -4,6 +4,60 @@
  * Provides consistent JSON responses across all API endpoints
  */
 
+// Note: ob_start() should be called in each API endpoint file, not here
+// to avoid double buffering issues
+
+/**
+ * Send JSON success response (alias: respondSuccess)
+ * @param mixed $data Response data
+ * @param int $httpCode HTTP status code
+ * @return void
+ */
+function respondSuccess($data = null, $httpCode = 200) {
+    // Clear any previous output if buffer exists
+    while (ob_get_level() > 0) {
+        ob_end_clean();
+    }
+
+    http_response_code($httpCode);
+    header('Content-Type: application/json; charset=utf-8');
+
+    $response = ['success' => true];
+
+    if ($data !== null) {
+        if (is_array($data)) {
+            $response = array_merge($response, $data);
+        } else {
+            $response['data'] = $data;
+        }
+    }
+
+    echo json_encode($response, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    exit;
+}
+
+/**
+ * Send JSON error response (alias: respondError)
+ * @param string $message Error message
+ * @param int $httpCode HTTP status code
+ * @return void
+ */
+function respondError($message, $httpCode = 400) {
+    // Clear any previous output if buffer exists
+    while (ob_get_level() > 0) {
+        ob_end_clean();
+    }
+
+    http_response_code($httpCode);
+    header('Content-Type: application/json; charset=utf-8');
+
+    echo json_encode([
+        'success' => false,
+        'error' => $message
+    ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    exit;
+}
+
 /**
  * Send JSON success response
  * @param mixed $data

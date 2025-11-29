@@ -1,9 +1,9 @@
 /**
- * EditProfileScreen - Edit User Profile
+ * EditProfileScreen - Edit User Profile - Dynamic Backend Save
  * Editable profile photo, name, email, phone
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -14,6 +14,7 @@ import {
   Image,
   Alert,
   Modal,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -21,6 +22,8 @@ import { useNavigation } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
 import type { MainStackParamList } from '../navigation/MainStack';
 import * as ImagePicker from 'expo-image-picker';
+import { getProfile, updateProfile } from '../api/userAPI';
+import { useAuth } from '../contexts/AuthContext';
 
 type EditProfileScreenNavigationProp = StackNavigationProp<MainStackParamList>;
 
@@ -32,18 +35,42 @@ interface CountryCode {
 
 const EditProfileScreen: React.FC = () => {
   const navigation = useNavigation<EditProfileScreenNavigationProp>();
+  const { user: authUser, setUser } = useAuth();
 
-  // Form state - pre-populated with mock data
-  const [fullName, setFullName] = useState('Mr. Jane Doe');
-  const [email, setEmail] = useState('Porter87@gmail.com');
-  const [phone, setPhone] = useState('329 393 3230');
+  // Form state - will be loaded from backend
+  const [fullName, setFullName] = useState('');
+  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
   const [profilePhoto, setProfilePhoto] = useState<string | null>(null);
   const [showCountryModal, setShowCountryModal] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [selectedCountry, setSelectedCountry] = useState<CountryCode>({
-    code: 'US +01',
-    country: 'United States',
-    flag: '🇺🇸',
+    code: 'PK +92',
+    country: 'Pakistan',
+    flag: '🇵🇰',
   });
+
+  // Load user data from backend on mount
+  useEffect(() => {
+    loadUserData();
+  }, []);
+
+  const loadUserData = async () => {
+    try {
+      const result = await getProfile();
+      if (result.success && result.data?.user) {
+        const user = result.data.user;
+        setFullName(user.name || '');
+        setEmail(user.email || '');
+        setPhone(user.phone || '');
+      }
+    } catch (error) {
+      console.error('Error loading profile:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const countryCodes: CountryCode[] = [
     { code: 'US +01', country: 'United States', flag: '🇺🇸' },
@@ -88,18 +115,41 @@ const EditProfileScreen: React.FC = () => {
     );
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!isFormValid()) {
       Alert.alert('Invalid Input', 'Please fill in all fields correctly.');
       return;
     }
 
-    // TODO: API call to update profile
-    Alert.alert(
-      'Success',
-      'Your profile has been updated successfully!',
-      [{ text: 'OK', onPress: () => navigation.goBack() }]
-    );
+    setSaving(true);
+    try {
+      // Call backend API to update profile
+      const result = await updateProfile({
+        name: fullName.trim(),
+        email: email.trim(),
+        phone: phone.trim(),
+      });
+
+      if (result.success) {
+        // Update AuthContext with new user data
+        if (setUser && result.data?.user) {
+          setUser(result.data.user);
+        }
+
+        Alert.alert(
+          'Success',
+          'Your profile has been updated successfully!',
+          [{ text: 'OK', onPress: () => navigation.goBack() }]
+        );
+      } else {
+        Alert.alert('Error', result.error || 'Failed to update profile');
+      }
+    } catch (error: any) {
+      console.error('Error updating profile:', error);
+      Alert.alert('Error', error.message || 'Failed to update profile');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleSelectCountry = (country: CountryCode) => {

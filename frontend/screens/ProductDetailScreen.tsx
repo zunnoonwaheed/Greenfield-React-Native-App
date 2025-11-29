@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -8,11 +8,22 @@ import {
   Image,
   Dimensions,
   StatusBar,
+  Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
+import type { RouteProp } from '@react-navigation/native';
+import type { StackNavigationProp } from '@react-navigation/stack';
+import type { MainStackParamList } from '../navigation/MainStack';
+import { getProductById } from '../api/getProduct';
+import { addToCart } from '../api/addToCart';
+import { getCartCount } from '../api/getCartCount';
 
 const { width } = Dimensions.get('window');
+
+type ProductDetailRouteProp = RouteProp<MainStackParamList, 'ProductDetail'>;
+type ProductDetailNavigationProp = StackNavigationProp<MainStackParamList, 'ProductDetail'>;
 
 interface AddonProduct {
   id: string;
@@ -23,70 +34,182 @@ interface AddonProduct {
 }
 
 const ProductDetailScreen: React.FC = () => {
-  const navigation = useNavigation();
+  const navigation = useNavigation<ProductDetailNavigationProp>();
+  const route = useRoute<ProductDetailRouteProp>();
+  const { productId } = route.params;
+
   const [quantity, setQuantity] = useState(1);
+  const [product, setProduct] = useState<any>(null);
+  const [similarProducts, setSimilarProducts] = useState<any[]>([]);
+  const [frequentlyBought, setFrequentlyBought] = useState<any[]>([]);
+  const [recommended, setRecommended] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [addingToCart, setAddingToCart] = useState(false);
 
-  const extraAddOns: AddonProduct[] = [
-    {
-      id: '1',
-      name: 'Milk – 1 Liter',
-      price: '+Rs. 220',
-      image: require('../images/homepage-assets/milk.png'),
-      discount: '-23%',
-    },
-    {
-      id: '2',
-      name: 'Eggs – 12 pcs',
-      price: '+Rs. 350',
-      image: require('../images/homepage-assets/eggs.png'),
-      discount: '-23%',
-    },
-  ];
+  // Load product details
+  useEffect(() => {
+    loadProductDetails();
+  }, [productId]);
 
-  const freshHerbs: AddonProduct[] = [
-    {
-      id: '1',
-      name: 'Green Chillies (250g)',
-      price: '+Rs. 70',
-      image: require('../images/homepage-assets/green-chillies.png'),
-      discount: '-23%',
-    },
-    {
-      id: '2',
-      name: 'Lemon Pack (500g)',
-      price: '+Rs. 150',
-      image: require('../images/homepage-assets/onions.png'),
-      discount: '-23%',
-    },
-  ];
+  const loadProductDetails = async () => {
+    try {
+      setLoading(true);
+      console.log('📦 Loading product details for ID:', productId);
+      const response = await getProductById(productId);
+
+      if (response.success && response.data && response.data.product) {
+        setProduct(response.data.product);
+        setSimilarProducts(response.data.similar_products || []);
+        setFrequentlyBought(response.data.frequently_bought_together || []);
+        setRecommended(response.data.recommended_for_you || []);
+        console.log('✅ Product loaded:', response.data.product.name);
+        console.log('✅ Similar products loaded:', response.data.similar_products?.length || 0);
+        console.log('✅ Frequently bought together loaded:', response.data.frequently_bought_together?.length || 0);
+        console.log('✅ Recommended loaded:', response.data.recommended_for_you?.length || 0);
+      } else {
+        Alert.alert('Error', 'Product not found');
+        navigation.goBack();
+      }
+    } catch (error) {
+      console.error('❌ Error loading product:', error);
+      Alert.alert('Error', 'Failed to load product details');
+      navigation.goBack();
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAddToCart = async () => {
+    try {
+      setAddingToCart(true);
+      console.log(`📦 Adding product ${productId} to cart (qty: ${quantity})`);
+
+      await addToCart({
+        product_id: productId,
+        quantity: quantity,
+        price: product.discounted_price || product.price
+      });
+
+      Alert.alert(
+        'Success',
+        `${product.name} added to cart!`,
+        [
+          { text: 'Continue Shopping', onPress: () => navigation.goBack() },
+          { text: 'View Cart', onPress: () => navigation.navigate('Cart') }
+        ]
+      );
+    } catch (error: any) {
+      console.error('Error adding to cart:', error);
+      Alert.alert('Error', error.message || 'Failed to add to cart');
+    } finally {
+      setAddingToCart(false);
+    }
+  };
+
 
   const handleQuantityChange = (change: number) => {
     setQuantity(Math.max(1, quantity + change));
   };
 
-  const renderAddonCard = (item: AddonProduct) => (
-    <View key={item.id} style={styles.addonCard}>
-      {/* Discount Badge */}
-      <View style={styles.addonDiscount}>
-        <Text style={styles.discountIcon}>⚡︎</Text>
-        <Text style={styles.addonDiscountText}>{item.discount}</Text>
-      </View>
+  const handleAddAddonToCart = async (addonProduct: any) => {
+    try {
+      console.log(`📦 Adding addon product ${addonProduct.id} to cart`);
 
-      {/* Product Image */}
-      <Image source={item.image} style={styles.addonImage} resizeMode="cover" />
+      const price = addonProduct.discounted_price && addonProduct.discounted_price < addonProduct.price
+        ? addonProduct.discounted_price
+        : addonProduct.price;
 
-      {/* Product Info */}
-      <View style={styles.addonInfo}>
-        <Text style={styles.addonName} numberOfLines={1}>{item.name}</Text>
-        <Text style={styles.addonPrice}>{item.price}</Text>
-      </View>
+      await addToCart({
+        product_id: addonProduct.id,
+        quantity: 1,
+        price: price
+      });
 
-      {/* Add to Cart Button */}
-      <TouchableOpacity style={styles.addonAddButton}>
-        <Text style={styles.addonAddButtonText}>Add To Cart</Text>
+      Alert.alert('Success', `${addonProduct.name} added to cart!`);
+    } catch (error: any) {
+      console.error('Error adding addon to cart:', error);
+      Alert.alert('Error', error.message || 'Failed to add to cart');
+    }
+  };
+
+  const renderAddonCard = (item: any) => {
+    const addonImage = item.image_url
+      ? { uri: item.image_url }
+      : require('../images/homepage-assets/shop-cat1.png');
+
+    const displayPrice = item.discounted_price && item.discounted_price < item.price
+      ? item.discounted_price
+      : item.price;
+
+    const hasDiscount = item.discount_percentage > 0;
+
+    return (
+      <TouchableOpacity
+        key={item.id}
+        style={styles.addonCard}
+        onPress={() => navigation.navigate('ProductDetail', { productId: item.id.toString() })}
+        activeOpacity={0.7}
+      >
+        {/* Discount Badge */}
+        {hasDiscount && (
+          <View style={styles.addonDiscount}>
+            <Text style={styles.discountIcon}>⚡︎</Text>
+            <Text style={styles.addonDiscountText}>-{item.discount_percentage}%</Text>
+          </View>
+        )}
+
+        {/* Product Image */}
+        <Image source={addonImage} style={styles.addonImage} resizeMode="cover" />
+
+        {/* Product Info */}
+        <View style={styles.addonInfo}>
+          <Text style={styles.addonName} numberOfLines={2}>{item.name}</Text>
+          <Text style={styles.addonPrice}>Rs. {displayPrice}</Text>
+        </View>
+
+        {/* Add to Cart Button */}
+        <TouchableOpacity
+          style={styles.addonAddButton}
+          onPress={(e) => {
+            e.stopPropagation();
+            handleAddAddonToCart(item);
+          }}
+        >
+          <Text style={styles.addonAddButtonText}>Add To Cart</Text>
+        </TouchableOpacity>
       </TouchableOpacity>
-    </View>
-  );
+    );
+  };
+
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#059669" />
+        <Text style={styles.loadingText}>Loading product...</Text>
+      </View>
+    );
+  }
+
+  if (!product) {
+    return (
+      <View style={styles.loadingContainer}>
+        <Text style={styles.errorText}>Product not found</Text>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backToHomeButton}>
+          <Text style={styles.backToHomeText}>Go Back</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
+  const productImage = product.image_url
+    ? { uri: product.image_url }
+    : require('../images/homepage-assets/shop-cat1.png');
+
+  const displayPrice = product.discounted_price && product.discounted_price < product.price
+    ? product.discounted_price
+    : product.price;
+
+  const hasDiscount = product.discount_percentage > 0;
 
   return (
     <View style={styles.container}>
@@ -96,7 +219,7 @@ const ProductDetailScreen: React.FC = () => {
         {/* Product Image */}
         <View style={styles.imageContainer}>
           <Image
-            source={require('../images/homepage-assets/fresh-vegetable.png')}
+            source={productImage}
             style={styles.productImage}
             resizeMode="cover"
           />
@@ -116,89 +239,124 @@ const ProductDetailScreen: React.FC = () => {
           {/* Title and Price */}
           <View style={styles.headerSection}>
             <View style={styles.titleContainer}>
-              <Text style={styles.productTitle}>Fresh Vegetables Bundle –{'\n'}Weekly Pack</Text>
+              <Text style={styles.productTitle}>{product.name}</Text>
             </View>
-            <Text style={styles.productPrice}>Rs. 1,499</Text>
+            <Text style={styles.productPrice}>Rs. {displayPrice}</Text>
           </View>
 
           {/* Description */}
-          <Text style={styles.description}>
-            This pack includes potatoes, onions, tomatoes, spinach, cucumber, and carrots - enough for a week's cooking. Perfect for families who want freshness and savings in one go.
-          </Text>
+          {product.description && (
+            <Text style={styles.description}>
+              {product.description}
+            </Text>
+          )}
 
           {/* Discount */}
-          <Text style={styles.sectionTitle}>Discount</Text>
-          <View style={styles.discountBadge}>
-            <Text style={styles.discountIcon}>⚡︎</Text>
-            <Text style={styles.discountBadgeText}>-23%</Text>
-          </View>
+          {hasDiscount && (
+            <>
+              <Text style={styles.sectionTitle}>Discount</Text>
+              <View style={styles.discountBadge}>
+                <Text style={styles.discountIcon}>⚡︎</Text>
+                <Text style={styles.discountBadgeText}>-{product.discount_percentage}%</Text>
+              </View>
+            </>
+          )}
 
           {/* Reviews */}
-          <Text style={styles.sectionTitle}>Reviews</Text>
-          <View style={styles.reviewsContainer}>
-            <Text style={styles.reviewScore}>4.3/5.0</Text>
-            <View style={styles.stars}>
-              {[1, 2, 3, 4, 5].map((star) => (
-                <Text key={star} style={styles.starIcon}>★</Text>
-              ))}
-            </View>
-          </View>
+          {product.rating && (
+            <>
+              <Text style={styles.sectionTitle}>Reviews</Text>
+              <View style={styles.reviewsContainer}>
+                <Text style={styles.reviewScore}>{product.rating}/5.0</Text>
+                <View style={styles.stars}>
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <Text key={star} style={[styles.starIcon, star <= Math.round(product.rating) ? styles.starFilled : styles.starEmpty]}>★</Text>
+                  ))}
+                </View>
+                {product.rating_count > 0 && (
+                  <Text style={styles.reviewCount}>({product.rating_count} reviews)</Text>
+                )}
+              </View>
+            </>
+          )}
 
-          {/* Features */}
-          <Text style={styles.sectionTitle}>Features</Text>
-          <View style={styles.featuresContainer}>
-            <View style={styles.featureChip}>
-              <Text style={styles.featureText}>Fresh, hand-picked</Text>
-            </View>
-            <View style={styles.featureChip}>
-              <Text style={styles.featureText}>Local farms</Text>
-            </View>
-            <View style={styles.featureChip}>
-              <Text style={styles.featureText}>Hygienic packaging</Text>
-            </View>
-          </View>
+          {/* Brand */}
+          {product.brand_name && (
+            <>
+              <Text style={styles.sectionTitle}>Brand</Text>
+              <View style={styles.featureChip}>
+                <Text style={styles.featureText}>{product.brand_name}</Text>
+              </View>
+            </>
+          )}
 
         </View>
 
-        {/* Extra/Add-Ons */}
-        <View style={styles.addonSection}>
-          <View style={styles.addonHeader}>
-            <View>
-              <Text style={styles.addonSectionTitle}>Extra/Add-Ons</Text>
-              <Text style={styles.addonSectionSubtitle}>Other Customers Also Order These</Text>
+        {/* Similar Products (Same Category) */}
+        {similarProducts.length > 0 && (
+          <View style={styles.addonSection}>
+            <View style={styles.addonHeader}>
+              <View>
+                <Text style={styles.addonSectionTitle}>You May Also Like</Text>
+                <Text style={styles.addonSectionSubtitle}>From the Same Category</Text>
+              </View>
+              <Text style={styles.optionalBadge}>Optional</Text>
             </View>
-            <Text style={styles.optionalBadge}>Optional</Text>
+
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              style={styles.addonScroll}
+              contentContainerStyle={styles.addonScrollContent}
+            >
+              {similarProducts.map(renderAddonCard)}
+            </ScrollView>
           </View>
+        )}
 
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            style={styles.addonScroll}
-            contentContainerStyle={styles.addonScrollContent}
-          >
-            {extraAddOns.map(renderAddonCard)}
-          </ScrollView>
-        </View>
-
-        {/* Fresh Herbs & Seasoning */}
-        <View style={styles.addonSection}>
-          <View style={styles.addonHeader}>
-            <View>
-              <Text style={styles.addonSectionTitle}>Fresh Herbs & Seasoning</Text>
-              <Text style={styles.addonSectionSubtitle}>Other Customers Also Order These</Text>
+        {/* Frequently Bought Together */}
+        {frequentlyBought.length > 0 && (
+          <View style={styles.addonSection}>
+            <View style={styles.addonHeader}>
+              <View>
+                <Text style={styles.addonSectionTitle}>Frequently Bought Together</Text>
+                <Text style={styles.addonSectionSubtitle}>Customers Often Add These Items</Text>
+              </View>
+              <Text style={styles.optionalBadge}>Optional</Text>
             </View>
-            <Text style={styles.optionalBadge}>Optional</Text>
-          </View>
 
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            style={styles.addonScroll}
-            contentContainerStyle={styles.addonScrollContent}
-          >
-            {freshHerbs.map(renderAddonCard)}
-          </ScrollView>
-        </View>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              style={styles.addonScroll}
+              contentContainerStyle={styles.addonScrollContent}
+            >
+              {frequentlyBought.map(renderAddonCard)}
+            </ScrollView>
+          </View>
+        )}
+
+        {/* Recommended For You */}
+        {recommended.length > 0 && (
+          <View style={styles.addonSection}>
+            <View style={styles.addonHeader}>
+              <View>
+                <Text style={styles.addonSectionTitle}>Recommended For You</Text>
+                <Text style={styles.addonSectionSubtitle}>Based on Your Browsing</Text>
+              </View>
+              <Text style={styles.optionalBadge}>Optional</Text>
+            </View>
+
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              style={styles.addonScroll}
+              contentContainerStyle={styles.addonScrollContent}
+            >
+              {recommended.map(renderAddonCard)}
+            </ScrollView>
+          </View>
+        )}
 
         {/* Bottom Spacing */}
         <View style={styles.bottomSpacing} />
@@ -225,8 +383,16 @@ const ProductDetailScreen: React.FC = () => {
         </View>
 
         {/* Add to Cart Button */}
-        <TouchableOpacity style={styles.addToCartButton}>
-          <Text style={styles.addToCartText}>Add To Cart</Text>
+        <TouchableOpacity
+          style={[styles.addToCartButton, addingToCart && styles.addToCartButtonDisabled]}
+          onPress={handleAddToCart}
+          disabled={addingToCart}
+        >
+          {addingToCart ? (
+            <ActivityIndicator size="small" color="#FFFFFF" />
+          ) : (
+            <Text style={styles.addToCartText}>Add To Cart</Text>
+          )}
         </TouchableOpacity>
         </View>
       </SafeAreaView>
@@ -238,6 +404,51 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#FFFFFF',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+  },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 16,
+    color: '#64748B',
+    fontFamily: 'DM Sans',
+  },
+  errorText: {
+    fontSize: 16,
+    color: '#EF4444',
+    fontFamily: 'DM Sans',
+    marginBottom: 16,
+  },
+  backToHomeButton: {
+    backgroundColor: '#059669',
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 8,
+  },
+  backToHomeText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '600',
+    fontFamily: 'DM Sans',
+  },
+  starFilled: {
+    color: '#FDB022',
+  },
+  starEmpty: {
+    color: '#E2E8F0',
+  },
+  reviewCount: {
+    fontSize: 14,
+    color: '#64748B',
+    marginLeft: 8,
+    fontFamily: 'DM Sans',
+  },
+  addToCartButtonDisabled: {
+    opacity: 0.6,
   },
   imageHeader: {
     position: 'absolute',

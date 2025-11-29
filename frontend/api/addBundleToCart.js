@@ -11,6 +11,11 @@ export const addBundleToCart = async (bundleData) => {
     const formData = new URLSearchParams();
     formData.append('bundle_id', bundleData.bundle_id);
 
+    // Send frontend image path if provided
+    if (bundleData.image_path) {
+      formData.append('image_path', bundleData.image_path);
+    }
+
     const response = await axiosInstance.post('/add-bundle-to-cart.php', formData.toString(), {
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',

@@ -5,14 +5,19 @@
  * Params: product_id OR id
  * Returns: JSON
  */
+require_once("helpers/session_config.php");
 header('Content-Type: application/json');
-session_start();
 
-$id = intval($_POST['product_id'] ?? $_POST['id'] ?? 0);
+$id = $_POST['product_id'] ?? $_POST['id'] ?? '';
 
-if ($id <= 0) {
+if (empty($id)) {
     echo json_encode(['success' => false, 'message' => 'Product ID is required']);
     exit;
+}
+
+// Convert to int if it's numeric (for products), keep as string for bundles
+if (is_numeric($id)) {
+    $id = intval($id);
 }
 
 if (isset($_SESSION['cart'][$id])) {
@@ -27,11 +32,19 @@ if (isset($_SESSION['cart'][$id])) {
         $itemTotal = $item['price'] * $item['qty'];
         $total += $itemTotal;
 
+        // Keep ID as-is (can be int for products or string for bundles)
+        $itemId = $item['id'];
+        if (is_numeric($itemId) && strpos($itemId, 'bundle_') === false) {
+            $itemId = (int)$itemId;
+        }
+
         $cart_items[] = [
-            'id' => (int)$item['id'],
+            'id' => $itemId,
             'name' => $item['name'],
             'price' => (float)$item['price'],
             'quantity' => (int)$item['qty'],
+            'image' => $item['image'] ?? '',
+            'type' => $item['type'] ?? 'product',
             'subtotal' => (float)$itemTotal
         ];
     }

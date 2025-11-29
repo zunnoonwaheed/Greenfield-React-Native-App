@@ -1,9 +1,9 @@
 /**
- * ProfileScreen - User Profile & Settings
+ * ProfileScreen - User Profile & Settings - Dynamic from Backend
  * Clean, minimal design with menu options
  */
 
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -12,13 +12,16 @@ import {
   ScrollView,
   Image,
   Alert,
+  ActivityIndicator,
+  RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
 import type { MainStackParamList } from '../navigation/MainStack';
 import { useAuth } from '../contexts/AuthContext';
+import { getProfile } from '../api/userAPI';
 import { Colors, Typography, Spacing, BorderRadius, Layout } from '../constants/theme';
 
 type ProfileScreenNavigationProp = StackNavigationProp<MainStackParamList>;
@@ -36,11 +39,43 @@ const ProfileScreen: React.FC = () => {
   const navigation = useNavigation<ProfileScreenNavigationProp>();
   const { logout: authLogout, user: authUser } = useAuth();
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const [userData, setUserData] = useState<any>(null);
 
-  // Use user data from AuthContext or fallback to mock
+  // Fetch user profile from backend
+  const fetchProfile = async () => {
+    try {
+      const result = await getProfile();
+      if (result.success && result.data?.user) {
+        setUserData(result.data.user);
+      }
+    } catch (error) {
+      console.error('Error fetching profile:', error);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  // Fetch on mount and when screen comes into focus
+  useFocusEffect(
+    useCallback(() => {
+      fetchProfile();
+    }, [])
+  );
+
+  // Pull to refresh
+  const handleRefresh = () => {
+    setRefreshing(true);
+    fetchProfile();
+  };
+
+  // Use fetched user data or fallback to AuthContext
   const user = {
-    name: authUser?.name || 'User',
-    email: authUser?.email || 'user@example.com',
+    name: userData?.name || authUser?.name || 'User',
+    email: userData?.email || authUser?.email || 'user@example.com',
+    phone: userData?.phone || '',
     avatar: require('../images/homepage-assets/profilepic.png'),
   };
 
@@ -48,54 +83,47 @@ const ProfileScreen: React.FC = () => {
     {
       id: '1',
       title: 'Address & Delivery',
-      subtitle: 'Edit added address details',
+      subtitle: 'Manage your delivery addresses',
       icon: require('../images/package-profile.png'),
       route: 'SavedAddresses',
     },
     {
       id: '2',
       title: 'Payment & Payouts',
-      subtitle: 'View payments & transaction history',
+      subtitle: 'Manage your payment methods',
       icon: require('../images/receipt.png'),
       route: 'PaymentMethods',
     },
     {
       id: '3',
       title: 'Order & Activity History',
-      subtitle: 'Track your orders & past purchases',
+      subtitle: 'View your past orders',
       icon: require('../images/homepage-assets/square-activity.png'),
       route: 'OrderHistory',
     },
     {
       id: '4',
       title: 'Notifications',
-      subtitle: 'Choose what alerts & updates you receive',
+      subtitle: 'View all notifications',
       icon: require('../images/bell-ring.png'),
-      route: 'NotificationSettings',
+      route: 'Notifications',
     },
     {
       id: '5',
       title: 'Privacy & Security',
-      subtitle: 'Update password & account security',
+      subtitle: 'Change your password',
       icon: require('../images/fingerprint.png'),
       route: 'Security',
     },
     {
       id: '6',
-      title: 'Help',
-      subtitle: 'Find answers or contact support staff',
+      title: 'Help & Support',
+      subtitle: 'Contact support team',
       icon: require('../images/circle-question-mark.png'),
       route: 'ContactUs',
     },
     {
       id: '7',
-      title: '🧪 API Endpoint Testing',
-      subtitle: 'Test all backend endpoints with seed data',
-      icon: require('../images/circle-question-mark.png'),
-      route: 'APITest',
-    },
-    {
-      id: '8',
       title: 'Logout',
       subtitle: 'Sign out from the platform',
       icon: require('../images/Outline.png'),
@@ -126,7 +154,18 @@ const ProfileScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={handleRefresh}
+            colors={['#059669']}
+            tintColor="#059669"
+          />
+        }
+      >
         {/* User Info Card */}
         <View style={styles.userCard}>
           <Image

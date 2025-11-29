@@ -3,7 +3,7 @@
  * Matches Figma design exactly
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -15,14 +15,31 @@ import {
   Image,
   ScrollView,
   StatusBar,
+  ActivityIndicator,
+  RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
 import type { RootStackParamList } from '../App';
+import { getAds, searchAds } from '../api/marketplaceAPI';
+import { API_BASE_URL } from '../api/axiosConfig';
 
 type SellAdsScreenNavigationProp = StackNavigationProp<RootStackParamList>;
+
+// Local image mapping for database image paths
+const LOCAL_IMAGES: { [key: string]: any } = {
+  'sell/sell1.png': require('../images/sell/sell1.png'),
+  'sell/sell2.png': require('../images/sell/sell2.png'),
+  'sell/sell3.png': require('../images/sell/sell3.png'),
+  'sell/sell4.png': require('../images/sell/sell4.png'),
+  'sell/sell5.png': require('../images/sell/sell5.png'),
+  'sell/sell6.png': require('../images/sell/sell6.png'),
+};
+
+// Default avatar for sellers
+const DEFAULT_AVATAR = require('../images/homepage-assets/Avatar.png');
 
 export interface Product {
   id: string;
@@ -41,109 +58,106 @@ export interface Product {
   };
 }
 
+// Helper function to get image source from database path or URI
+const getImageSource = (imagePath: string | null): any => {
+  if (!imagePath) {
+    return require('../images/sell/sell1.png'); // Default fallback
+  }
+  // Check if it's a local image path from database (matching frontend assets)
+  if (LOCAL_IMAGES[imagePath]) {
+    return LOCAL_IMAGES[imagePath];
+  }
+  // Check if it's a full URL (for uploaded images)
+  if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
+    return { uri: imagePath };
+  }
+  // Check if it's a local file URI (for newly uploaded images)
+  if (imagePath.startsWith('file://')) {
+    return { uri: imagePath };
+  }
+  // Check if it's a relative server path (uploads/ads/...)
+  if (imagePath.startsWith('uploads/')) {
+    return { uri: `${API_BASE_URL}/${imagePath}` };
+  }
+  // Default fallback
+  return require('../images/sell/sell1.png');
+};
+
+// Helper to format date
+const formatDate = (dateString: string): string => {
+  const date = new Date(dateString);
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  return `${months[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()}`;
+};
+
+// Helper to truncate description
+const truncateDescription = (desc: string, maxLength: number = 25): string => {
+  if (desc.length <= maxLength) return desc;
+  return desc.substring(0, maxLength) + '...';
+};
+
 const SellAdsScreen: React.FC = () => {
   const navigation = useNavigation<SellAdsScreenNavigationProp>();
   const [showSearchModal, setShowSearchModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
-  const [products] = useState<Product[]>([
-    {
-      id: '1',
-      title: 'Farm Tomatoes',
-      description: 'Juicy, ripe, and handpicke...',
-      price: 950,
-      image: require('../images/sell/sell1.png'),
-      category: 'Groceries',
-      location: 'Dha Phase 2, Street 5',
-      condition: 'New',
-      specifications: ['Organic', 'Fresh', '5kg Pack'],
-      seller: {
-        name: 'Kashan Ali',
-        image: require('../images/homepage-assets/Avatar.png'),
-        datePosted: 'Oct 5, 2025',
-      },
-    },
-    {
-      id: '2',
-      title: 'Acer Nitro 5',
-      description: 'Power-packed performan...',
-      price: 145000,
-      image: require('../images/sell/sell2.png'),
-      category: 'Electronics, Mobile Phones',
-      location: 'Dha Phase 2, Street 5',
-      condition: 'Used',
-      specifications: ['RTX 3060', '16GB RAM', '512GB SSD', '144Hz Display'],
-      seller: {
-        name: 'Kashan Ali',
-        image: require('../images/homepage-assets/Avatar.png'),
-        datePosted: 'Oct 5, 2025',
-      },
-    },
-    {
-      id: '3',
-      title: 'IPhone 13 Pro',
-      description: 'Sleek design, excellent co...',
-      price: 185000,
-      image: require('../images/sell/sell3.png'),
-      category: 'Electronics, Mobile Phones',
-      location: 'Dha Phase 2, Street 5',
-      condition: 'Used',
-      specifications: ['128GB Storage', 'Graphite Color', 'Excellent Condition', 'Box Pack', 'Genuine Charger'],
-      seller: {
-        name: 'Kashan Ali',
-        image: require('../images/homepage-assets/Avatar.png'),
-        datePosted: 'Oct 5, 2025',
-      },
-    },
-    {
-      id: '4',
-      title: 'Basmati Rice (10kg)',
-      description: 'Long-grain, aromatic rice f...',
-      price: 2400,
-      image: require('../images/sell/sell4.png'),
-      category: 'Groceries',
-      location: 'Dha Phase 2, Street 5',
-      condition: 'New',
-      specifications: ['Long Grain', 'Premium Quality', '10kg Pack'],
-      seller: {
-        name: 'Kashan Ali',
-        image: require('../images/homepage-assets/Avatar.png'),
-        datePosted: 'Oct 5, 2025',
-      },
-    },
-    {
-      id: '5',
-      title: 'Used Honda Civic 2019',
-      description: 'Well-maintained, low mile...',
-      price: 4200000,
-      image: require('../images/sell/sell5.png'),
-      category: 'Vehicles',
-      location: 'Dha Phase 2, Street 5',
-      condition: 'Used',
-      specifications: ['Automatic', 'Low Mileage', 'Single Owner', 'Well Maintained'],
-      seller: {
-        name: 'Kashan Ali',
-        image: require('../images/homepage-assets/Avatar.png'),
-        datePosted: 'Oct 5, 2025',
-      },
-    },
-    {
-      id: '6',
-      title: 'Study Table',
-      description: 'Durable, minimal design, p...',
-      price: 12000,
-      image: require('../images/sell/sell6.png'),
-      category: 'Furniture',
-      location: 'Dha Phase 2, Street 5',
-      condition: 'Used',
-      specifications: ['Solid Wood', 'With Drawer', 'Ergonomic Design'],
-      seller: {
-        name: 'Kashan Ali',
-        image: require('../images/homepage-assets/Avatar.png'),
-        datePosted: 'Oct 5, 2025',
-      },
-    },
-  ]);
+  // Fetch ads from backend
+  const fetchAds = async (search?: string) => {
+    try {
+      let result;
+      if (search && search.trim()) {
+        result = await searchAds(search);
+      } else {
+        result = await getAds();
+      }
+
+      if (result.success && result.data?.ads) {
+        // Transform backend data to match frontend Product interface
+        const transformedProducts: Product[] = result.data.ads.map((ad: any) => ({
+          id: String(ad.id),
+          title: ad.title,
+          description: truncateDescription(ad.description),
+          fullDescription: ad.description, // Keep full description for detail screen
+          price: ad.price,
+          image: getImageSource(ad.primary_image),
+          category: ad.subcategory ? `${ad.category}, ${ad.subcategory}` : ad.category,
+          location: ad.location || 'Unknown Location',
+          condition: ad.condition as 'New' | 'Used',
+          specifications: ad.specifications || [],
+          images: ad.total_images || 1, // Number of images for the ad
+          seller: {
+            name: ad.seller?.name || 'Unknown Seller',
+            image: DEFAULT_AVATAR,
+            datePosted: formatDate(ad.created_at),
+          },
+          // Keep raw data for detail screen
+          rawData: ad,
+        }));
+        setProducts(transformedProducts);
+      }
+    } catch (error) {
+      console.error('Error fetching ads:', error);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  // Fetch ads when screen comes into focus (to refresh after creating new ad)
+  useFocusEffect(
+    useCallback(() => {
+      fetchAds();
+    }, [])
+  );
+
+  // Pull to refresh handler
+  const handleRefresh = () => {
+    setRefreshing(true);
+    fetchAds();
+  };
 
   const handleAddNewAd = () => {
     navigation.navigate('CreateAdFlow');
@@ -211,19 +225,44 @@ const SellAdsScreen: React.FC = () => {
         <Text style={styles.headerTitle}>Sell/Ads</Text>
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false} style={styles.scrollView}>
-        <View style={styles.productsContainer}>
-          <FlatList
-            data={products}
-            renderItem={renderProductCard}
-            keyExtractor={(item) => item.id}
-            numColumns={2}
-            columnWrapperStyle={styles.columnWrapper}
-            scrollEnabled={false}
-            contentContainerStyle={styles.flatListContent}
-          />
+      {loading ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#059669" />
+          <Text style={styles.loadingText}>Loading ads...</Text>
         </View>
-      </ScrollView>
+      ) : (
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          style={styles.scrollView}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={handleRefresh}
+              colors={['#059669']}
+              tintColor="#059669"
+            />
+          }
+        >
+          <View style={styles.productsContainer}>
+            {products.length === 0 ? (
+              <View style={styles.emptyContainer}>
+                <Text style={styles.emptyText}>No ads found</Text>
+                <Text style={styles.emptySubtext}>Pull down to refresh or create a new ad</Text>
+              </View>
+            ) : (
+              <FlatList
+                data={products}
+                renderItem={renderProductCard}
+                keyExtractor={(item) => item.id}
+                numColumns={2}
+                columnWrapperStyle={styles.columnWrapper}
+                scrollEnabled={false}
+                contentContainerStyle={styles.flatListContent}
+              />
+            )}
+          </View>
+        </ScrollView>
+      )}
 
       {/* Bottom Navigation */}
       <View style={styles.bottomNav}>
@@ -281,6 +320,8 @@ const SellAdsScreen: React.FC = () => {
               style={styles.searchSubmitButton}
               onPress={() => {
                 setShowSearchModal(false);
+                setLoading(true);
+                fetchAds(searchQuery);
               }}
             >
               <Text style={styles.searchSubmitButtonText}>Search</Text>
@@ -338,6 +379,34 @@ const styles = StyleSheet.create({
   },
   scrollView: {
     flex: 1,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 60,
+  },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 14,
+    color: '#64748B',
+    fontFamily: 'DM Sans',
+  },
+  emptyContainer: {
+    alignItems: 'center',
+    paddingVertical: 60,
+  },
+  emptyText: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#1E293B',
+    fontFamily: 'DM Sans',
+    marginBottom: 8,
+  },
+  emptySubtext: {
+    fontSize: 14,
+    color: '#64748B',
+    fontFamily: 'DM Sans',
   },
   productsContainer: {
     paddingHorizontal: 16,

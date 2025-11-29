@@ -12,11 +12,14 @@ import {
   StyleSheet,
   ScrollView,
   Image,
+  ActivityIndicator,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { useCreateAd } from './CreateAdContext';
+import { uploadAdImage } from '../api/marketplaceAPI';
 
 interface CreateAdStep2Props {
   onNext: () => void;
@@ -26,6 +29,7 @@ interface CreateAdStep2Props {
 const CreateAdStep2: React.FC<CreateAdStep2Props> = ({ onNext, onBack }) => {
   const { adData, updateAdData } = useCreateAd();
   const [specInput, setSpecInput] = useState('');
+  const [uploadingIndex, setUploadingIndex] = useState<number | null>(null);
 
   const handleAddSpecification = () => {
     const trimmed = specInput.trim();
@@ -52,9 +56,32 @@ const CreateAdStep2: React.FC<CreateAdStep2Props> = ({ onNext, onBack }) => {
     });
 
     if (!result.canceled && result.assets[0]) {
+      const localUri = result.assets[0].uri;
+
+      // Show the image immediately (local preview)
       const newImages = [...adData.images];
-      newImages[index] = result.assets[0].uri;
+      newImages[index] = localUri;
       updateAdData({ images: newImages });
+
+      // Upload to server in background
+      setUploadingIndex(index);
+      try {
+        const uploadResult = await uploadAdImage(localUri);
+        if (uploadResult.success && uploadResult.data?.image_url) {
+          // Update with server URL
+          const updatedImages = [...adData.images];
+          updatedImages[index] = uploadResult.data.image_url;
+          updateAdData({ images: updatedImages });
+        } else {
+          // Keep local URI if upload fails - it will still work for preview
+          console.warn('Image upload failed, keeping local URI');
+        }
+      } catch (error) {
+        console.error('Error uploading image:', error);
+        // Keep local URI on error
+      } finally {
+        setUploadingIndex(null);
+      }
     }
   };
 
@@ -123,13 +150,25 @@ const CreateAdStep2: React.FC<CreateAdStep2Props> = ({ onNext, onBack }) => {
                   style={styles.imageBoxSmall}
                   onPress={() => handlePickImage(index)}
                   activeOpacity={0.7}
+                  disabled={uploadingIndex === index}
                 >
                   {adData.images[index] ? (
-                    <Image
-                      source={{ uri: adData.images[index] }}
-                      style={styles.uploadedImageSmall}
-                      resizeMode="cover"
-                    />
+                    <View style={styles.imageContainer}>
+                      <Image
+                        source={{ uri: adData.images[index].startsWith('http') || adData.images[index].startsWith('file') || adData.images[index].startsWith('uploads')
+                          ? adData.images[index].startsWith('uploads')
+                            ? `http://localhost:3000/${adData.images[index]}`
+                            : adData.images[index]
+                          : adData.images[index] }}
+                        style={styles.uploadedImageSmall}
+                        resizeMode="cover"
+                      />
+                      {uploadingIndex === index && (
+                        <View style={styles.uploadingOverlay}>
+                          <ActivityIndicator size="small" color="#FFFFFF" />
+                        </View>
+                      )}
+                    </View>
                   ) : (
                     <View style={styles.imagePlaceholderSmall}>
                       <Ionicons name="camera" size={20} color="#94A3B8" />
@@ -256,10 +295,24 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     overflow: 'hidden',
   },
+  imageContainer: {
+    flex: 1,
+    position: 'relative',
+  },
   uploadedImageSmall: {
     width: '100%',
     height: '100%',
     backgroundColor: '#F5F5F5',
+  },
+  uploadingOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   imagePlaceholderSmall: {
     flex: 1,

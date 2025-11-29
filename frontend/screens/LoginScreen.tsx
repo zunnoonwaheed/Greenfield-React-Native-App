@@ -8,6 +8,7 @@ import {
   StatusBar,
   TextInput,
   Image,
+  ImageBackground,
   Platform,
   KeyboardAvoidingView,
   ScrollView,
@@ -20,6 +21,7 @@ import type { StackNavigationProp } from '@react-navigation/stack';
 import type { AuthStackParamList } from '../navigation/AuthStack';
 import { login as apiLogin } from '../api/authAPI';
 import { useAuth } from '../contexts/AuthContext';
+import axiosInstance from '../api/axiosConfig';
 
 type LoginScreenNavigationProp = StackNavigationProp<AuthStackParamList, 'Login'>;
 
@@ -66,17 +68,35 @@ const LoginScreen: React.FC = () => {
     try {
       console.log('🔐 Logging in user:', email.trim());
 
-      // Call actual backend authentication
+      // NOTE: apiLogin stores auth token automatically, but we need to check addresses FIRST
+      // So we'll let it login, then check addresses before triggering AuthContext
       const result = await apiLogin(email.trim(), password);
 
       if (result && result.success) {
-        console.log('✅ Login successful:', result.user?.email);
+        console.log('✅ Backend login successful:', result.user?.email);
+        console.log('⚠️ Note: Auth token stored, but NOT triggering AuthContext yet');
 
-        // Store auth token and user data (handled by apiLogin)
-        // Now log in to AuthContext
-        await authLogin('logged_in', result.user || { email: email.trim() });
+        // Check if user has saved addresses
+        try {
+          const addressResponse = await axiosInstance.get('/api/addresses.php');
+          console.log('📍 Addresses response:', addressResponse);
 
-        // Navigation will happen automatically via AuthContext
+          // If user has no addresses, navigate to AddLocation screen
+          if (!addressResponse.success || !addressResponse.data?.addresses || addressResponse.data.addresses.length === 0) {
+            console.log('📍 No addresses found - navigating to AddLocation');
+            console.log('📍 User will add address, then auth will complete');
+            navigation.navigate('AddLocation');
+          } else {
+            // User has addresses - trigger AuthContext to switch to MainStack
+            console.log('📍 User has addresses - triggering AuthContext');
+            await authLogin('logged_in', result.user || { email: email.trim() });
+            // Navigation will happen automatically via AuthContext switching to MainStack
+          }
+        } catch (addressError) {
+          console.error('⚠️ Error checking addresses:', addressError);
+          // If error checking addresses, assume no addresses and navigate to AddLocation
+          navigation.navigate('AddLocation');
+        }
       } else {
         throw new Error(result?.message || 'Login failed');
       }
@@ -175,24 +195,12 @@ const LoginScreen: React.FC = () => {
     <View style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor={ORANGE} />
 
-      {/* ORANGE HEADER + PATTERN */}
-      <View style={styles.header}>
-        <Image
-          source={require('../images/homepage-assets/cart-home1.png')}
-          style={[styles.cartBg, styles.cart1]}
-          resizeMode="contain"
-        />
-        <Image
-          source={require('../images/homepage-assets/cart-home2.png')}
-          style={[styles.cartBg, styles.cart2]}
-          resizeMode="contain"
-        />
-        <Image
-          source={require('../images/homepage-assets/cart-home3.png')}
-          style={[styles.cartBg, styles.cart3]}
-          resizeMode="contain"
-        />
-
+      {/* HEADER WITH BACKGROUND IMAGE */}
+      <ImageBackground
+        source={require('../images/homepage-assets/add-location.png')}
+        style={styles.header}
+        resizeMode="cover"
+      >
         <SafeAreaView edges={['top']} style={styles.safeTop}>
           <View style={styles.topBar}>
             <TouchableOpacity style={styles.backButton} onPress={onBack} activeOpacity={0.7}>
@@ -204,7 +212,7 @@ const LoginScreen: React.FC = () => {
             <Text style={styles.topTitle}>Privacy</Text>
           </View>
         </SafeAreaView>
-      </View>
+      </ImageBackground>
 
       {/* SHEET */}
       <KeyboardAvoidingView
@@ -353,12 +361,6 @@ const styles = StyleSheet.create({
     borderRightColor: '#FFFFFF',
   },
   topTitle: { color: '#FFF4EE', fontSize: 17, fontWeight: Platform.select({ ios: '600', android: '700' }) as any },
-
-  // Pattern tint + scale
-  cartBg: { position: 'absolute', opacity: 0.18, tintColor: ORANGE_TINT },
-  cart1: { width: 290, height: 290, top: 58, left: -92, transform: [{ rotate: '-18deg' }] },
-  cart2: { width: 250, height: 250, top: 305, right: -70, transform: [{ rotate: '24deg' }] },
-  cart3: { width: 190, height: 190, top: 170, right: -14, transform: [{ rotate: '-10deg' }] },
 
   // Sheet
   sheetWrap: { position: 'absolute', left: 0, right: 0, bottom: 0 },

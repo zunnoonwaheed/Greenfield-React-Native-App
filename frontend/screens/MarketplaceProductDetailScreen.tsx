@@ -46,8 +46,18 @@ const MarketplaceProductDetailScreen: React.FC = () => {
   // Get product from route params or use mock data
   const passedProduct = (route.params as any)?.product;
 
-  // Expand description if truncated
-  const getFullDescription = (desc: string) => {
+  // Expand description if truncated - check for fullDescription first (from API)
+  const getFullDescription = (product: any) => {
+    // If we have fullDescription from API, use it
+    if (product.fullDescription) {
+      return product.fullDescription;
+    }
+    // If we have rawData from API, use the description from there
+    if (product.rawData?.description) {
+      return product.rawData.description;
+    }
+    // Otherwise try to expand truncated description
+    const desc = product.description || '';
     if (desc && desc.includes('...')) {
       // For tomatoes
       if (desc.includes('handpicke')) {
@@ -72,17 +82,17 @@ const MarketplaceProductDetailScreen: React.FC = () => {
   const product = passedProduct ? {
     price: passedProduct.price || 185000,
     title: passedProduct.title || 'Product Title',
-    description: getFullDescription(passedProduct.description || 'Product description'),
+    description: getFullDescription(passedProduct),
     location: passedProduct.location || 'Location',
     category: passedProduct.category || 'Category',
     tags: passedProduct.specifications || passedProduct.tags || [],
     seller: {
-      name: passedProduct.seller?.name || 'Seller Name',
+      name: passedProduct.seller?.name || passedProduct.rawData?.seller?.name || 'Seller Name',
       date: passedProduct.seller?.datePosted || passedProduct.seller?.date || 'Date',
       avatar: passedProduct.seller?.image || passedProduct.seller?.avatar || require('../images/homepage-assets/profile-pic.png'),
     },
     condition: passedProduct.condition || 'Used',
-    images: passedProduct.images || 5,
+    images: passedProduct.rawData?.total_images || passedProduct.images || 5,
     currentImage: passedProduct.currentImage || 1,
     image: passedProduct.image || require('../images/homepage-assets/used-frame.png'),
   } : {
@@ -145,18 +155,29 @@ const MarketplaceProductDetailScreen: React.FC = () => {
             </TouchableOpacity>
           </View>
 
-          {/* Bottom Badges - Used Tag and Image Counter */}
+          {/* Bottom Badges - Condition Tag and Image Counter */}
           <View style={styles.bottomBadges}>
-            <Image
-              source={require('../images/homepage-assets/used-tag.png')}
-              style={styles.usedTagImage}
-              resizeMode="contain"
-            />
-            <Image
-              source={require('../images/homepage-assets/images-number-tag.png')}
-              style={styles.imageCountImage}
-              resizeMode="contain"
-            />
+            {/* Dynamic Condition Badge with profile-sell icon */}
+            <View style={[
+              styles.conditionBadge,
+              product.condition === 'New' ? styles.conditionNew : styles.conditionUsed
+            ]}>
+              <Image
+                source={require('../images/homepage-assets/profile-sell.png')}
+                style={styles.conditionIcon}
+                resizeMode="contain"
+              />
+              <Text style={styles.conditionText}>{product.condition}</Text>
+            </View>
+            {/* Dynamic Image Count Badge with profile-camera icon */}
+            <View style={styles.imageCountBadge}>
+              <Image
+                source={require('../images/homepage-assets/profile-camera.png')}
+                style={styles.cameraIcon}
+                resizeMode="contain"
+              />
+              <Text style={styles.imageCountText}>1/{product.images}</Text>
+            </View>
           </View>
         </View>
 
@@ -217,11 +238,17 @@ const MarketplaceProductDetailScreen: React.FC = () => {
 
           {/* Seller Details */}
           <Text style={styles.sellerHeading}>Seller Details</Text>
-          <Image
-            source={require('../images/homepage-assets/seller-details.png')}
-            style={styles.sellerDetailsImage}
-            resizeMode="contain"
-          />
+          <View style={styles.sellerCard}>
+            <Image
+              source={require('../images/homepage-assets/profile-image-sell.png')}
+              style={styles.sellerAvatar}
+              resizeMode="cover"
+            />
+            <View style={styles.sellerInfo}>
+              <Text style={styles.sellerName}>{product.seller.name}</Text>
+              <Text style={styles.sellerDate}>Member since {product.seller.date}</Text>
+            </View>
+          </View>
 
           {/* Contact Seller Button */}
           <TouchableOpacity
@@ -295,13 +322,48 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     zIndex: 10,
   },
-  usedTagImage: {
-    width: 80,
-    height: 32,
+  conditionBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 20,
+    gap: 6,
   },
-  imageCountImage: {
-    width: 70,
-    height: 32,
+  conditionNew: {
+    backgroundColor: '#059669',
+  },
+  conditionUsed: {
+    backgroundColor: '#F59E0B',
+  },
+  conditionIcon: {
+    width: 16,
+    height: 16,
+    tintColor: '#FFFFFF',
+  },
+  conditionText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#FFFFFF',
+  },
+  imageCountBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 20,
+    gap: 6,
+  },
+  cameraIcon: {
+    width: 18,
+    height: 18,
+    tintColor: '#FFFFFF',
+  },
+  imageCountText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#FFFFFF',
   },
   contentSection: {
     padding: 20,
@@ -372,10 +434,33 @@ const styles = StyleSheet.create({
     color: '#000000',
     marginBottom: 16,
   },
-  sellerDetailsImage: {
-    width: '100%',
-    height: 80,
+  sellerCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F8FAFC',
+    borderRadius: 12,
+    padding: 16,
     marginBottom: 20,
+    gap: 12,
+  },
+  sellerAvatar: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: '#E2E8F0',
+  },
+  sellerInfo: {
+    flex: 1,
+  },
+  sellerName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1E293B',
+    marginBottom: 4,
+  },
+  sellerDate: {
+    fontSize: 13,
+    color: '#64748B',
   },
   contactButton: {
     backgroundColor: '#026A49',

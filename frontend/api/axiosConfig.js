@@ -145,13 +145,19 @@ axiosInstance.interceptors.response.use(
     let data = response.data;
     if (typeof data === 'string') {
       // Try to extract JSON from response that might have PHP warnings/errors
-      const jsonMatch = data.match(/\{.*\}/s);
-      if (jsonMatch) {
+      // Find the first { and last } to extract the full JSON object
+      const firstBrace = data.indexOf('{');
+      const lastBrace = data.lastIndexOf('}');
+      if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+        const jsonString = data.substring(firstBrace, lastBrace + 1);
         try {
-          data = JSON.parse(jsonMatch[0]);
-          console.log('🧹 Cleaned PHP warnings from response');
+          data = JSON.parse(jsonString);
+          if (firstBrace > 0) {
+            console.log('🧹 Cleaned PHP warnings from response');
+          }
         } catch (e) {
-          console.error('⚠️ Failed to parse JSON from response');
+          console.error('⚠️ Failed to parse JSON from response:', e.message);
+          // Return original data if parsing fails
         }
       }
     }

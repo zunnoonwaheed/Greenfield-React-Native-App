@@ -7,7 +7,7 @@
  * Authentication: Not required (session-based cart)
  */
 
-session_start();
+require_once("../helpers/session_config.php");
 require_once("../admin/includes/db_settings.php");
 require_once("../helpers/response.php");
 require_once("../helpers/database.php");
@@ -58,6 +58,14 @@ $currency = dbFetchOne(
 
 $finalPrice = $product['dprice'] > 0 ? $product['dprice'] : $product['price'];
 
+// Construct full image URL
+$imageUrl = '';
+if (!empty($product['imagee'])) {
+    $protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http';
+    $host = $_SERVER['HTTP_HOST'];
+    $imageUrl = $protocol . '://' . $host . '/admin/upload/dow/' . $product['imagee'];
+}
+
 // Initialize cart if not exists
 if (!isset($_SESSION['cart'])) {
     $_SESSION['cart'] = [];
@@ -69,7 +77,7 @@ if (!isset($_SESSION['cart'][$product['id']])) {
         'id' => $product['id'],
         'name' => $product['namee'],
         'price' => $finalPrice,
-        'image' => $product['imagee'],
+        'image' => $imageUrl,
         'currency' => $currency['currency'] ?? 'PKR',
         'exchange_rate' => $currency['exchange_rate'] ?? 1,
         'qty' => 0,

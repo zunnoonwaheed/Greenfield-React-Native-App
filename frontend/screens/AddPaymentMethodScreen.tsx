@@ -19,6 +19,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
 import type { MainStackParamList } from '../navigation/MainStack';
+import { addPaymentMethod } from '../api/paymentAPI';
 
 type AddPaymentMethodScreenNavigationProp = StackNavigationProp<MainStackParamList>;
 
@@ -36,6 +37,7 @@ const AddPaymentMethodScreen: React.FC = () => {
   const [cardNumber, setCardNumber] = useState('');
   const [expiryDate, setExpiryDate] = useState('');
   const [cvc, setCvc] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const paymentMethods: PaymentMethod[] = [
     { id: 'paypal', name: 'Paypal' },
@@ -81,22 +83,58 @@ const AddPaymentMethodScreen: React.FC = () => {
     );
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!isFormValid()) {
       Alert.alert('Incomplete Form', 'Please fill in all fields correctly.');
       return;
     }
 
-    Alert.alert(
-      'Payment Method Added',
-      'Your payment method has been saved successfully.',
-      [
-        {
-          text: 'OK',
-          onPress: () => navigation.goBack(),
-        },
-      ]
-    );
+    setLoading(true);
+    console.log('💳 Adding payment method...');
+
+    try {
+      // Get last 4 digits of card
+      const cleanedCardNumber = cardNumber.replace(/\s/g, '');
+      const last4 = cleanedCardNumber.slice(-4);
+
+      // Prepare payment data
+      const paymentData = {
+        method_type: 'card',
+        card_last4: last4,
+        card_holder: cardHolder.trim(),
+        card_brand: selectedMethod.toLowerCase(),
+        card_expiry: expiryDate,
+        is_default: false,
+      };
+
+      console.log('💳 Sending payment data:', paymentData);
+
+      const response = await addPaymentMethod(paymentData);
+
+      if (response.success) {
+        console.log('✅ Payment method added successfully');
+        Alert.alert(
+          'Payment Method Added',
+          'Your payment method has been saved successfully.',
+          [
+            {
+              text: 'OK',
+              onPress: () => navigation.goBack(),
+            },
+          ]
+        );
+      } else {
+        throw new Error(response.error || 'Failed to add payment method');
+      }
+    } catch (error: any) {
+      console.error('❌ Error adding payment method:', error);
+      Alert.alert(
+        'Error',
+        error.message || 'Failed to add payment method. Please try again.'
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (

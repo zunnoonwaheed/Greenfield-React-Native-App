@@ -10,6 +10,7 @@ import {
   Alert,
   ActivityIndicator,
   Image,
+  ImageBackground,
   Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -86,25 +87,12 @@ const LocationPermissionScreen: React.FC<LocationPermissionScreenProps> = ({ onB
     <View style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor={GREEN} />
 
-      {/* Header (green) with subtle cart icons */}
-      <View style={styles.header}>
-        {/* Background cart icons (sizes/positions tuned to mock) */}
-        <Image
-          source={require('../images/homepage-assets/cart-home1.png')}
-          style={[styles.cartBg, styles.cart1]}
-          resizeMode="contain"
-        />
-        <Image
-          source={require('../images/homepage-assets/cart-home2.png')}
-          style={[styles.cartBg, styles.cart2]}
-          resizeMode="contain"
-        />
-        <Image
-          source={require('../images/homepage-assets/cart-home3.png')}
-          style={[styles.cartBg, styles.cart3]}
-          resizeMode="contain"
-        />
-
+      {/* Header with background image */}
+      <ImageBackground
+        source={require('../images/homepage-assets/auth-signup-screen.png')}
+        style={styles.header}
+        resizeMode="cover"
+      >
         <SafeAreaView edges={['top']} style={styles.safeTop}>
           <View style={styles.topBar}>
             <TouchableOpacity style={styles.backButton} onPress={handleBack} activeOpacity={0.7}>
@@ -116,7 +104,7 @@ const LocationPermissionScreen: React.FC<LocationPermissionScreenProps> = ({ onB
             <Text style={styles.topTitle}>Privacy</Text>
           </View>
         </SafeAreaView>
-      </View>
+      </ImageBackground>
 
       {/* Bottom sheet */}
       <View style={styles.sheetWrap}>
@@ -206,12 +194,6 @@ const styles = StyleSheet.create({
     fontWeight: Platform.select({ ios: '600', android: '700' }) as any,
     letterSpacing: -0.2,
   },
-
-  // Pattern (scaled to match mock)
-  cartBg: { position: 'absolute', opacity: 0.22, tintColor: PATTERN_TINT },
-  cart1: { width: 270, height: 270, top: 58, left: -88, transform: [{ rotate: '-18deg' }] },
-  cart2: { width: 235, height: 235, top: 300, right: -64, transform: [{ rotate: '24deg' }] },
-  cart3: { width: 180, height: 180, top: 165, right: -4, transform: [{ rotate: '-10deg' }] },
 
   // Sheet
   sheetWrap: { position: 'absolute', left: 0, right: 0, bottom: 0 },

@@ -1,10 +1,10 @@
 <?php
+require_once("helpers/session_config.php");
 header('Content-Type: application/json');
-session_start();
 include("admin/includes/db_settings.php");
 
-if (!isset($_POST['bundle_id'], $_POST['qty'])) {
-    echo json_encode(['success' => false, 'message' => 'Bundle ID and quantity are required']);
+if (!isset($_POST['bundle_id'])) {
+    echo json_encode(['success' => false, 'message' => 'Bundle ID is required']);
     exit;
 }
 
@@ -33,10 +33,14 @@ $cquery = "SELECT currency, exchange_rate FROM exchange WHERE default_currency =
 $cres = mysqli_query($con, $cquery);
 $currency = mysqli_fetch_assoc($cres);
 
-// --- calculate subtotal ---
-$subtotal = 0;
+// --- use bundle's price from database ---
+// Use final_price if available, otherwise use base_price
+$bundlePrice = !empty($bundle['final_price']) ? (float)$bundle['final_price'] : (float)$bundle['base_price'];
+
+// If no price set, calculate from products (if provided)
 $bundleItems = [];
-if (!empty($_POST['quantity'])) {
+if ($bundlePrice == 0 && !empty($_POST['quantity'])) {
+    $subtotal = 0;
     foreach ($_POST['quantity'] as $product_id => $pqty) {
         $product_id = intval($product_id);
         $pqty = max(1, intval($pqty));
@@ -55,11 +59,19 @@ if (!empty($_POST['quantity'])) {
             ];
         }
     }
+    $bundlePrice = $subtotal;
 }
 
-// --- apply discount ---
-$discount = (int)$bundle['discount'];
-$finalTotal = $subtotal - ($subtotal * $discount / 100);
+$finalTotal = $bundlePrice;
+
+// Use frontend image path if provided, otherwise use database image
+$imagePath = $_POST['image_path'] ?? '';
+if (empty($imagePath) && !empty($bundle['image'])) {
+    // Fallback to database image if frontend didn't send one
+    $protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http';
+    $host = $_SERVER['HTTP_HOST'];
+    $imagePath = $protocol . '://' . $host . '/uploads/bundles/' . $bundle['image'];
+}
 
 // --- create cart item ---
 $cartItem = [
@@ -67,10 +79,12 @@ $cartItem = [
     "name" => $bundle['name'],
     "price" => $finalTotal,
     "qty" => $qty,
+    "image" => $imagePath,
     "currency" => $currency['currency'],
     "exchange_rate" => $currency['exchange_rate'],
     "is_bundle" => true,
-    "items" => $bundleItems
+    "items" => $bundleItems,
+    "type" => 'bundle'
 ];
 
 // --- add to session cart ---
@@ -78,7 +92,14 @@ if (!isset($_SESSION['cart'])) {
     $_SESSION['cart'] = [];
 }
 
-$_SESSION['cart'][] = $cartItem;
+// Use bundle ID as key (e.g., "bundle_3")
+$bundleKey = "bundle_" . $bundle['id'];
+if (!isset($_SESSION['cart'][$bundleKey])) {
+    $_SESSION['cart'][$bundleKey] = $cartItem;
+} else {
+    // If bundle already in cart, increase quantity
+    $_SESSION['cart'][$bundleKey]['qty'] += $qty;
+}
 
 // Calculate total cart count
 $cart_count = 0;

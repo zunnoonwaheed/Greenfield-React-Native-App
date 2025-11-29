@@ -10,6 +10,7 @@ import {
   ImageSourcePropType,
   Alert,
   ActivityIndicator,
+  TextInput,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
@@ -17,17 +18,18 @@ import type { StackNavigationProp } from '@react-navigation/stack';
 import type { RootStackParamList } from '../App';
 import SavedAddressesScreen from './SavedAddressesScreen';
 import AddNewAddressScreen from './AddNewAddressScreen';
+import ChatbotModal from './ChatbotModal';
 
 // ============================================
 // API IMPORTS - All integrated with PHP backend
 // ============================================
 import { getProducts } from '../api/getProducts';
+import { getBestSellingProducts } from '../api/productAPI';
 import { getTopLevelCategories } from '../api/getCategories';
-import { getFeaturedBundles } from '../api/getBundles';
 import { getCartCount } from '../api/getCartCount';
 import { getUnreadNotificationsCount } from '../api/getNotifications';
 import { getUserAddress } from '../api/getUserAddress';
-import { addBundleToCart } from '../api/addBundleToCart';
+import { addToCart } from '../api/addToCart';
 
 type HomescreenNavigationProp = StackNavigationProp<RootStackParamList>;
 
@@ -38,21 +40,11 @@ interface CategoryItem {
   slug?: string;
 }
 
-interface BundleItem {
-  id: string | number;
-  name: string;
-  description: string;
-  original_price: string | number;
-  discounted_price: string | number;
-  discount_percentage?: number;
-  image: ImageSourcePropType;
-  products?: any[];
-}
-
 interface ProductItem {
   id: string | number;
   name: string;
   price: string | number;
+  discounted_price?: string | number;
   image_url?: string;
   category_id?: string | number;
 }
@@ -63,18 +55,21 @@ const HomescreenNew: React.FC = () => {
   // Modal states
   const [showAddressModal, setShowAddressModal] = useState(false);
   const [showAddNewAddress, setShowAddNewAddress] = useState(false);
+  const [showChatbot, setShowChatbot] = useState(false);
 
   // Data states
   const [deliveryAddress, setDeliveryAddress] = useState('Loading...');
   const [cartItemCount, setCartItemCount] = useState(0);
   const [notificationCount, setNotificationCount] = useState(0);
   const [categories, setCategories] = useState<CategoryItem[]>([]);
-  const [bundles, setBundles] = useState<BundleItem[]>([]);
-  const [products, setProducts] = useState<ProductItem[]>([]);
+  const [bestSellingProducts, setBestSellingProducts] = useState<ProductItem[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Bundle quantities for UI
-  const [bundleQuantities, setBundleQuantities] = useState<{ [key: string]: number }>({});
+  // Product quantities for UI (for best-selling products)
+  const [productQuantities, setProductQuantities] = useState<{ [key: string]: number }>({});
+
+  // Search state
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Load all data on mount and when screen focuses
   useFocusEffect(
@@ -105,122 +100,52 @@ const HomescreenNew: React.FC = () => {
       console.log('🏠 Loading homepage data from backend...');
 
       // Load all data in parallel for better performance
-      const [categoriesRes, bundlesRes, productsRes] = await Promise.all([
+      const [categoriesRes, bestSellingRes] = await Promise.all([
         getTopLevelCategories().catch(err => {
           console.error('Error loading categories:', err);
           return { success: false, data: { categories: [] } };
         }),
-        getFeaturedBundles(5).catch(err => {
-          console.error('Error loading bundles:', err);
-          return { success: false, data: { bundles: [] } };
-        }),
-        getProducts({ limit: 20 }).catch(err => {
-          console.error('Error loading products:', err);
+        getBestSellingProducts(20).catch(err => {
+          console.error('Error loading best-selling products:', err);
           return { success: false, data: { products: [] } };
         })
       ]);
 
-      // Process categories
+      // Process categories - Show ALL categories from database
       if (categoriesRes.success && categoriesRes.data && categoriesRes.data.categories) {
-        // Map category names to their correct images (in specific order)
-        const categoryImageMap: { [key: string]: any } = {
-          'Grocery Bundles': require('../images/homepage-assets/shop-cat1.png'),
-          'Fresh Produce': require('../images/homepage-assets/shop-cat4.png'),
-          'Dairy & Bakery': require('../images/homepage-assets/shop-cat3.png'),
-          'Snacks & Beverages': require('../images/homepage-assets/shop-cat2.png'),
-        };
-
-        // Define the exact order and categories for homepage
-        const mainCategoriesOrder = ['Grocery Bundles', 'Fresh Produce', 'Dairy & Bakery', 'Snacks & Beverages'];
-
-        // Sort categories by the defined order
-        const cats = mainCategoriesOrder
-          .map(catName => {
-            const cat = categoriesRes.data.categories.find((c: any) => c.name === catName);
-            if (cat) {
-              return {
-                id: cat.id,
-                name: cat.name,
-                slug: cat.slug,
-                image: categoryImageMap[cat.name],
-              };
-            }
-            return null;
-          })
-          .filter((cat): cat is NonNullable<typeof cat> => cat !== null);
+        // Map ALL database categories (no limit - show all)
+        const cats = categoriesRes.data.categories.map((cat: any) => ({
+          id: cat.id,
+          name: cat.name,
+          slug: cat.slug,
+          // Use real category image from database (same as web app)
+          image: cat.image_url ? { uri: cat.image_url } : require('../images/homepage-assets/shop-cat1.png'),
+        }));
 
         setCategories(cats);
-        console.log('✅ Categories loaded:', cats.length);
+        console.log('✅ Categories loaded from database:', cats.length);
       } else {
-        // Fallback to default categories if backend fails
-        setCategories([
-          { id: '1', name: 'Grocery Bundles', image: require('../images/homepage-assets/shop-cat1.png') },
-          { id: '2', name: 'Fresh Produce', image: require('../images/homepage-assets/shop-cat4.png') },
-          { id: '3', name: 'Dairy & Bakery', image: require('../images/homepage-assets/shop-cat3.png') },
-          { id: '4', name: 'Snacks & Beverages', image: require('../images/homepage-assets/shop-cat2.png') },
-        ]);
+        // Show empty if backend fails - don't use hardcoded data
+        setCategories([]);
+        console.warn('⚠️ Failed to load categories from backend');
       }
 
-      // Process bundles
-      if (bundlesRes.success && bundlesRes.data && bundlesRes.data.bundles) {
-        const bdls = bundlesRes.data.bundles.map((bundle: any) => {
-          const originalPrice = parseFloat(bundle.original_price) || 0;
-          const discountedPrice = parseFloat(bundle.discounted_price) || 0;
-          const discountPercentage = originalPrice > 0
-            ? Math.round(((originalPrice - discountedPrice) / originalPrice) * 100)
-            : 0;
+      // Process best-selling products
+      if (bestSellingRes.success && bestSellingRes.data && bestSellingRes.data.products) {
+        const products = bestSellingRes.data.products;
+        setBestSellingProducts(products);
 
-          return {
-            id: bundle.id,
-            name: bundle.name || 'Bundle Offer',
-            description: bundle.description || 'Special bundle offer',
-            original_price: originalPrice,
-            discounted_price: discountedPrice,
-            discount_percentage: discountPercentage,
-            products: bundle.products || [],
-            // Use placeholder image - can be updated to use bundle.image_url if available
-            image: require('../images/homepage-assets/grocery-bun.png'),
-          };
-        });
-        setBundles(bdls);
-
-        // Initialize quantities
+        // Initialize quantities for products
         const initialQuantities: { [key: string]: number } = {};
-        bdls.forEach((b: BundleItem) => {
-          initialQuantities[b.id.toString()] = 1;
+        products.forEach((product: ProductItem) => {
+          initialQuantities[product.id.toString()] = 1;
         });
-        setBundleQuantities(initialQuantities);
+        setProductQuantities(initialQuantities);
 
-        console.log('✅ Bundles loaded:', bdls.length);
+        console.log('✅ Best-selling products loaded:', products.length);
       } else {
-        // Fallback bundles - showing at least 2 cards
-        setBundles([
-          {
-            id: '1',
-            name: 'Weekly Essentials',
-            description: 'Rice, flour, pulses, oil, tea, sugar, and spices',
-            original_price: 899,
-            discounted_price: 699,
-            discount_percentage: 23,
-            image: require('../images/homepage-assets/grocery-bun.png'),
-          },
-          {
-            id: '2',
-            name: 'Fresh Produce Pack',
-            description: 'Fresh fruits, vegetables, and dairy products',
-            original_price: 1299,
-            discounted_price: 999,
-            discount_percentage: 23,
-            image: require('../images/homepage-assets/grocery-bun.png'),
-          }
-        ]);
-        setBundleQuantities({ '1': 1, '2': 1 });
-      }
-
-      // Process products
-      if (productsRes.success && productsRes.data && productsRes.data.products) {
-        setProducts(productsRes.data.products);
-        console.log('✅ Products loaded:', productsRes.data.products.length);
+        setBestSellingProducts([]);
+        console.warn('⚠️ Failed to load best-selling products');
       }
 
       // Load user address
@@ -239,17 +164,26 @@ const HomescreenNew: React.FC = () => {
    */
   const loadDefaultAddress = async () => {
     try {
+      console.log('📍 Loading user address from backend...');
       const response = await getUserAddress();
+
       if (response.success && response.data && response.data.user) {
-        const address = response.data.user.address || 'Set delivery address';
-        setDeliveryAddress(address);
-        console.log('✅ Address loaded:', address);
+        const userAddress = response.data.user.address;
+
+        if (userAddress && userAddress.trim() !== '') {
+          setDeliveryAddress(userAddress);
+          console.log('✅ Address loaded from backend:', userAddress);
+        } else {
+          setDeliveryAddress('Set delivery address');
+          console.log('⚠️ No address set for user');
+        }
       } else {
         setDeliveryAddress('Set delivery address');
+        console.log('⚠️ No user data returned');
       }
     } catch (error) {
-      console.error('Error loading address:', error);
-      setDeliveryAddress('Sky Avenue'); // Fallback
+      console.error('❌ Error loading address:', error);
+      setDeliveryAddress('Set delivery address'); // Changed fallback
     }
   };
 
@@ -282,43 +216,66 @@ const HomescreenNew: React.FC = () => {
   };
 
   /**
-   * HANDLE ADD BUNDLE TO CART
+   * HANDLE SEARCH
    */
-  const handleAddBundleToCart = async (bundle: BundleItem) => {
-    try {
-      const quantity = bundleQuantities[bundle.id.toString()] || 1;
-      console.log(`📦 Adding bundle ${bundle.id} to cart (qty: ${quantity})`);
-
-      await addBundleToCart({ bundle_id: bundle.id });
-
-      Alert.alert(
-        'Success',
-        `${bundle.name} added to cart!`,
-        [{ text: 'OK', onPress: () => loadCartBadge() }]
-      );
-    } catch (error: any) {
-      console.error('Error adding bundle to cart:', error);
-      Alert.alert('Error', error.message || 'Failed to add bundle to cart');
+  const handleSearch = () => {
+    if (searchQuery.trim()) {
+      console.log('🔍 Searching for:', searchQuery);
+      navigation.navigate('ProductListing', { searchQuery: searchQuery.trim() });
     }
   };
 
   /**
-   * UPDATE BUNDLE QUANTITY
+   * HANDLE ADD PRODUCT TO CART
    */
-  const updateBundleQuantity = (bundleId: string | number, delta: number) => {
-    setBundleQuantities(prev => {
-      const currentQty = prev[bundleId.toString()] || 1;
+  const handleAddProductToCart = async (product: ProductItem) => {
+    try {
+      const quantity = productQuantities[product.id.toString()] || 1;
+      console.log(`📦 Adding product ${product.id} to cart (qty: ${quantity})`);
+
+      await addToCart({
+        product_id: product.id,
+        quantity: quantity,
+        price: product.price
+      });
+
+      Alert.alert(
+        'Success',
+        `${product.name} added to cart!`,
+        [{ text: 'OK', onPress: () => loadCartBadge() }]
+      );
+    } catch (error: any) {
+      console.error('Error adding product to cart:', error);
+      Alert.alert('Error', error.message || 'Failed to add product to cart');
+    }
+  };
+
+  /**
+   * UPDATE PRODUCT QUANTITY
+   */
+  const updateProductQuantity = (productId: string | number, delta: number) => {
+    setProductQuantities(prev => {
+      const currentQty = prev[productId.toString()] || 1;
       const newQty = Math.max(1, currentQty + delta);
       return {
         ...prev,
-        [bundleId.toString()]: newQty
+        [productId.toString()]: newQty
       };
     });
+  };
+
+  // Handle address selection from SavedAddressesScreen
+  const handleSelectAddress = (address: { id: string; name: string; address: string }) => {
+    console.log('📍 Address selected:', address);
+    // Update navbar immediately with selected address
+    const fullAddress = `${address.name}, ${address.address}`;
+    setDeliveryAddress(fullAddress);
   };
 
   // Address modal handlers
   const handleAddressModalClose = () => {
     setShowAddressModal(false);
+    // Reload from backend to ensure sync
     loadDefaultAddress();
   };
 
@@ -339,8 +296,12 @@ const HomescreenNew: React.FC = () => {
   };
 
   const handleAddressAdded = () => {
-    loadDefaultAddress();
+    console.log('🏠 Address added - reloading address...');
     setShowAddNewAddress(false);
+    // Reload address after a short delay to ensure backend has updated
+    setTimeout(() => {
+      loadDefaultAddress();
+    }, 500);
   };
 
   /**
@@ -350,7 +311,10 @@ const HomescreenNew: React.FC = () => {
     <TouchableOpacity
       key={item.id}
       style={styles.categoryItem}
-      onPress={() => navigation.navigate('GroceryList')}
+      onPress={() => {
+        // Navigate to GroceryList with category filter
+        navigation.navigate('GroceryList', { categoryId: item.id } as any);
+      }}
     >
       <View style={styles.categoryImageContainer}>
         <Image source={item.image} style={styles.categoryImage} resizeMode="contain" />
@@ -360,57 +324,69 @@ const HomescreenNew: React.FC = () => {
   );
 
   /**
-   * RENDER BUNDLE ITEM
+   * RENDER BEST-SELLING PRODUCT ITEM (Bundle Card Design)
    */
-  const renderBundleItem = (item: BundleItem) => {
-    const quantity = bundleQuantities[item.id.toString()] || 1;
-    const discountText = item.discount_percentage
-      ? `-${item.discount_percentage}%`
-      : '-23%';
-    const priceText = typeof item.discounted_price === 'number'
-      ? `Rs. ${item.discounted_price}`
-      : `Rs. ${item.discounted_price}`;
+  const renderBestSellingProduct = (item: ProductItem) => {
+    const productImage = item.image_url
+      ? { uri: item.image_url }
+      : require('../images/homepage-assets/shop-cat1.png');
+
+    const quantity = productQuantities[item.id.toString()] || 1;
+
+    // Calculate discount percentage
+    const price = typeof item.price === 'number' ? item.price : parseFloat(item.price as string);
+    const discountedPrice = item.discounted_price
+      ? (typeof item.discounted_price === 'number' ? item.discounted_price : parseFloat(item.discounted_price as string))
+      : price;
+    const discountPercentage = price > 0 && discountedPrice < price
+      ? Math.round(((price - discountedPrice) / price) * 100)
+      : 0;
+
+    const discountText = discountPercentage > 0 ? `-${discountPercentage}%` : '';
+    const displayPrice = discountedPrice > 0 && discountedPrice < price ? discountedPrice : price;
 
     return (
       <TouchableOpacity
         key={item.id}
         style={styles.bundleCard}
-        onPress={() => navigation.navigate('ProductDetail' as any)}
+        onPress={() => {
+          // Navigate to product detail screen
+          navigation.navigate('ProductDetail', { productId: item.id });
+        }}
       >
-        <View style={styles.discountLabel}>
-          <Text style={styles.discountIcon}>⚡</Text>
-          <Text style={styles.discountText}>{discountText}</Text>
-        </View>
+        {discountPercentage > 0 && (
+          <View style={styles.discountLabel}>
+            <Text style={styles.discountIcon}>⚡</Text>
+            <Text style={styles.discountText}>{discountText}</Text>
+          </View>
+        )}
         <View style={styles.bundleImageContainer}>
-          <Image source={item.image} style={styles.bundleImage} resizeMode="cover" />
+          <Image source={productImage} style={styles.bundleImage} resizeMode="cover" />
         </View>
         <View style={styles.bundleContent}>
           <View style={styles.bundleInfo}>
-            <Text style={styles.bundleName}>{item.name}</Text>
-            <Text style={styles.bundleDescription} numberOfLines={2}>
-              {item.description}
-            </Text>
-            <Text style={styles.bundlePrice}>{priceText}</Text>
+            <Text style={styles.bundleName} numberOfLines={2}>{item.name}</Text>
+            <Text style={styles.bundlePrice}>Rs. {displayPrice}</Text>
           </View>
           <View style={styles.bundleActions}>
             <View style={styles.quantitySelector}>
               <TouchableOpacity
                 style={styles.quantityButton}
-                onPress={() => updateBundleQuantity(item.id, -1)}
+                onPress={() => updateProductQuantity(item.id, -1)}
               >
                 <Text style={styles.quantityButtonText}>−</Text>
               </TouchableOpacity>
               <Text style={styles.quantityText}>{quantity}</Text>
               <TouchableOpacity
                 style={styles.quantityButton}
-                onPress={() => updateBundleQuantity(item.id, 1)}
+                onPress={() => updateProductQuantity(item.id, 1)}
               >
                 <Text style={styles.quantityButtonText}>+</Text>
               </TouchableOpacity>
             </View>
             <TouchableOpacity
               style={styles.addToCartButton}
-              onPress={() => handleAddBundleToCart(item)}
+              onPress={() => handleAddProductToCart(item)}
             >
               <Text style={styles.addToCartText} numberOfLines={1}>Add To Cart</Text>
             </TouchableOpacity>
@@ -419,6 +395,7 @@ const HomescreenNew: React.FC = () => {
       </TouchableOpacity>
     );
   };
+
 
   return (
     <SafeAreaView style={styles.container} edges={[]}>
@@ -478,19 +455,48 @@ const HomescreenNew: React.FC = () => {
               onPress={() => setShowAddressModal(true)}
               activeOpacity={0.7}
             >
-              <Image
-                source={require('../images/homepage-assets/deliver-avenue.png')}
-                style={styles.deliverAvenueImage}
-                resizeMode="contain"
-              />
+              {/* Dynamic address display - matches deliver-avenue.png design */}
+              <View style={styles.deliverToContainer}>
+                <View style={styles.deliverToRow}>
+                  <Text style={styles.deliverToText} numberOfLines={1}>
+                    Deliver to{' '}
+                    <Text style={styles.addressHighlight}>
+                      {deliveryAddress.length > 20
+                        ? deliveryAddress.substring(0, 20) + '...'
+                        : deliveryAddress}
+                    </Text>
+                  </Text>
+                  <Text style={styles.deliverToArrow}>⌄</Text>
+                </View>
+              </View>
             </TouchableOpacity>
             <View style={styles.searchContainer}>
-              <Text style={styles.searchPlaceholder}>Start Shopping</Text>
               <Image
-                source={require('../images/homepage-assets/mic.png')}
-                style={styles.micIcon}
+                source={require('../images/homepage-assets/search.png')}
+                style={styles.searchIcon}
                 resizeMode="contain"
               />
+              <TextInput
+                style={styles.searchInput}
+                placeholder="Search for products..."
+                placeholderTextColor="#999"
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+                onSubmitEditing={handleSearch}
+                returnKeyType="search"
+              />
+              {searchQuery.length > 0 && (
+                <TouchableOpacity onPress={() => setSearchQuery('')}>
+                  <Text style={styles.clearButton}>✕</Text>
+                </TouchableOpacity>
+              )}
+              <TouchableOpacity onPress={handleSearch}>
+                <Image
+                  source={require('../images/homepage-assets/mic.png')}
+                  style={styles.micIcon}
+                  resizeMode="contain"
+                />
+              </TouchableOpacity>
             </View>
           </View>
         </View>
@@ -516,12 +522,15 @@ const HomescreenNew: React.FC = () => {
             />
           </View>
 
-          {/* Shop by Category */}
+          {/* Categories Section */}
           <View style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>Shop by Category</Text>
+            <TouchableOpacity
+              style={styles.sectionHeader}
+              onPress={() => navigation.navigate('Categories')}
+            >
+              <Text style={styles.sectionTitle}>Categories</Text>
               <Text style={styles.chevronRight}>›</Text>
-            </View>
+            </TouchableOpacity>
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
@@ -531,21 +540,18 @@ const HomescreenNew: React.FC = () => {
             </ScrollView>
           </View>
 
-          {/* Popular Grocery Bundles */}
+          {/* Best Selling Products */}
           <View style={styles.section}>
-            <TouchableOpacity
-              style={styles.sectionHeader}
-              onPress={() => navigation.navigate('GroceryList')}
-            >
-              <Text style={styles.sectionTitle}>Popular Grocery Bundles</Text>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Best Selling Products</Text>
               <Text style={styles.chevronRight}>›</Text>
-            </TouchableOpacity>
+            </View>
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
               style={styles.bundlesContainer}
             >
-              {bundles.map(renderBundleItem)}
+              {bestSellingProducts.map(renderBestSellingProduct)}
             </ScrollView>
           </View>
 
@@ -606,8 +612,8 @@ const HomescreenNew: React.FC = () => {
       <TouchableOpacity
         style={styles.chatbotButton}
         onPress={() => {
-          console.log('Opening Messages screen');
-          navigation.navigate('Messages');
+          console.log('Opening Chatbot modal');
+          setShowChatbot(true);
         }}
         activeOpacity={0.8}
       >
@@ -624,6 +630,7 @@ const HomescreenNew: React.FC = () => {
           visible={showAddressModal}
           onClose={handleAddressModalClose}
           onAddNewAddress={handleAddNewAddress}
+          onSelectAddress={handleSelectAddress}
         />
       )}
 
@@ -634,6 +641,12 @@ const HomescreenNew: React.FC = () => {
           onAddressAdded={handleAddressAdded}
         />
       )}
+
+      {/* Chatbot Modal */}
+      <ChatbotModal
+        visible={showChatbot}
+        onClose={() => setShowChatbot(false)}
+      />
     </SafeAreaView>
   );
 };
@@ -736,25 +749,58 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: -4,
   },
-  deliverAvenueImage: {
-    width: 200,
-    height: 24,
+  deliverToContainer: {
+    marginBottom: 12,
+  },
+  deliverToRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    maxWidth: '100%',
+  },
+  deliverToText: {
+    fontSize: 14,
+    color: '#FFFFFF',
+    fontWeight: '400',
+    fontFamily: 'DM Sans',
+    flexShrink: 1,
+  },
+  addressHighlight: {
+    fontWeight: '700',
+    fontSize: 15,
+  },
+  deliverToArrow: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    marginTop: -3,
+    fontWeight: '400',
+    flexShrink: 0,
   },
   searchContainer: {
     backgroundColor: '#FFFFFF',
     borderRadius: 8,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    gap: 8,
   },
-  searchPlaceholder: {
-    color: '#94A3B8',
+  searchIcon: {
+    width: 18,
+    height: 18,
+    tintColor: '#94A3B8',
+  },
+  searchInput: {
+    flex: 1,
     fontSize: 14,
-    fontWeight: '400',
+    color: '#1E293B',
+    paddingVertical: 0,
     fontFamily: 'DM Sans',
-    marginTop: -2,
+  },
+  clearButton: {
+    fontSize: 18,
+    color: '#94A3B8',
+    paddingHorizontal: 4,
   },
   micIcon: {
     width: 20,

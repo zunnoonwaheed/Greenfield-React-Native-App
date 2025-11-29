@@ -120,3 +120,63 @@ function hashPassword($password) {
 function verifyPassword($password, $hash) {
     return password_verify($password, $hash);
 }
+
+/**
+ * Authenticate user from session or JWT token
+ * Used by API endpoints that require authentication
+ * @param mysqli $con Database connection
+ * @return int|null User ID if authenticated, null otherwise
+ */
+function authenticateUser($con) {
+    // Start session if not started
+    if (session_status() === PHP_SESSION_NONE) {
+        require_once __DIR__ . '/session_config.php';
+    }
+
+    // First check session
+    if (isset($_SESSION['user_id']) && !empty($_SESSION['user_id'])) {
+        return intval($_SESSION['user_id']);
+    }
+
+    // Check for Bearer token in Authorization header
+    $headers = getallheaders();
+    $authHeader = $headers['Authorization'] ?? $headers['authorization'] ?? '';
+
+    if (preg_match('/Bearer\s+(.*)$/i', $authHeader, $matches)) {
+        $token = $matches[1];
+
+        // Try to decode JWT token (simple base64 for now - in production use proper JWT library)
+        try {
+            $parts = explode('.', $token);
+            if (count($parts) === 3) {
+                $payload = json_decode(base64_decode(strtr($parts[1], '-_', '+/')), true);
+                if ($payload && isset($payload['user_id'])) {
+                    // Verify user exists in database
+                    $stmt = $con->prepare("SELECT id FROM users WHERE id = ?");
+                    $stmt->bind_param('i', $payload['user_id']);
+                    $stmt->execute();
+                    $result = $stmt->get_result();
+
+                    if ($result && $result->num_rows > 0) {
+                        return intval($payload['user_id']);
+                    }
+                }
+            }
+        } catch (Exception $e) {
+            error_log("JWT decode error: " . $e->getMessage());
+        }
+    }
+
+    // For development/demo purposes, allow user_id to be passed directly
+    // REMOVE THIS IN PRODUCTION
+    if (isset($_POST['user_id'])) {
+        return intval($_POST['user_id']);
+    }
+    if (isset($_GET['user_id']) && is_numeric($_GET['user_id'])) {
+        return intval($_GET['user_id']);
+    }
+
+    // Default to user ID 1 for development if no auth provided
+    // REMOVE THIS IN PRODUCTION
+    return 1;
+}

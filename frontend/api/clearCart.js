@@ -6,8 +6,9 @@ import axiosInstance from './axiosConfig';
  */
 export const clearCart = async () => {
   try {
-    const response = await axiosInstance.get('/clear-cart.php');
-    console.log('✅ Cart cleared successfully');
+    // Use force-clear to completely wipe session
+    const response = await axiosInstance.post('/force-clear-cart.php');
+    console.log('✅ Cart and session cleared completely');
     return response;
   } catch (error) {
     console.error('❌ Error clearing cart:', error);

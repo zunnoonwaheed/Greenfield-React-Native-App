@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet, StatusBar, TextInput,
-  Alert, ActivityIndicator, Image, Platform, ScrollView,
+  Alert, ActivityIndicator, Image, ImageBackground, Platform, ScrollView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
@@ -100,11 +100,12 @@ const ResetPasswordScreen: React.FC = () => {
     <View style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor={YELLOW} />
 
-      {/* header + pattern */}
-      <View style={styles.header}>
-        <Image source={require('../images/homepage-assets/cart-home1.png')} style={[styles.cart, styles.cart1]} />
-        <Image source={require('../images/homepage-assets/cart-home2.png')} style={[styles.cart, styles.cart2]} />
-        <Image source={require('../images/homepage-assets/cart-home3.png')} style={[styles.cart, styles.cart3]} />
+      {/* header with background image */}
+      <ImageBackground
+        source={require('../images/homepage-assets/auth-reset.png')}
+        style={styles.header}
+        resizeMode="cover"
+      >
         <SafeAreaView edges={['top']} style={styles.safeTop}>
           <View style={styles.topBar}>
             <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
@@ -113,7 +114,7 @@ const ResetPasswordScreen: React.FC = () => {
             <Text style={styles.topTitle}>Privacy</Text>
           </View>
         </SafeAreaView>
-      </View>
+      </ImageBackground>
 
       {/* sheet */}
       <View style={styles.sheetWrap}>
@@ -188,11 +189,6 @@ const styles = StyleSheet.create({
     borderTopColor: 'transparent', borderBottomColor: 'transparent', borderRightColor: '#FFFFFF',
   },
   topTitle: { color: '#FFF7E6', fontSize: 17, fontWeight: Platform.select({ ios: '600', android: '700' }) as any },
-
-  cart: { position: 'absolute', opacity: 0.18, tintColor: PATTERN_TINT },
-  cart1: { width: 300, height: 300, top: 50, left: -98, transform: [{ rotate: '-18deg' }] },
-  cart2: { width: 260, height: 260, top: 295, right: -78, transform: [{ rotate: '24deg' }] },
-  cart3: { width: 200, height: 200, top: 162, right: -20, transform: [{ rotate: '-10deg' }] },
 
   sheetWrap: { position: 'absolute', left: 0, right: 0, bottom: 0 },
   sheet: {
