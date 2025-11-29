@@ -6,6 +6,7 @@
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
+import Constants from 'expo-constants';
 
 // 🔹 Replace with your local machine IP (from `ifconfig` or `ipconfig`)
 const LOCAL_IP = '192.168.100.247';  // ⬅️ Your computer's IP address (UPDATED!)
@@ -30,8 +31,8 @@ if (__DEV__) {
     API_BASE_URL = `http://${LOCAL_IP}:${PHP_PORT}`;
   }
 } else {
-  // 🔒 Production endpoint (no /api suffix for PHP backend)
-  API_BASE_URL = 'https://your-production-domain.com';
+  // 🔒 Production endpoint - use environment variable or fallback
+  API_BASE_URL = Constants.expoConfig?.extra?.API_BASE_URL || process.env.API_BASE_URL || 'https://greenfieldsupermarket.com';
 }
 
 console.log(`📡 Using API Base URL: ${API_BASE_URL}`);
