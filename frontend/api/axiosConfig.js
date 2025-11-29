@@ -19,7 +19,13 @@ const PHP_PORT = '8000';
 // ============================================
 let API_BASE_URL = '';
 
-if (__DEV__) {
+// 🔹 FORCE PRODUCTION MODE - Connect to cPanel backend
+const FORCE_PRODUCTION = true; // Set to false to use local PHP backend
+
+if (FORCE_PRODUCTION || !__DEV__) {
+  // 🔒 Production endpoint - use environment variable or fallback
+  API_BASE_URL = Constants.expoConfig?.extra?.API_BASE_URL || process.env.API_BASE_URL || 'https://greenfieldsupermarket.com';
+} else if (__DEV__) {
   if (Platform.OS === 'ios') {
     // iOS simulator - use computer's IP address
     API_BASE_URL = `http://${LOCAL_IP}:${PHP_PORT}`;
@@ -30,9 +36,6 @@ if (__DEV__) {
     // Web or other platforms
     API_BASE_URL = `http://${LOCAL_IP}:${PHP_PORT}`;
   }
-} else {
-  // 🔒 Production endpoint - use environment variable or fallback
-  API_BASE_URL = Constants.expoConfig?.extra?.API_BASE_URL || process.env.API_BASE_URL || 'https://greenfieldsupermarket.com';
 }
 
 console.log(`📡 Using API Base URL: ${API_BASE_URL}`);
