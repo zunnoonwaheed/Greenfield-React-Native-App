@@ -21,24 +21,16 @@ if ($_SERVER['REQUEST_METHOD'] !== 'DELETE') {
     exit();
 }
 
+require_once __DIR__ . '/../admin/includes/db_settings.php';
 require_once __DIR__ . '/../helpers/database.php';
 require_once __DIR__ . '/../helpers/response.php';
 require_once __DIR__ . '/../helpers/auth.php';
 require_once __DIR__ . '/../helpers/logger.php';
 
-// Database connection
-$host = 'localhost';
-$db = 'greenfieldsuperm_db';
-$user = 'root';
-$pass = '';
-
-$con = new mysqli($host, $user, $pass, $db);
-
-if ($con->connect_error) {
+// Use production database connection from db_settings.php
+if (!$con) {
     respondError('Database connection failed');
 }
-
-$con->set_charset('utf8mb4');
 
 logRequest('delete-ad.php');
 

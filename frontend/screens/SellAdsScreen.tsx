@@ -53,9 +53,12 @@ export interface Product {
   specifications: string[];
   seller: {
     name: string;
+    phone?: string;
+    email?: string;
     image: any;
     datePosted: string;
   };
+  rawData?: any;
 }
 
 // Helper function to get image source from database path or URI
@@ -107,6 +110,7 @@ const SellAdsScreen: React.FC = () => {
   // Fetch ads from backend
   const fetchAds = async (search?: string) => {
     try {
+      console.log('🔍 [SellAds] Fetching ads...');
       let result;
       if (search && search.trim()) {
         result = await searchAds(search);
@@ -114,32 +118,48 @@ const SellAdsScreen: React.FC = () => {
         result = await getAds();
       }
 
+      console.log('📦 [SellAds] API Result:', JSON.stringify(result, null, 2));
+
       if (result.success && result.data?.ads) {
+        console.log(`✅ [SellAds] Found ${result.data.ads.length} ads`);
+
         // Transform backend data to match frontend Product interface
-        const transformedProducts: Product[] = result.data.ads.map((ad: any) => ({
-          id: String(ad.id),
-          title: ad.title,
-          description: truncateDescription(ad.description),
-          fullDescription: ad.description, // Keep full description for detail screen
-          price: ad.price,
-          image: getImageSource(ad.primary_image),
-          category: ad.subcategory ? `${ad.category}, ${ad.subcategory}` : ad.category,
-          location: ad.location || 'Unknown Location',
-          condition: ad.condition as 'New' | 'Used',
-          specifications: ad.specifications || [],
-          images: ad.total_images || 1, // Number of images for the ad
-          seller: {
-            name: ad.seller?.name || 'Unknown Seller',
-            image: DEFAULT_AVATAR,
-            datePosted: formatDate(ad.created_at),
-          },
-          // Keep raw data for detail screen
-          rawData: ad,
-        }));
+        const transformedProducts: Product[] = result.data.ads.map((ad: any) => {
+          console.log(`🔄 [SellAds] Transforming ad: ${ad.title}`);
+          console.log(`   📞 Seller: ${ad.seller?.name}, Phone: ${ad.seller?.phone}`);
+          return {
+            id: String(ad.id),
+            title: ad.title,
+            description: truncateDescription(ad.description),
+            fullDescription: ad.description, // Keep full description for detail screen
+            price: ad.price,
+            image: getImageSource(ad.primary_image),
+            category: ad.subcategory ? `${ad.category}, ${ad.subcategory}` : ad.category,
+            location: ad.location || 'Unknown Location',
+            condition: ad.condition as 'New' | 'Used',
+            specifications: ad.specifications || [],
+            images: ad.total_images || 1, // Number of images for the ad
+            seller: {
+              name: ad.seller?.name || 'Unknown Seller',
+              phone: ad.seller?.phone || '',
+              email: ad.seller?.email || '',
+              image: DEFAULT_AVATAR,
+              datePosted: formatDate(ad.created_at),
+            },
+            // Keep raw data for detail screen
+            rawData: ad,
+          };
+        });
+
+        console.log(`✅ [SellAds] Transformed ${transformedProducts.length} products`);
         setProducts(transformedProducts);
+      } else {
+        console.log('⚠️ [SellAds] No ads in result or result not successful');
+        console.log('Result success:', result.success);
+        console.log('Result data:', result.data);
       }
     } catch (error) {
-      console.error('Error fetching ads:', error);
+      console.error('❌ [SellAds] Error fetching ads:', error);
     } finally {
       setLoading(false);
       setRefreshing(false);

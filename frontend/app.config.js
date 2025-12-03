@@ -35,7 +35,7 @@ export default {
         projectId: "8042594d-c901-4079-a2d0-7eb6cc54ec79"
       },
       // Environment variables for production
-      API_BASE_URL: process.env.API_BASE_URL || "https://greenfieldsupermarket.com",
+      API_BASE_URL: process.env.API_BASE_URL || "https://greenfieldsupermarket.com/mobile-api/backend",
       DB_NAME: process.env.DB_NAME || "greenfieldsuperm_db",
       NODE_ENV: process.env.NODE_ENV || "production"
     },

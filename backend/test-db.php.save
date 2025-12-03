@@ -1,0 +1,14 @@
+<?php
+$servername = "YOUR_MYSQL_HOSTNAME_HERE";  // e.g., cp123.webhost.com
+$username   = "greenfieldsuperm_user";
+$password   = "YOUR_NEW_PASSWORD_HERE";
+$dbname     = "greenfieldsuperm_db";
+
+$conn = new mysqli($servername, $username, $password, $dbname);
+
+if ($conn->connect_error) {
+    die("Connection failed: " . $conn->connect_error);
+}
+
+echo "Connected to: " . $servername;
+

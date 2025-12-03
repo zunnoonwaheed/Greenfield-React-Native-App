@@ -24,26 +24,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 }
 
 require_once __DIR__ . '/../helpers/session_config.php';
+require_once __DIR__ . '/../admin/includes/db_settings.php';
 require_once __DIR__ . '/../helpers/database.php';
 require_once __DIR__ . '/../helpers/response.php';
 require_once __DIR__ . '/../helpers/auth.php';
 
-// Database connection
-$host = 'localhost';
-$db = 'greenfieldsuperm_db';
-$user = 'root';
-$pass = '';
-
-// Suppress mysqli errors
-mysqli_report(MYSQLI_REPORT_OFF);
-
-$con = @new mysqli($host, $user, $pass, $db);
-
-if ($con->connect_error) {
+// Use production database connection from db_settings.php
+if (!$con) {
     respondError('Database connection failed');
 }
-
-$con->set_charset('utf8mb4');
 
 // Check if notifications table exists
 $tableCheck = @$con->query("SHOW TABLES LIKE 'notifications'");

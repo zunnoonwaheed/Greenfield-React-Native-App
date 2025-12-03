@@ -1,0 +1,177 @@
+<?php
+/**
+ * Payment Methods API
+ * GET /api/payment-methods.php - List user's payment methods
+ * POST /api/payment-methods.php - Add new payment method
+ */
+
+// Start output buffering
+ob_start();
+
+// Suppress errors from being output
+error_reporting(0);
+ini_set('display_errors', 0);
+
+// CORS headers
+header('Access-Control-Allow-Origin: *');
+header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
+header('Access-Control-Allow-Headers: Content-Type, Authorization');
+
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    while (ob_get_level() > 0) ob_end_clean();
+    http_response_code(200);
+    exit();
+}
+
+require_once __DIR__ . '/../helpers/session_config.php';
+require_once __DIR__ . '/../admin/includes/db_settings.php';
+require_once __DIR__ . '/../helpers/database.php';
+require_once __DIR__ . '/../helpers/response.php';
+require_once __DIR__ . '/../helpers/auth.php';
+require_once __DIR__ . '/../helpers/notifications.php';
+
+// Use production database connection from db_settings.php
+if (!$con) {
+    respondError('Database connection failed');
+}
+
+// Check if payment_methods table exists
+$tableCheck = @$con->query("SHOW TABLES LIKE 'payment_methods'");
+if (!$tableCheck || $tableCheck->num_rows === 0) {
+    $con->close();
+    respondSuccess(['payment_methods' => [], 'message' => 'Payment methods table not yet created']);
+}
+
+// For development, use user_id = 1 (or from auth if available)
+$user_id = 1;
+$authUser = authenticateUser($con);
+if ($authUser) {
+    $user_id = $authUser;
+}
+
+// Handle GET - List payment methods
+if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+    $query = "
+        SELECT
+            id,
+            method_type,
+            card_number_last4,
+            card_holder_name,
+            card_brand,
+            card_expiry,
+            account_number,
+            bank_name,
+            phone_number,
+            is_default,
+            status,
+            created_at
+        FROM payment_methods
+        WHERE user_id = ? AND status = 'active'
+        ORDER BY is_default DESC, created_at DESC
+    ";
+
+    $methods = dbFetchAll($con, $query, 'i', [$user_id]);
+
+    $con->close();
+
+    $formatted = array_map(function($method) {
+        return [
+            'id' => $method['id'],
+            'type' => $method['method_type'],
+            'card_last4' => $method['card_number_last4'],
+            'card_holder' => $method['card_holder_name'],
+            'card_brand' => $method['card_brand'],
+            'card_expiry' => $method['card_expiry'],
+            'account_number' => $method['account_number'],
+            'bank_name' => $method['bank_name'],
+            'phone_number' => $method['phone_number'],
+            'is_default' => boolval($method['is_default']),
+            'status' => $method['status'],
+            'created_at' => $method['created_at']
+        ];
+    }, $methods);
+
+    respondSuccess(['data' => ['payment_methods' => $formatted]]);
+}
+
+// Handle POST - Add payment method
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $data = json_decode(file_get_contents('php://input'), true);
+
+    if (!$data) {
+        $con->close();
+        respondError('Invalid JSON data', 400);
+    }
+
+    $method_type = isset($data['method_type']) ? trim($data['method_type']) : '';
+
+    // Validate method type
+    $validTypes = ['card', 'bank', 'jazzcash', 'easypaisa', 'wallet'];
+    if (!in_array($method_type, $validTypes)) {
+        $con->close();
+        respondError('Invalid payment method type', 400);
+    }
+
+    $card_last4 = isset($data['card_last4']) ? trim($data['card_last4']) : null;
+    $card_holder = isset($data['card_holder']) ? trim($data['card_holder']) : null;
+    $card_brand = isset($data['card_brand']) ? trim($data['card_brand']) : null;
+    $card_expiry = isset($data['card_expiry']) ? trim($data['card_expiry']) : null;
+    $account_number = isset($data['account_number']) ? trim($data['account_number']) : null;
+    $bank_name = isset($data['bank_name']) ? trim($data['bank_name']) : null;
+    $phone_number = isset($data['phone_number']) ? trim($data['phone_number']) : null;
+    $is_default = isset($data['is_default']) && $data['is_default'] ? 1 : 0;
+
+    // If setting as default, remove default from others
+    if ($is_default) {
+        dbExecute($con, "UPDATE payment_methods SET is_default = 0 WHERE user_id = ?", 'i', [$user_id]);
+    }
+
+    // Insert new payment method
+    $insertQuery = "
+        INSERT INTO payment_methods
+        (user_id, method_type, card_number_last4, card_holder_name, card_brand, card_expiry, account_number, bank_name, phone_number, is_default, status)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'active')
+    ";
+
+    $result = dbExecute(
+        $con,
+        $insertQuery,
+        'issssssssi',
+        [$user_id, $method_type, $card_last4, $card_holder, $card_brand, $card_expiry, $account_number, $bank_name, $phone_number, $is_default]
+    );
+
+    if (!$result['success']) {
+        $con->close();
+        respondError('Failed to add payment method', 500);
+    }
+
+    $method_id = $result['insert_id'];
+
+    // Fetch the created method
+    $fetchQuery = "SELECT * FROM payment_methods WHERE id = ?";
+    $method = dbFetchOne($con, $fetchQuery, 'i', [$method_id]);
+
+    // Create notification for payment method addition
+    if ($method && $card_brand && $card_last4) {
+        createPaymentMethodNotification($con, $user_id, $card_brand, $card_last4);
+    }
+
+    $con->close();
+
+    respondSuccess([
+        'message' => 'Payment method added successfully',
+        'payment_method' => [
+            'id' => $method['id'],
+            'type' => $method['method_type'],
+            'card_last4' => $method['card_number_last4'],
+            'card_holder' => $method['card_holder_name'],
+            'card_brand' => $method['card_brand'],
+            'card_expiry' => $method['card_expiry'],
+            'is_default' => boolval($method['is_default']),
+            'created_at' => $method['created_at']
+        ]
+    ], 201);
+}
+
+$con->close();
+respondError('Method not allowed', 405);

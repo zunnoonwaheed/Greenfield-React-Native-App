@@ -13,7 +13,12 @@ import axiosInstance from './axiosConfig';
 export const getAds = async (params = {}) => {
   try {
     const response = await axiosInstance.get('/api/ads.php', { params });
-    return { success: true, data: response };
+    // Response interceptor already returns response.data, which contains {success, data: {ads, pagination}}
+    // So response is already the full API response
+    if (response.success && response.data) {
+      return { success: true, data: response.data }; // Return response.data which contains {ads, pagination}
+    }
+    return response;
   } catch (error) {
     console.error('Error fetching ads:', error);
     return {

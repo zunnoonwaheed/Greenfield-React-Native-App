@@ -12,6 +12,8 @@ import {
   ScrollView,
   Image,
   StatusBar,
+  Alert,
+  Linking,
 } from 'react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
@@ -36,7 +38,45 @@ const MarketplaceProductDetailScreen: React.FC = () => {
   };
 
   const handleContactSeller = () => {
-    navigation.navigate('Messages');
+    // Debug logging
+    console.log('🔍 Contact Seller clicked');
+    console.log('📦 Product:', JSON.stringify(product, null, 2));
+    console.log('👤 Seller:', product.seller);
+    console.log('📞 Seller Phone:', product.seller?.phone);
+    console.log('📦 Raw Data:', product.rawData);
+
+    // Show alert with seller contact info instead of navigating to Messages
+    const sellerPhone = product.seller?.phone || product.rawData?.seller?.phone;
+    const sellerName = product.seller?.name || 'Seller';
+
+    console.log('📞 Final phone:', sellerPhone);
+    console.log('👤 Final name:', sellerName);
+
+    if (sellerPhone) {
+      Alert.alert(
+        `Contact ${sellerName}`,
+        `Phone: ${sellerPhone}`,
+        [
+          {
+            text: 'Call Now',
+            onPress: () => {
+              // Open phone dialer
+              const phoneUrl = `tel:${sellerPhone}`;
+              Linking.openURL(phoneUrl).catch(() => {
+                Alert.alert('Error', 'Unable to make phone call');
+              });
+            }
+          },
+          {
+            text: 'Cancel',
+            style: 'cancel'
+          }
+        ]
+      );
+    } else {
+      console.log('❌ No phone number found');
+      Alert.alert('Contact Info', 'Seller contact information not available');
+    }
   };
 
   const handleFavorite = () => {
@@ -88,6 +128,8 @@ const MarketplaceProductDetailScreen: React.FC = () => {
     tags: passedProduct.specifications || passedProduct.tags || [],
     seller: {
       name: passedProduct.seller?.name || passedProduct.rawData?.seller?.name || 'Seller Name',
+      phone: passedProduct.seller?.phone || passedProduct.rawData?.seller?.phone || '',
+      email: passedProduct.seller?.email || passedProduct.rawData?.seller?.email || '',
       date: passedProduct.seller?.datePosted || passedProduct.seller?.date || 'Date',
       avatar: passedProduct.seller?.image || passedProduct.seller?.avatar || require('../images/homepage-assets/profile-pic.png'),
     },
@@ -95,6 +137,7 @@ const MarketplaceProductDetailScreen: React.FC = () => {
     images: passedProduct.rawData?.total_images || passedProduct.images || 5,
     currentImage: passedProduct.currentImage || 1,
     image: passedProduct.image || require('../images/homepage-assets/used-frame.png'),
+    rawData: passedProduct.rawData || passedProduct,
   } : {
     price: 185000,
     title: 'iPhone 13 Pro – 128GB',

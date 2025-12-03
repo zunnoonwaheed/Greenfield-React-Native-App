@@ -1,6 +1,6 @@
 <?php
 /**
- * Get Product Details API - FIXED VERSION
+ * Get Product Details API
  * Supports both ID and slug
  * Method: GET
  * Params: id OR slug
@@ -8,7 +8,6 @@
  */
 include("../admin/includes/db_settings.php");
 header('Content-Type: application/json');
-header('Access-Control-Allow-Origin: *');
 
 $id = $_GET['id'] ?? '';
 $slug = $_GET['slug'] ?? '';
@@ -61,15 +60,17 @@ if ($product['price'] > 0 && $product['dprice'] > 0 && $product['dprice'] < $pro
     $discountPct = round((($product['price'] - $product['dprice']) / $product['price']) * 100);
 }
 
-// Get similar products (same category) - FIXED: removed non-existent columns
+// Get similar products (same category)
 $similarQuery = "SELECT d.id, d.namee as name, d.slug, d.imagee as image, d.price, d.dprice,
-                        CASE WHEN d.price > 0 AND d.dprice > 0 AND d.dprice < d.price
-                             THEN ROUND(((d.price - d.dprice) / d.price) * 100)
-                             ELSE 0 END as discount_percentage
+                        COALESCE(d.discount_percentage,
+                            CASE WHEN d.price > 0 AND d.dprice > 0 AND d.dprice < d.price
+                                 THEN ROUND(((d.price - d.dprice) / d.price) * 100)
+                                 ELSE 0 END
+                        ) as discount_percentage
                  FROM dow d
                  WHERE d.catID = ? AND d.id != ? AND d.statuss = '1'
                  AND d.imagee IS NOT NULL AND d.imagee != ''
-                 ORDER BY d.id DESC
+                 ORDER BY d.is_popular DESC, d.rating_count DESC
                  LIMIT 6";
 $stmt = $con->prepare($similarQuery);
 $stmt->bind_param("ii", $product['catID'], $product['id']);
@@ -100,15 +101,18 @@ while ($row = $similarResult->fetch_assoc()) {
     ];
 }
 
-// Get frequently bought together (popular products from different categories) - FIXED
+// Get frequently bought together (popular products from different categories)
 $frequentlyBoughtQuery = "SELECT d.id, d.namee as name, d.slug, d.imagee as image, d.price, d.dprice,
-                                 CASE WHEN d.price > 0 AND d.dprice > 0 AND d.dprice < d.price
-                                      THEN ROUND(((d.price - d.dprice) / d.price) * 100)
-                                      ELSE 0 END as discount_percentage
+                                 COALESCE(d.discount_percentage,
+                                     CASE WHEN d.price > 0 AND d.dprice > 0 AND d.dprice < d.price
+                                          THEN ROUND(((d.price - d.dprice) / d.price) * 100)
+                                          ELSE 0 END
+                                 ) as discount_percentage
                           FROM dow d
                           WHERE d.catID != ? AND d.id != ? AND d.statuss = '1'
                           AND d.imagee IS NOT NULL AND d.imagee != ''
-                          ORDER BY RAND()
+                          AND d.is_popular = 1
+                          ORDER BY d.rating_count DESC, RAND()
                           LIMIT 6";
 $stmt = $con->prepare($frequentlyBoughtQuery);
 $stmt->bind_param("ii", $product['catID'], $product['id']);
@@ -139,15 +143,17 @@ while ($row = $frequentlyBoughtResult->fetch_assoc()) {
     ];
 }
 
-// Get other recommendations (recently added products) - FIXED
+// Get other recommendations (recently added popular products)
 $recommendedQuery = "SELECT d.id, d.namee as name, d.slug, d.imagee as image, d.price, d.dprice,
-                            CASE WHEN d.price > 0 AND d.dprice > 0 AND d.dprice < d.price
-                                 THEN ROUND(((d.price - d.dprice) / d.price) * 100)
-                                 ELSE 0 END as discount_percentage
+                            COALESCE(d.discount_percentage,
+                                CASE WHEN d.price > 0 AND d.dprice > 0 AND d.dprice < d.price
+                                     THEN ROUND(((d.price - d.dprice) / d.price) * 100)
+                                     ELSE 0 END
+                            ) as discount_percentage
                      FROM dow d
                      WHERE d.id != ? AND d.statuss = '1'
                      AND d.imagee IS NOT NULL AND d.imagee != ''
-                     ORDER BY d.id DESC
+                     ORDER BY d.id DESC, d.is_popular DESC
                      LIMIT 6";
 $stmt = $con->prepare($recommendedQuery);
 $stmt->bind_param("i", $product['id']);
@@ -187,14 +193,14 @@ echo json_encode([
             'slug' => $product['slug'],
             'image_url' => $productImageUrl,
             'price' => (float)$product['price'],
-            'discounted_price' => (float)($product['dprice'] ?: $product['price']),
+            'discounted_price' => (float)$product['dprice'],
             'discount_percentage' => $discountPct,
             'description' => $product['desc1'] ?? '',
             'category_id' => (int)$product['catID'],
             'brand_id' => (int)($product['brID'] ?? 0),
-            'rating' => 4.0,
-            'rating_count' => 0,
-            'brand_name' => 'Greenfield'
+            'rating' => (float)($product['rating'] ?? 4.0),
+            'rating_count' => (int)($product['rating_count'] ?? 0),
+            'brand_name' => $product['brID'] ? '' : 'Greenfield' // Will be populated if you join with brands table
         ],
         'similar_products' => $similarProducts,
         'frequently_bought_together' => $frequentlyBought,
