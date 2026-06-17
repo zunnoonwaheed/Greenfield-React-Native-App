@@ -152,7 +152,7 @@ const ChatbotModal: React.FC<ChatbotModalProps> = ({ visible, onClose }) => {
         >
           <View style={styles.chatContainer}>
             <ImageBackground
-              source={require('../images/homepage-assets/background-chatbot.png')}
+              source={require('../images/homepage-assets/chatbot-bg.png')}
               style={styles.backgroundImage}
               resizeMode="cover"
             >

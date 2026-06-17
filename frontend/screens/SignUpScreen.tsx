@@ -99,14 +99,36 @@ const SignUpScreen: React.FC = () => {
       if (result && result.success) {
         console.log('✅ Registration successful');
 
-        // Show success message and navigate to login
+        // Get verification token and email status from response
+        const verificationToken = result.data?.verification_token || result.verification_token || '';
+        const emailSent = result.data?.email_sent !== false;
+
+        // Show success message with email verification instructions
+        const message = emailSent
+          ? `Welcome ${name.trim()}! Your account has been created successfully.\n\n📧 We've sent a verification email to ${email}. Please check your inbox and click the verification link to activate your account.\n\nYou must verify your email before you can login.`
+          : `Welcome ${name.trim()}! Your account has been created.\n\n⚠️ Email sending failed. ${verificationToken ? 'Please contact support or use the test verification option.' : 'Please contact support.'}`;
+
         Alert.alert(
-          '🎉 Account Created!',
-          `Welcome ${name.trim()}! Your account has been created successfully.\n\nPlease login with your email and password to continue.`,
+          '✅ Registration Successful!',
+          message,
           [
+            // For development: Allow direct verification if token is returned
+            ...(verificationToken ? [{
+              text: 'Test Verify (Dev)',
+              onPress: () => navigation.navigate('VerifyEmail', { token: verificationToken }),
+              style: 'default' as const
+            }] : []),
             {
-              text: 'Go to Login',
-              onPress: () => navigation.navigate('Login'),
+              text: 'OK',
+              onPress: () => {
+                // Clear form
+                setName('');
+                setEmail('');
+                setPhone('');
+                setPassword('');
+                // Navigate to login
+                navigation.navigate('Login');
+              },
             },
           ]
         );

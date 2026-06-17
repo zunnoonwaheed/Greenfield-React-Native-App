@@ -10,6 +10,7 @@ session_start();
 require_once("../admin/includes/db_settings.php");
 require_once("../helpers/response.php");
 require_once("../helpers/database.php");
+require_once("../helpers/email.php");
 
 header('Content-Type: application/json');
 
@@ -47,12 +48,24 @@ if ($user) {
     $result = dbExecute($con, $query, 'ss', [$email, $token]);
 
     if ($result['success']) {
-        // In production, send email here
-        // For now, return the token for testing
-        jsonSuccess([
-            'reset_token' => $token,
-            'note' => 'In production, this token would be sent via email. Token expires in 1 hour.'
-        ], 'Password reset link sent to your email');
+        // Send password reset email
+        $emailSent = sendPasswordResetEmail($email, $user['name'], $token);
+
+        if ($emailSent) {
+            // Email sent successfully
+            jsonSuccess([
+                'token' => $token, // For development/testing - remove in production
+                'email_sent' => true
+            ], 'Password reset link sent to your email. Please check your inbox.');
+        } else {
+            // Email failed but token created - still allow testing
+            error_log("⚠️ Failed to send email to $email, but token created: $token");
+            jsonSuccess([
+                'token' => $token, // For development/testing
+                'email_sent' => false,
+                'note' => 'Email sending failed. Token available for testing.'
+            ], 'Password reset token created. (Email delivery may have failed)');
+        }
     } else {
         jsonError('Failed to generate reset token', 500);
     }

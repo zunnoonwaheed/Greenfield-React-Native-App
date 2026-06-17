@@ -9,10 +9,10 @@ import { Platform } from 'react-native';
 import Constants from 'expo-constants';
 
 // 🔹 Replace with your local machine IP (from `ifconfig` or `ipconfig`)
-const LOCAL_IP = '192.168.100.247';  // ⬅️ Your computer's IP address (UPDATED!)
+const LOCAL_IP = '192.168.100.136';  // ⬅️ Your computer's IP address (UPDATED!)
 
-// 🔹 PHP Backend Port (PHP server running on port 8000)
-const PHP_PORT = '8000';
+// 🔹 PHP Backend Port (PHP server running on port 8888)
+const PHP_PORT = '8888';
 
 // ============================================
 // Detect environment and platform
@@ -20,11 +20,11 @@ const PHP_PORT = '8000';
 let API_BASE_URL = '';
 
 // 🔹 FORCE PRODUCTION MODE - Connect to cPanel backend
-const FORCE_PRODUCTION = true; // Set to true to use production backend
+const FORCE_PRODUCTION = false; // Set to true to use production backend
 
 if (FORCE_PRODUCTION || !__DEV__) {
   // 🔒 Production endpoint - use environment variable or fallback
-  API_BASE_URL = Constants.expoConfig?.extra?.API_BASE_URL || process.env.API_BASE_URL || 'https://greenfieldsupermarket.com';
+  API_BASE_URL = Constants.expoConfig?.extra?.API_BASE_URL || process.env.API_BASE_URL || 'https://greenfieldsupermarket.com/mobile-api/backend';
 } else if (__DEV__) {
   if (Platform.OS === 'ios') {
     // iOS simulator/physical device - use computer's IP address

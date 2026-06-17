@@ -7,6 +7,7 @@ import {
   Animated,
   Dimensions,
   Image,
+  ImageBackground,
   TouchableOpacity,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -86,7 +87,11 @@ const WelcomeScreen: React.FC = () => {
     });
 
   return (
-    <View style={styles.container}>
+    <ImageBackground
+      source={require('../images/homepage-assets/welcome-bg.png')}
+      style={styles.container}
+      resizeMode="contain"
+    >
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
 
       <SafeAreaView edges={['top']} style={styles.safe}>
@@ -100,9 +105,9 @@ const WelcomeScreen: React.FC = () => {
         </View>
       </SafeAreaView>
 
-      <View style={styles.confettiWrap}>{renderConfetti()}</View>
+      <View style={styles.confettiWrap} pointerEvents="none">{renderConfetti()}</View>
 
-      {/* Centered image (includes the “Welcome aboard!” text inside the asset) */}
+      {/* Centered image (includes the "Welcome aboard!" text inside the asset) */}
       <View style={styles.centerContent}>
         <Image
           source={require('../images/homepage-assets/welcome.png')}
@@ -110,13 +115,13 @@ const WelcomeScreen: React.FC = () => {
           resizeMode="contain"
         />
       </View>
-    </View>
+    </ImageBackground>
   );
 };
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#FFFFFF' },
-  safe: { backgroundColor: '#FFFFFF' },
+  safe: { position: 'absolute', top: 0, left: 0, right: 0, zIndex: 999, backgroundColor: 'transparent' },
 
   topBar: { height: 44, justifyContent: 'center', paddingHorizontal: 18 },
   backBtn: { width: 36, height: 36, justifyContent: 'center', alignItems: 'flex-start' },
@@ -135,11 +140,25 @@ const styles = StyleSheet.create({
     borderRightColor: '#1A1A1A',
   },
 
-  confettiWrap: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
+  confettiWrap: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 10 },
   confetti: { position: 'absolute', borderRadius: 2 },
 
-  centerContent: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 24 },
-  illustration: { width: width * 0.8, height: width * 0.8 * 1.05 },
+  centerContent: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 24,
+    zIndex: 1,
+  },
+  illustration: {
+    width: '100%',
+    height: height * 0.6,
+    maxWidth: 400,
+  },
 });
 
 export default WelcomeScreen;

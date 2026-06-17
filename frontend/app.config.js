@@ -2,43 +2,71 @@ import 'dotenv/config';
 
 export default {
   expo: {
-    entryPoint: "./index.ts",
-    name: "Greenfield",
-    slug: "Greenfield",
-    version: "1.0.0",
+    name: "greenfield",
+    slug: "greenfield",
+
+    version: "1.0.1",
     orientation: "portrait",
-    icon: "./assets/icon.png",
+
+    icon: "./assets/logo.png",
     userInterfaceStyle: "light",
-    newArchEnabled: true,
+
     splash: {
-      image: "./assets/splash-icon.png",
+      image: "./assets/logo.png",
       resizeMode: "contain",
       backgroundColor: "#ffffff"
     },
+
+    scheme: "greenfield",
+
     ios: {
-      supportsTablet: true
+      bundleIdentifier: "com.greenfieldsupermarket.app",
+      associatedDomains: ["applinks:greenfieldsupermarket.com"]
     },
+
     android: {
+      package: "com.greenfieldsupermarket.app",
+      versionCode: 2,
+      permissions: ["INTERNET"],
       adaptiveIcon: {
-        foregroundImage: "./assets/adaptive-icon.png",
+        foregroundImage: "./assets/logo.png",
         backgroundColor: "#ffffff"
       },
-      edgeToEdgeEnabled: true,
-      predictiveBackGestureEnabled: false,
-      package: "com.zunnoon.Greenfield"
+      intentFilters: [
+        {
+          action: "VIEW",
+          autoVerify: true,
+          data: [
+            {
+              scheme: "greenfield",
+              host: "*"
+            }
+          ],
+          category: ["BROWSABLE", "DEFAULT"]
+        }
+      ]
     },
-    web: {
-      favicon: "./assets/favicon.png"
-    },
+
+    plugins: [
+      "expo-web-browser",
+      "@react-native-google-signin/google-signin"
+    ],
+
     extra: {
+      API_BASE_URL:
+        process.env.API_BASE_URL ||
+        "https://greenfieldsupermarket.com/mobile-api/backend",
+
+      NODE_ENV: "production",
+
+      GOOGLE_WEB_CLIENT_ID: process.env.GOOGLE_WEB_CLIENT_ID || "969529169540-vkaojfsqj9n4167e0a2cbahlh5ogkn8v.apps.googleusercontent.com",
+
+      // ✅ REQUIRED for dynamic config
       eas: {
-        projectId: "8042594d-c901-4079-a2d0-7eb6cc54ec79"
-      },
-      // Environment variables for production
-      API_BASE_URL: process.env.API_BASE_URL || "https://greenfieldsupermarket.com/mobile-api/backend",
-      DB_NAME: process.env.DB_NAME || "greenfieldsuperm_db",
-      NODE_ENV: process.env.NODE_ENV || "production"
+        projectId: "bb87a0c7-0bc3-4311-ac60-9a2167343b73"
+      }
     },
-    owner: "zunnoon"
+
+    owner: "zunnoonwaheed"
   }
 };

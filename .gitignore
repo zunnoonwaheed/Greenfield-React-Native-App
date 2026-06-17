@@ -1,0 +1,6 @@
+# Large zip files
+backend-deploy.zip
+backend.zip
+
+# macOS
+.DS_Store

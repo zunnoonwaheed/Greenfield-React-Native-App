@@ -3,7 +3,7 @@ import {
   View,
   Text,
   StyleSheet,
-  ScrollView,
+  FlatList,
   TouchableOpacity,
   StatusBar,
   Image,
@@ -175,9 +175,8 @@ const CategoriesScreen: React.FC = () => {
       setLoading(false);
     }
   };
-  const renderCategoryItem = (item: Category) => (
+  const renderCategoryItem = ({ item }: { item: Category }) => (
     <TouchableOpacity
-      key={item.id}
       style={styles.categoryCard}
       onPress={() => {
         console.log(`📂 Category ${item.name} (ID: ${item.id}) clicked`);
@@ -201,19 +200,6 @@ const CategoriesScreen: React.FC = () => {
     </TouchableOpacity>
   );
 
-  const renderCategoriesGrid = () => {
-    const rows = [];
-    for (let i = 0; i < categories.length; i += 4) {
-      const rowCategories = categories.slice(i, i + 4);
-      rows.push(
-        <View key={i} style={styles.categoryRow}>
-          {rowCategories.map(renderCategoryItem)}
-        </View>
-      );
-    }
-    return rows;
-  };
-
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
@@ -235,24 +221,31 @@ const CategoriesScreen: React.FC = () => {
       </View>
 
       {/* Categories Grid */}
-      <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
-        {loading ? (
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color="#28B446" />
-            <Text style={styles.loadingText}>Loading categories...</Text>
-          </View>
-        ) : categories.length === 0 ? (
-          <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>No categories available</Text>
-          </View>
-        ) : (
-          renderCategoriesGrid()
-        )}
-      </ScrollView>
+      {loading ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#28B446" />
+          <Text style={styles.loadingText}>Loading categories...</Text>
+        </View>
+      ) : categories.length === 0 ? (
+        <View style={styles.emptyContainer}>
+          <Text style={styles.emptyText}>No categories available</Text>
+        </View>
+      ) : (
+        <FlatList
+          data={categories}
+          renderItem={renderCategoryItem}
+          keyExtractor={(item) => item.id.toString()}
+          numColumns={4}
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+          columnWrapperStyle={styles.categoryRow}
+          removeClippedSubviews={true}
+          maxToRenderPerBatch={12}
+          updateCellsBatchingPeriod={50}
+          initialNumToRender={16}
+          windowSize={5}
+        />
+      )}
     </SafeAreaView>
   );
 };
@@ -287,9 +280,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     fontFamily: 'DM Sans',
     color: '#1E293B',
-  },
-  scrollView: {
-    flex: 1,
   },
   scrollContent: {
     paddingHorizontal: 16,

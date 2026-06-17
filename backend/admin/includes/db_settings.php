@@ -1,14 +1,14 @@
 <?php
 /**
- * Database configuration - Production DB
- * Both mobile app and web use the same production database
+ * Database configuration - Local Development
+ * Using local MySQL for development
  */
 
-// cPanel Production DB credentials
-$db_host = "localhost";                  // Usually 'localhost' in cPanel
-$db_user = "greenfieldsuperm_user";     // Production DB user
-$db_pass = "Samikhan123###";            // Production DB password
-$db_name = "greenfieldsuperm_db";       // Production DB name
+// Local MySQL credentials (Homebrew MySQL)
+$db_host = "localhost";
+$db_user = "root";                    // Default MySQL user
+$db_pass = "";                        // Empty password for Homebrew MySQL
+$db_name = "greenfieldsuperm_db_local";  // Local database
 
 // Create connection
 $con = mysqli_connect($db_host, $db_user, $db_pass, $db_name);

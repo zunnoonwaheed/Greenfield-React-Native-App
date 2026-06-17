@@ -7,6 +7,17 @@
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axiosInstance, { setUserData, removeAuthToken, setAuthToken } from './axiosConfig';
+import Constants from 'expo-constants';
+
+// Conditionally import GoogleSignin only in development builds (not Expo Go)
+let GoogleSignin = null;
+try {
+  if (Constants.appOwnership !== 'expo') {
+    GoogleSignin = require('@react-native-google-signin/google-signin').GoogleSignin;
+  }
+} catch (error) {
+  console.log('⚠️ Google Sign-In not available in Expo Go');
+}
 
 /**
  * LOGIN - Authenticate user with session
@@ -304,6 +315,93 @@ export const checkAuthStatus = async () => {
   }
 };
 
+/**
+ * GOOGLE SIGN-IN - Authenticate user with Google
+ * @returns {Promise} API response with user data
+ */
+export const googleSignIn = async () => {
+  try {
+    console.log('============================================');
+    console.log('[CLIENT] Google Sign-In attempt');
+    console.log('============================================');
+
+    // Check if GoogleSignin is available (not in Expo Go)
+    if (!GoogleSignin) {
+      throw new Error('Google Sign-In is not available in Expo Go. Please use a development build.');
+    }
+
+    // Check if device supports Google Play services (Android)
+    await GoogleSignin.hasPlayServices();
+
+    // Sign in with Google
+    const userInfo = await GoogleSignin.signIn();
+
+    console.log('[CLIENT] Google sign-in successful:', userInfo);
+
+    // Get ID token for backend verification
+    const { idToken } = await GoogleSignin.getTokens();
+
+    // Send to backend for verification and authentication
+    const formData = new URLSearchParams();
+    formData.append('id_token', idToken);
+    formData.append('email', userInfo.data?.user?.email || userInfo.user?.email);
+    formData.append('name', userInfo.data?.user?.name || userInfo.user?.name);
+    formData.append('google_id', userInfo.data?.user?.id || userInfo.user?.id);
+    formData.append('photo', userInfo.data?.user?.photo || userInfo.user?.photo || '');
+
+    const response = await axiosInstance.post('/api/google-login.php', formData.toString(), {
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+    });
+
+    console.log('[CLIENT] Backend response:', response);
+
+    if (response.success && response.data && response.data.user) {
+      const user = response.data.user;
+
+      // Store auth flag and user data
+      await setAuthToken('logged_in');
+      await setUserData(user);
+
+      // Store session ID if provided
+      if (response.data.session_id) {
+        await AsyncStorage.setItem('sessionId', response.data.session_id);
+        console.log('🔑 Session ID stored:', response.data.session_id);
+      }
+
+      console.log('[CLIENT] ✅ Google login successful');
+
+      return {
+        success: true,
+        message: response.message || 'Login successful',
+        user: user
+      };
+    }
+
+    throw new Error(response.error || response.message || 'Google login failed');
+
+  } catch (error) {
+    console.error('[CLIENT] ❌ Google sign-in error:', error);
+
+    let errorMessage = 'Google sign-in failed. Please try again.';
+
+    if (error.code === 'SIGN_IN_CANCELLED') {
+      errorMessage = 'Sign-in was cancelled';
+    } else if (error.code === 'IN_PROGRESS') {
+      errorMessage = 'Sign-in is already in progress';
+    } else if (error.code === 'PLAY_SERVICES_NOT_AVAILABLE') {
+      errorMessage = 'Google Play services not available';
+    } else if (error.response && error.response.data) {
+      errorMessage = error.response.data.error || error.response.data.message || errorMessage;
+    } else if (error.message) {
+      errorMessage = error.message;
+    }
+
+    throw new Error(errorMessage);
+  }
+};
+
 export default {
   login,
   signup,
@@ -312,4 +410,5 @@ export default {
   forgotPassword,
   resetPassword,
   checkAuthStatus,
+  googleSignIn,
 };

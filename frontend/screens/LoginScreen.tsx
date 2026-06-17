@@ -1,5 +1,5 @@
 // screens/LoginScreen.tsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -19,9 +19,20 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
 import type { AuthStackParamList } from '../navigation/AuthStack';
-import { login as apiLogin } from '../api/authAPI';
+import { login as apiLogin, googleSignIn } from '../api/authAPI';
 import { useAuth } from '../contexts/AuthContext';
 import axiosInstance from '../api/axiosConfig';
+import Constants from 'expo-constants';
+
+// Conditionally import GoogleSignin only in development builds (not Expo Go)
+let GoogleSignin: any = null;
+try {
+  if (Constants.appOwnership !== 'expo') {
+    GoogleSignin = require('@react-native-google-signin/google-signin').GoogleSignin;
+  }
+} catch (error) {
+  console.log('⚠️ Google Sign-In not available in Expo Go');
+}
 
 type LoginScreenNavigationProp = StackNavigationProp<AuthStackParamList, 'Login'>;
 
@@ -39,6 +50,31 @@ const LoginScreen: React.FC = () => {
   const [password, setPassword] = useState('');
   const [pwVisible, setPwVisible] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
+
+  useEffect(() => {
+    // Configure Google Sign-In (only in development builds, not Expo Go)
+    if (!GoogleSignin) {
+      console.log('⚠️ Google Sign-In not available in Expo Go');
+      return;
+    }
+
+    const webClientId = Constants.expoConfig?.extra?.GOOGLE_WEB_CLIENT_ID;
+
+    if (webClientId) {
+      try {
+        GoogleSignin.configure({
+          webClientId: webClientId,
+          offlineAccess: true,
+          forceCodeForRefreshToken: true,
+        });
+      } catch (error) {
+        console.warn('⚠️ Failed to configure Google Sign-In:', error);
+      }
+    } else {
+      console.warn('⚠️ GOOGLE_WEB_CLIENT_ID not configured. Google Sign-In will not work.');
+    }
+  }, []);
 
   const onLogin = async () => {
     if (loading) {
@@ -191,13 +227,83 @@ const LoginScreen: React.FC = () => {
     navigation.navigate('SignUp');
   };
 
+  const onGoogleSignIn = async () => {
+    if (googleLoading || loading) {
+      return;
+    }
+
+    // Check if running in Expo Go (won't work there)
+    const isExpoGo = Constants.appOwnership === 'expo';
+    if (isExpoGo) {
+      Alert.alert(
+        'Development Build Required',
+        'Google Sign-In requires a development build and does not work in Expo Go.\n\nPlease build the app with:\neas build --profile preview --platform android',
+        [{ text: 'OK' }]
+      );
+      return;
+    }
+
+    setGoogleLoading(true);
+
+    try {
+      console.log('🔐 Starting Google Sign-In...');
+
+      const result = await googleSignIn();
+
+      if (result && result.success) {
+        console.log('✅ Google Sign-In successful:', result.user?.email);
+
+        // Check if user has saved addresses
+        try {
+          const addressResponse = await axiosInstance.get('/api/addresses.php');
+          console.log('📍 Addresses response:', addressResponse);
+
+          // If user has no addresses, navigate to AddLocation screen
+          if (!addressResponse.success || !addressResponse.data?.addresses || addressResponse.data.addresses.length === 0) {
+            console.log('📍 No addresses found - navigating to AddLocation');
+            navigation.navigate('AddLocation');
+          } else {
+            // User has addresses - trigger AuthContext to switch to MainStack
+            console.log('📍 User has addresses - triggering AuthContext');
+            await authLogin('logged_in', result.user || { email: result.user?.email || '' });
+          }
+        } catch (addressError) {
+          console.error('⚠️ Error checking addresses:', addressError);
+          navigation.navigate('AddLocation');
+        }
+      } else {
+        throw new Error(result?.message || 'Google Sign-In failed');
+      }
+    } catch (error: any) {
+      console.error('❌ Google Sign-In error:', error);
+
+      let errorMessage = 'Google Sign-In failed. Please try again.';
+
+      if (error.message) {
+        if (error.message === 'Sign-in was cancelled') {
+          // User cancelled, don't show error
+          setGoogleLoading(false);
+          return;
+        } else if (error.message.includes('Network Error') || error.message.includes('network')) {
+          errorMessage = 'Cannot connect to server. Please check your internet connection.';
+        } else {
+          errorMessage = error.message;
+        }
+      }
+
+      Alert.alert('❌ Google Sign-In Failed', errorMessage);
+    } finally {
+      setGoogleLoading(false);
+    }
+  };
+
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor={ORANGE} />
+      <StatusBar barStyle="light-content" backgroundColor={GREEN} />
 
       {/* HEADER WITH BACKGROUND IMAGE */}
       <ImageBackground
-        source={require('../images/homepage-assets/login-location.png')}
+        source={require('../images/homepage-assets/login-bg.png')}
         style={styles.header}
         resizeMode="cover"
       >
@@ -303,13 +409,24 @@ const LoginScreen: React.FC = () => {
             </View>
 
             {/* Google */}
-            <TouchableOpacity style={styles.socialBtn} activeOpacity={0.9}>
-              <Image
-                source={require('../images/homepage-assets/google-logo.png')}
-                style={styles.socialIcon}
-                resizeMode="contain"
-              />
-              <Text style={styles.socialText}>Sign in with Google</Text>
+            <TouchableOpacity
+              style={[styles.socialBtn, googleLoading && { opacity: 0.6 }]}
+              activeOpacity={0.9}
+              onPress={onGoogleSignIn}
+              disabled={googleLoading || loading}
+            >
+              {googleLoading ? (
+                <ActivityIndicator color="#4285F4" size="small" />
+              ) : (
+                <>
+                  <Image
+                    source={require('../images/homepage-assets/google-logo.png')}
+                    style={styles.socialIcon}
+                    resizeMode="contain"
+                  />
+                  <Text style={styles.socialText}>Sign in with Google</Text>
+                </>
+              )}
             </TouchableOpacity>
 
             {/* Apple */}
@@ -339,9 +456,9 @@ const LoginScreen: React.FC = () => {
 const SHEET_RADIUS = 28;
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: ORANGE },
+  container: { flex: 1, backgroundColor: GREEN },
 
-  header: { flex: 1, backgroundColor: ORANGE, position: 'relative' },
+  header: { flex: 1, backgroundColor: GREEN, position: 'relative' },
   safeTop: { flex: 1 },
 
   topBar: { flexDirection: 'row', alignItems: 'center', height: 56, paddingHorizontal: 16 },

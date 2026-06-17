@@ -59,22 +59,31 @@ const ForgotPasswordScreen: React.FC = () => {
         console.log('✅ Reset link sent successfully');
 
         // In development, backend returns token for testing
-        const token = result.token || '';
+        const token = result.data?.token || result.token || '';
+        const emailSent = result.data?.email_sent !== false;
+
+        // Show success message with instructions
+        const message = emailSent
+          ? `A password reset link has been sent to ${email}. Please check your email inbox and click the link to reset your password.\n\nThe link will expire in 1 hour.`
+          : `Password reset initiated. ${token ? '(Email sending failed - using test mode)' : ''}`;
 
         Alert.alert(
-          'Success!',
-          result.message || 'Password reset link sent to your email',
+          'Check Your Email',
+          message,
           [
+            // For development: Allow direct navigation if token is returned
+            ...(token ? [{
+              text: 'Test Reset (Dev)',
+              onPress: () => navigation.navigate('ResetPassword', { token }),
+              style: 'default' as const
+            }] : []),
             {
               text: 'OK',
               onPress: () => {
-                // Navigate to reset password screen with token (for development)
-                if (token) {
-                  navigation.navigate('ResetPassword', { token });
-                } else {
-                  // In production, user would get email with link
-                  navigation.goBack();
-                }
+                // Clear email field
+                setEmail('');
+                // Return to login screen
+                navigation.navigate('Login');
               },
             },
           ]

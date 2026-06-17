@@ -12,6 +12,7 @@ require_once("../helpers/response.php");
 require_once("../helpers/auth.php");
 require_once("../helpers/database.php");
 require_once("../helpers/logger.php");
+require_once("../helpers/email.php");
 
 header('Content-Type: application/json');
 
@@ -85,35 +86,59 @@ if ($type === "Apartment" && $apartment) {
 $hashedPassword = hashPassword($password);
 $createdAt = date("Y-m-d H:i:s");
 
-// Insert user
-$query = "INSERT INTO users (name, email, password, phone, address, created_at) VALUES (?, ?, ?, ?, ?, ?)";
-$result = dbExecute($con, $query, 'ssssss', [$name, $email, $hashedPassword, $phone, $fullAddress, $createdAt]);
+// Generate email verification token (valid for 24 hours)
+$verificationToken = bin2hex(random_bytes(32));
+$verificationExpires = date("Y-m-d H:i:s", strtotime('+24 hours'));
+
+// Insert user with email verification fields
+$query = "INSERT INTO users (name, email, password, phone, address, email_verified, email_verification_token, email_verification_expires_at, created_at)
+          VALUES (?, ?, ?, ?, ?, 0, ?, ?, ?)";
+$result = dbExecute($con, $query, 'ssssssss', [$name, $email, $hashedPassword, $phone, $fullAddress, $verificationToken, $verificationExpires, $createdAt]);
 
 if ($result['success']) {
     $userId = $result['insert_id'];
 
-    // Auto-login after registration
-    setUserSession([
-        'id' => $userId,
-        'name' => $name,
-        'email' => $email,
-        'phone' => $phone,
-        'address' => $fullAddress
-    ]);
+    // Send email verification email
+    $emailSent = sendEmailVerification($email, $name, $verificationToken);
 
-    logInfo("User registered successfully: ID $userId, Email: $email");
-    logResponse($endpoint, true, null, "Registration successful for $email");
-    endTimer($startTime, $endpoint);
+    if ($emailSent) {
+        logInfo("User registered successfully: ID $userId, Email: $email - Verification email sent");
+        logResponse($endpoint, true, null, "Registration successful for $email");
+        endTimer($startTime, $endpoint);
 
-    jsonSuccess([
-        'user' => [
-            'id' => $userId,
-            'name' => $name,
-            'email' => $email,
-            'phone' => $phone,
-            'address' => $fullAddress
-        ]
-    ], 'Registration successful', 201);
+        jsonSuccess([
+            'user' => [
+                'id' => $userId,
+                'name' => $name,
+                'email' => $email,
+                'phone' => $phone,
+                'address' => $fullAddress,
+                'email_verified' => false
+            ],
+            'verification_token' => $verificationToken, // For development/testing - remove in production
+            'email_sent' => true
+        ], 'Registration successful! Please check your email to verify your account.', 201);
+    } else {
+        // Email failed but user created
+        error_log("⚠️ Failed to send verification email to $email, but user created with ID $userId");
+        logInfo("User registered successfully: ID $userId, Email: $email - Email sending failed");
+        logResponse($endpoint, true, null, "Registration successful for $email (email delivery failed)");
+        endTimer($startTime, $endpoint);
+
+        jsonSuccess([
+            'user' => [
+                'id' => $userId,
+                'name' => $name,
+                'email' => $email,
+                'phone' => $phone,
+                'address' => $fullAddress,
+                'email_verified' => false
+            ],
+            'verification_token' => $verificationToken, // For development/testing
+            'email_sent' => false,
+            'note' => 'Email delivery may have failed. Token available for testing.'
+        ], 'Registration successful! (Email verification may have failed - please contact support)', 201);
+    }
 } else {
     logError($endpoint, "Registration failed: " . $result['error']);
     logResponse($endpoint, false, null, 'Registration failed');

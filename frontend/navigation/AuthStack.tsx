@@ -12,6 +12,7 @@ import LoginScreen from '../screens/LoginScreen';
 import SignUpScreen from '../screens/SignUpScreen';
 import ForgotPasswordScreen from '../screens/ForgotPasswordScreen';
 import ResetPasswordScreen from '../screens/ResetPasswordScreen';
+import VerifyEmailScreen from '../screens/VerifyEmailScreen';
 import WelcomeScreen from '../screens/WelcomeScreen';
 import AddLocationScreen from '../screens/AddLocationScreen';
 
@@ -22,6 +23,7 @@ export type AuthStackParamList = {
   SignUp: undefined;
   ForgotPassword: undefined;
   ResetPassword: { token?: string };
+  VerifyEmail: { token?: string };
   Welcome: undefined;
   AddLocation: undefined;
 };
@@ -56,6 +58,10 @@ const AuthStack: React.FC = () => {
       <Stack.Screen
         name="ResetPassword"
         component={ResetPasswordScreen}
+      />
+      <Stack.Screen
+        name="VerifyEmail"
+        component={VerifyEmailScreen}
       />
       <Stack.Screen
         name="Welcome"

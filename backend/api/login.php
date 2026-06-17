@@ -48,10 +48,18 @@ if (!validateEmail($email)) {
 
 logInfo("Attempting login for email: $email");
 
-// Fetch user
-$user = dbFetchOne($con, "SELECT id, name, email, phone, address, password FROM users WHERE email = ? LIMIT 1", 's', [$email]);
+// Fetch user with email verification status
+$user = dbFetchOne($con, "SELECT id, name, email, phone, address, password, email_verified FROM users WHERE email = ? LIMIT 1", 's', [$email]);
 
 if ($user && verifyPassword($password, $user['password'])) {
+    // Check if email is verified
+    if ($user['email_verified'] != 1) {
+        logError($endpoint, "Login attempt with unverified email: $email");
+        logResponse($endpoint, false, null, 'Email not verified');
+        endTimer($startTime, $endpoint);
+        jsonError('Please verify your email address before logging in. Check your inbox for the verification email.', 403);
+    }
+
     // Set session
     setUserSession($user);
 
@@ -65,7 +73,8 @@ if ($user && verifyPassword($password, $user['password'])) {
             'name' => $user['name'],
             'email' => $user['email'],
             'phone' => $user['phone'],
-            'address' => $user['address']
+            'address' => $user['address'],
+            'email_verified' => true
         ]
     ], 'Login successful');
 } else {

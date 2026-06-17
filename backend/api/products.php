@@ -128,7 +128,7 @@ if (!empty($sort_by)) {
             break;
         case 'Most Popular':
         case 'popular':
-            $orderBy = "d.catID ASC, d.id DESC";
+            $orderBy = "CASE WHEN d.imagee IS NOT NULL AND d.imagee != '' THEN 0 ELSE 1 END, d.id DESC";
             break;
         case 'name':
             $orderBy = "d.namee ASC";
@@ -154,16 +154,11 @@ $host = $_SERVER['HTTP_HOST'];
 $productionUrl = 'https://greenfieldsupermarket.com';
 
 while ($row = $result->fetch_assoc()) {
-    // Construct full image URL
+    // Construct full image URL - always use local server
     $imageUrl = '';
     if (!empty($row['image_url'])) {
-        $localImagePath = __DIR__ . '/../admin/upload/dow/' . $row['image_url'];
-
-        if (file_exists($localImagePath)) {
-            $imageUrl = $protocol . '://' . $host . '/admin/upload/dow/' . $row['image_url'];
-        } else {
-            $imageUrl = $productionUrl . '/admin/upload/dow/' . $row['image_url'];
-        }
+        // Always construct local URL
+        $imageUrl = $protocol . '://' . $host . '/admin/upload/dow/' . $row['image_url'];
     }
 
     // Calculate discount percentage

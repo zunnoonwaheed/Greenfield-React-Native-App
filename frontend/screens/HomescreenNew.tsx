@@ -11,6 +11,7 @@ import {
   Alert,
   ActivityIndicator,
   TextInput,
+  ImageBackground,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
@@ -324,12 +325,14 @@ const HomescreenNew: React.FC = () => {
   );
 
   /**
-   * RENDER BEST-SELLING PRODUCT ITEM (Bundle Card Design)
+   * BEST-SELLING PRODUCT ITEM COMPONENT
    */
-  const renderBestSellingProduct = (item: ProductItem) => {
-    const productImage = item.image_url
-      ? { uri: item.image_url }
-      : require('../images/homepage-assets/shop-cat1.png');
+  const BestSellingProductItem = ({ item }: { item: ProductItem }) => {
+    const [imageError, setImageError] = React.useState(false);
+
+    const productImage = (!item.image_url || imageError)
+      ? require('../images/homepage-assets/shop-cat1.png')
+      : { uri: item.image_url };
 
     const quantity = productQuantities[item.id.toString()] || 1;
 
@@ -345,9 +348,15 @@ const HomescreenNew: React.FC = () => {
     const discountText = discountPercentage > 0 ? `-${discountPercentage}%` : '';
     const displayPrice = discountedPrice > 0 && discountedPrice < price ? discountedPrice : price;
 
+    // Debug logging
+    React.useEffect(() => {
+      if (item.image_url) {
+        console.log(`Product ${item.id} (${item.name}) image URL: ${item.image_url}`);
+      }
+    }, [item.id, item.name, item.image_url]);
+
     return (
       <TouchableOpacity
-        key={item.id}
         style={styles.bundleCard}
         onPress={() => {
           // Navigate to product detail screen
@@ -361,7 +370,15 @@ const HomescreenNew: React.FC = () => {
           </View>
         )}
         <View style={styles.bundleImageContainer}>
-          <Image source={productImage} style={styles.bundleImage} resizeMode="cover" />
+          <Image
+            source={productImage}
+            style={styles.bundleImage}
+            resizeMode="contain"
+            onError={(e) => {
+              console.error(`Failed to load image for product ${item.id}:`, item.image_url);
+              setImageError(true);
+            }}
+          />
         </View>
         <View style={styles.bundleContent}>
           <View style={styles.bundleInfo}>
@@ -404,7 +421,7 @@ const HomescreenNew: React.FC = () => {
       {/* Header Section with Background Image */}
       <View style={styles.headerWrapper}>
         <Image
-          source={require('../images/homepage-assets/bg-home.png')}
+          source={require('../images/homepage-assets/nav-bg.png')}
           style={styles.headerBackgroundImage}
           resizeMode="cover"
         />
@@ -551,7 +568,9 @@ const HomescreenNew: React.FC = () => {
               showsHorizontalScrollIndicator={false}
               style={styles.bundlesContainer}
             >
-              {bestSellingProducts.map(renderBestSellingProduct)}
+              {bestSellingProducts.map((item) => (
+                <BestSellingProductItem key={item.id} item={item} />
+              ))}
             </ScrollView>
           </View>
 
@@ -577,7 +596,7 @@ const HomescreenNew: React.FC = () => {
               <View style={styles.listCard}>
                 <View style={styles.listImageContainer}>
                   <Image
-                    source={require('../images/homepage-assets/grocery-list-cart.png')}
+                    source={require('../images/homepage-assets/home-grocery-list.png')}
                     style={styles.listImageIcon}
                     resizeMode="contain"
                   />
@@ -592,7 +611,7 @@ const HomescreenNew: React.FC = () => {
               <View style={styles.listCard}>
                 <View style={styles.listImageContainer}>
                   <Image
-                    source={require('../images/homepage-assets/grocery-list-cart.png')}
+                    source={require('../images/homepage-assets/home-grocery-list.png')}
                     style={styles.listImageIcon}
                     resizeMode="contain"
                   />
@@ -917,11 +936,12 @@ const styles = StyleSheet.create({
   },
   bundleImageContainer: {
     height: 130,
-    backgroundColor: '#F1F5F9',
+    backgroundColor: '#FFFFFF',
     justifyContent: 'center',
     alignItems: 'center',
     overflow: 'hidden',
     width: '100%',
+    borderRadius: 8,
   },
   bundleImage: {
     width: '100%',
@@ -1053,10 +1073,21 @@ const styles = StyleSheet.create({
     marginRight: 12,
     padding: 12,
     gap: 8,
+    overflow: 'hidden',
+  },
+  listCardImage: {
+    borderRadius: 8,
+  },
+  listBackgroundImage: {
+    height: 100,
+    width: '100%',
+    borderRadius: 8,
+    overflow: 'hidden',
+    marginBottom: 8,
   },
   listImageContainer: {
     height: 100,
-    backgroundColor: '#F1F5F9',
+    backgroundColor: 'transparent',
     justifyContent: 'center',
     alignItems: 'center',
     borderRadius: 8,
