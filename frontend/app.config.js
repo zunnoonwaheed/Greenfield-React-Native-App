@@ -47,6 +47,11 @@ export default {
       ]
     },
 
+    web: {
+      favicon: "./assets/favicon.png",
+      bundler: "metro"
+    },
+
     plugins: [
       "expo-web-browser",
       "@react-native-google-signin/google-signin"
@@ -57,11 +62,10 @@ export default {
         process.env.API_BASE_URL ||
         "https://greenfieldsupermarket.com/mobile-api/backend",
 
-      NODE_ENV: "production",
+      NODE_ENV: process.env.NODE_ENV || "production",
 
       GOOGLE_WEB_CLIENT_ID: process.env.GOOGLE_WEB_CLIENT_ID || "969529169540-vkaojfsqj9n4167e0a2cbahlh5ogkn8v.apps.googleusercontent.com",
 
-      // ✅ REQUIRED for dynamic config
       eas: {
         projectId: "bb87a0c7-0bc3-4311-ac60-9a2167343b73"
       }
