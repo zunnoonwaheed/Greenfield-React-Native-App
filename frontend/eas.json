@@ -15,14 +15,14 @@
     },
     "production": {
       "android": {
-        "buildType": "app-bundle"  
+        "buildType": "apk"
       },
-      "autoIncrement": true        
+      "autoIncrement": true
     }
   },
   "submit": {
     "production": {
-      "android": {}               
+      "android": {}
     }
   }
 }

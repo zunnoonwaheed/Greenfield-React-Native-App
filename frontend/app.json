@@ -1,38 +1,41 @@
 {
   "expo": {
-    "entryPoint": "./index.ts",
+    "entryPoint": "./index.js",
     "name": "Greenfield",
-    "slug": "Greenfield",
-    "version": "1.0.0",
+    "slug": "greenfield",
+    "version": "1.0.1",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/logo.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "splash": {
-      "image": "./assets/splash-icon.png",
+      "image": "./assets/logo.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
     "ios": {
+      "bundleIdentifier": "com.greenfieldsupermarket.app",
       "supportsTablet": true
     },
     "android": {
+      "package": "com.greenfieldsupermarket.app",
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
+        "foregroundImage": "./assets/logo.png",
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.zunnoon.Greenfield"
+      "permissions": ["INTERNET"]
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/favicon.png",
+      "bundler": "metro"
     },
     "extra": {
       "eas": {
-        "projectId": "8042594d-c901-4079-a2d0-7eb6cc54ec79"
+        "projectId": "bb87a0c7-0bc3-4311-ac60-9a2167343b73"
       }
     },
-    "owner": "zunnoon"
+    "owner": "zunnoonwaheed"
   }
 }

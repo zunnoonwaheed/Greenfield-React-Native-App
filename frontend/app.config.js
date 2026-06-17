@@ -2,7 +2,7 @@ import 'dotenv/config';
 
 export default {
   expo: {
-    name: "greenfield",
+    name: "Greenfield",
     slug: "greenfield",
 
     version: "1.0.1",
@@ -10,6 +10,7 @@ export default {
 
     icon: "./assets/logo.png",
     userInterfaceStyle: "light",
+    newArchEnabled: true,
 
     splash: {
       image: "./assets/logo.png",
@@ -21,6 +22,7 @@ export default {
 
     ios: {
       bundleIdentifier: "com.greenfieldsupermarket.app",
+      supportsTablet: true,
       associatedDomains: ["applinks:greenfieldsupermarket.com"]
     },
 
@@ -32,6 +34,8 @@ export default {
         foregroundImage: "./assets/logo.png",
         backgroundColor: "#ffffff"
       },
+      edgeToEdgeEnabled: true,
+      predictiveBackGestureEnabled: false,
       intentFilters: [
         {
           action: "VIEW",
